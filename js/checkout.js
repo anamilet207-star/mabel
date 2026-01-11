@@ -1862,6 +1862,37 @@ function formatPhoneNumber(input) {
     }
 }
 
+// En checkout.js
+function processOrder() {
+    // 1. Obtener datos del formulario
+    const orderData = {
+        customer: getFormData(),
+        cart: cartManager.loadCart(),
+        total: calculateTotal(),
+        orderId: generateOrderId(),
+        date: new Date().toISOString()
+    };
+    
+    // 2. Guardar en localStorage o mostrar para transferencia
+    saveOrderToLocalStorage(orderData);
+    
+    // 3. Preparar mensaje de WhatsApp
+    const whatsappMessage = createWhatsAppMessage(orderData);
+    
+    // 4. Redirigir a WhatsApp
+    window.open(`https://wa.me/18292202292?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
+    
+    // 5. Vaciar carrito
+    cartManager.clearCart();
+}
+
+function saveOrderToLocalStorage(orderData) {
+    // Guardar orden en localStorage
+    const orders = JSON.parse(localStorage.getItem('mabel_orders')) || [];
+    orders.push(orderData);
+    localStorage.setItem('mabel_orders', JSON.stringify(orders));
+}
+
 // Aplicar formato a los campos de teléfono
 document.addEventListener('DOMContentLoaded', function() {
     formatPhoneNumber('telefono');

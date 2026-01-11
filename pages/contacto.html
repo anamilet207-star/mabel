@@ -347,12 +347,15 @@
     </header>
 
     <!-- Hero -->
-    <section class="contact-hero">
+    <section class="contact-section">
         <div class="container">
-            <h1 class="contact-hero-title">CONTÁCTANOS</h1>
-            <p class="contact-hero-subtitle">
-                ¿Tienes preguntas, comentarios o necesitas ayuda? Estamos aquí para asistirte.
-            </p>
+            <h1>Contacto</h1>
+            <form name="contact" netlify data-netlify="true">
+                <input type="text" name="nombre" placeholder="Tu nombre" required>
+                <input type="email" name="email" placeholder="Tu email" required>
+                <textarea name="mensaje" placeholder="Tu mensaje" required></textarea>
+                <button type="submit">Enviar mensaje</button>
+            </form>
         </div>
     </section>
 
