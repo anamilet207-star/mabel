@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ofertas Especiales - Mabel Activewear</title>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/shop.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* Estilos específicos para la página de ofertas */
+        .offers-hero {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            padding: 100px 0 60px;
+            text-align: center;
+            color: white;
+        }
+
+        .offers-hero-title {
+            font-size: 48px;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .offers-hero-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .offer-badge {
+            background-color: #000 !important;
+            color: white !important;
+            border: 1px solid #000 !important;
+        }
+
+        .offer-badge::before {
+            content: "🎁 ";
+        }
+
+        .discount-percent {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #000;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 500;
+            z-index: 2;
+        }
+
+        .original-price {
+            color: #999;
+            text-decoration: line-through;
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        .discounted-price {
+            color: #000;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .savings-tag {
+            color: #666;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        /* Asegurar que las imágenes se vean bien */
+        .shop-product-image {
+            height: 350px;
+            overflow: hidden;
+        }
+
+        .shop-product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .shop-product-card:hover .shop-product-image img {
+            transform: scale(1.05);
+        }
+
+        /* Badge elegante */
+        .shop-product-badge.sale {
+            background-color: #000 !important;
+            color: white !important;
+            border: none !important;
+        }
+
+        /* Contenedor de mensaje cuando no hay ofertas */
+        .no-offers-message {
+            text-align: center;
+            padding: 80px 20px;
+            grid-column: 1 / -1;
+        }
+
+        .no-offers-message i {
+            font-size: 48px;
+            color: #999;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .no-offers-message h3 {
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            color: #000;
+        }
+
+        .no-offers-message p {
+            color: #666;
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Superior -->
+    <div class="top-bar">
+        <div class="container top-bar-content">
+            <div class="top-bar-text">
+                ENVÍO GRATIS EN PEDIDOS SUPERIORES A $50
+            </div>
+            <ul class="top-bar-links">
+                <li><a href="/envios">Envíos</a></li>
+                <li><a href="/ayuda">Ayuda</a></li>
+                <li><a href="/contacto">Contacto</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Header Principal -->
+    <header class="main-header" id="mainHeader">
+        <div class="container header-container">
+            <!-- Logo -->
+            <a href="/" class="logo">
+                <img src="/public/icons/logo-mabel.png" class="logo-png" alt="Mabel Activewear">
+            </a>
+
+            <!-- Navegación -->
+            <nav class="main-nav">
+                <ul class="nav-menu">
+                    <li><a href="/shop">TIENDA</a></li>
+                    <li><a href="/shop?category=leggings">LEGGINGS</a></li>
+                    <li><a href="/shop?category=tops">TOPS</a></li>
+                    <li><a href="/shop?category=sets">SETS</a></li>
+                    <li><a href="/ofertas" class="active">OFERTAS</a></li>
+                </ul>
+            </nav>
+
+            <!-- Iconos -->
+            <div class="header-icons">
+                <a href="/account" class="icon-link" title="Mi Cuenta">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="/cart" class="icon-link" title="Carrito">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="cart-count">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero de Ofertas -->
+    <section class="offers-hero">
+        <div class="container">
+            <h1 class="offers-hero-title">OFERTAS ESPECIALES</h1>
+            <p class="offers-hero-subtitle">
+                Aprovecha nuestros descuentos exclusivos en ropa deportiva de alta calidad.
+                Precios especiales por tiempo limitado.
+            </p>
+        </div>
+    </section>
+
+    <!-- Productos en Oferta -->
+    <section class="products-section">
+        <div class="container">
+            <!-- Filtros -->
+            <div class="shop-filters" style="margin-top: 30px;">
+                <div class="container">
+                    <div class="filters-container">
+                        <div class="filter-group">
+                            <span class="filter-label">Filtrar por:</span>
+                            <select class="filter-select" id="sort-filter">
+                                <option value="newest">Más recientes</option>
+                                <option value="price-low">Menor precio</option>
+                                <option value="price-high">Mayor precio</option>
+                                <option value="discount-high">Mayor descuento</option>
+                            </select>
+                        </div>
+                        <div class="filter-buttons">
+                            <button class="filter-btn" id="filter-btn">
+                                <i class="fas fa-filter"></i> Aplicar
+                            </button>
+                            <button class="filter-btn secondary" id="reset-btn">
+                                <i class="fas fa-redo"></i> Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contador de productos -->
+            <div style="text-align: center; margin: 40px 0 20px;">
+                <span id="product-count" style="color: #666; font-size: 14px; letter-spacing: 1px;">
+                    Cargando ofertas...
+                </span>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading-state" style="display: block;">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                <p>Cargando ofertas especiales...</p>
+            </div>
+            
+            <!-- Grid de productos -->
+            <div class="products-grid" id="productsGrid">
+                <!-- Los productos en oferta se cargarán aquí -->
+            </div>
+            
+            <!-- Mensaje cuando no hay ofertas -->
+            <div id="no-ofertas" class="no-offers-message" style="display: none;">
+                <i class="fas fa-percentage"></i>
+                <h3>No hay ofertas disponibles</h3>
+                <p>Actualmente no tenemos productos en oferta. Revisa nuestra tienda para ver todos los productos disponibles.</p>
+                <a href="/shop" class="btn" style="margin-top: 20px;">
+                    <i class="fas fa-store"></i> Ir a la Tienda
+                </a>
+            </div>
+
+            <!-- Paginación -->
+            <div class="pagination" id="pagination" style="display: none;"></div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <!-- Información de la Empresa -->
+                <div class="footer-section">
+                    <h3>MABEL ACTIVEWEAR</h3>
+                    <p>
+                        Ropa deportiva femenina de alta calidad. Diseñada para mujeres activas 
+                        que valoran el estilo, el rendimiento y la comodidad.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Enlaces Rápidos -->
+                <div class="footer-section">
+                    <h3>ENLACES RÁPIDOS</h3>
+                    <ul class="footer-links">
+                        <li><a href="/shop">Tienda</a></li>
+                        <li><a href="/ofertas">Ofertas</a></li>
+                        <li><a href="/tallas">Guía de Tallas</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contacto -->
+                <div class="footer-section">
+                    <h3>CONTACTO</h3>
+                    <ul class="footer-links">
+                        <li>
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:info@mabelactivewear.com">info@mabelactivewear.com</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="copyright">
+                    &copy; 2024 MABEL ACTIVEWEAR. TODOS LOS DERECHOS RESERVADOS.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="/js/shop-script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎁 Página de ofertas cargada');
+            
+            // Inicializar ShopManager para ofertas
+            window.offersManager = new class OffersManager {
+                constructor() {
+                    this.products = [];
+                    this.discountedProducts = [];
+                    this.currentPage = 1;
+                    this.productsPerPage = 12;
+                    this.sortBy = 'newest';
+                    this.init();
+                }
+                
+                async init() {
+                    console.log('🔄 Inicializando OffersManager...');
+                    await this.loadProducts();
+                    this.setupEventListeners();
+                    this.showDiscountedProducts();
+                    this.updateCartCount();
+                }
+                
+                async loadProducts() {
+                    try {
+                        console.log('📦 Cargando productos...');
+                        const response = await fetch('/api/products');
+                        
+                        if (!response.ok) {
+                            throw new Error(`Error ${response.status}`);
+                        }
+                        
+                        this.products = await response.json();
+                        
+                        // Procesar arrays
+                        this.products.forEach(product => {
+                            product.precio_final = this.calculateDiscountedPrice(product);
+                            product.tiene_descuento = product.precio_final < parseFloat(product.precio);
+                        });
+                        
+                        console.log(`✅ ${this.products.length} productos cargados`);
+                        
+                        // Ocultar loading
+                        const loadingElement = document.getElementById('loading');
+                        if (loadingElement) {
+                            loadingElement.style.display = 'none';
+                        }
+                        
+                    } catch (error) {
+                        console.error('❌ Error cargando productos:', error);
+                        this.showError();
+                    }
+                }
+                
+                calculateDiscountedPrice(product) {
+                    let precioFinal = parseFloat(product.precio) || 0;
+                    
+                    if (product.descuento_porcentaje > 0) {
+                        const descuento = precioFinal * (product.descuento_porcentaje / 100);
+                        precioFinal = precioFinal - descuento;
+                    } else if (product.descuento_precio > 0) {
+                        precioFinal = parseFloat(product.descuento_precio);
+                    }
+                    
+                    return parseFloat(precioFinal.toFixed(2));
+                }
+                
+                showDiscountedProducts() {
+                    // Filtrar solo productos con descuento
+                    this.discountedProducts = this.products.filter(product => 
+                        product.tiene_descuento && product.activo !== false
+                    );
+                    
+                    console.log(`🎁 ${this.discountedProducts.length} productos en oferta`);
+                    
+                    const productsGrid = document.getElementById('productsGrid');
+                    const noOfertas = document.getElementById('no-ofertas');
+                    const productCount = document.getElementById('product-count');
+                    const pagination = document.getElementById('pagination');
+                    
+                    if (this.discountedProducts.length === 0) {
+                        productsGrid.innerHTML = '';
+                        if (noOfertas) noOfertas.style.display = 'block';
+                        if (productCount) productCount.textContent = '0 productos en oferta';
+                        if (pagination) pagination.style.display = 'none';
+                        return;
+                    }
+                    
+                    if (noOfertas) noOfertas.style.display = 'none';
+                    
+                    // Ordenar productos
+                    this.sortProducts();
+                    
+                    // Calcular productos para la página actual
+                    const startIndex = (this.currentPage - 1) * this.productsPerPage;
+                    const endIndex = startIndex + this.productsPerPage;
+                    const paginatedProducts = this.discountedProducts.slice(startIndex, endIndex);
+                    
+                    // Mostrar productos
+                    productsGrid.innerHTML = paginatedProducts.map(product => {
+                        const precioOriginal = parseFloat(product.precio) || 0;
+                        const precioFinal = product.precio_final || precioOriginal;
+                        const porcentajeDescuento = product.descuento_porcentaje || 
+                            Math.round((1 - (precioFinal / precioOriginal)) * 100);
+                        
+                        return `
+                        <div class="shop-product-card" data-id="${product.id}">
+                            <div class="shop-product-image">
+                                <a href="/product-detail.html?id=${product.id}">
+                                    <img src="${product.imagen || '/public/images/default-product.jpg'}" 
+                                         alt="${product.nombre}"
+                                         onerror="this.src='/public/images/default-product.jpg'"
+                                         loading="lazy">
+                                </a>
+                                ${product.tiene_descuento ? 
+                                    `<span class="shop-product-badge sale">${porcentajeDescuento}% OFF</span>` : ''}
+                                
+                                ${product.stock <= 0 ? 
+                                    '<span class="shop-product-badge" style="background: #666;">AGOTADO</span>' : 
+                                    product.stock <= 5 ? 
+                                    '<span class="shop-product-badge" style="background: #333;">ÚLTIMAS UNIDADES</span>' : ''}
+                            </div>
+                            <div class="shop-product-info">
+                                <span class="shop-product-category">${this.formatCategoryName(product.categoria)}</span>
+                                <h3 class="shop-product-name">
+                                    <a href="/product-detail.html?id=${product.id}">${product.nombre}</a>
+                                </h3>
+                                <div class="shop-product-price">
+                                    <span class="original-price">$${precioOriginal.toFixed(2)}</span>
+                                    <span class="discounted-price">$${precioFinal.toFixed(2)}</span>
+                                    <span class="savings-tag">Ahorras $${(precioOriginal - precioFinal).toFixed(2)}</span>
+                                </div>
+                                
+                                <div class="shop-product-actions">
+                                    <button class="btn btn-primary add-to-cart-btn" 
+                                            onclick="offersManager.addToCart(${product.id})"
+                                            ${product.stock <= 0 ? 'disabled' : ''}>
+                                        <i class="fas fa-shopping-bag"></i>
+                                        ${product.stock <= 0 ? 'Agotado' : 'Agregar al Carrito'}
+                                    </button>
+                                    <a href="/product-detail.html?id=${product.id}" class="btn btn-outline">
+                                        Ver Detalles
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                    
+                    // Actualizar contador
+                    if (productCount) {
+                        productCount.textContent = `${this.discountedProducts.length} productos en oferta`;
+                    }
+                    
+                    // Mostrar paginación
+                    this.renderPagination();
+                    
+                    // Mostrar paginación si hay más de una página
+                    if (pagination) {
+                        pagination.style.display = this.discountedProducts.length > this.productsPerPage ? 'flex' : 'none';
+                    }
+                }
+                
+                formatCategoryName(category) {
+                    const categoryMap = {
+                        'leggings': 'Leggings',
+                        'tops': 'Tops',
+                        'sets': 'Sets',
+                        'shorts': 'Shorts',
+                        'accesorios': 'Accesorios',
+                        'sports-bras': 'Sports Bras',
+                        'jackets': 'Chaquetas',
+                        'pants': 'Pantalones',
+                        'new-collection': 'Nueva Colección'
+                    };
+                    
+                    return categoryMap[category] || 
+                           category.charAt(0).toUpperCase() + category.slice(1);
+                }
+                
+                sortProducts() {
+                    this.discountedProducts.sort((a, b) => {
+                        const precioA = a.precio_final || parseFloat(a.precio) || 0;
+                        const precioB = b.precio_final || parseFloat(b.precio) || 0;
+                        const descuentoA = a.descuento_porcentaje || 0;
+                        const descuentoB = b.descuento_porcentaje || 0;
+                        
+                        switch (this.sortBy) {
+                            case 'price-low':
+                                return precioA - precioB;
+                            case 'price-high':
+                                return precioB - precioA;
+                            case 'discount-high':
+                                return descuentoB - descuentoA;
+                            case 'newest':
+                            default:
+                                return (b.id || 0) - (a.id || 0);
+                        }
+                    });
+                }
+                
+                renderPagination() {
+                    const totalPages = Math.ceil(this.discountedProducts.length / this.productsPerPage);
+                    
+                    if (totalPages <= 1) {
+                        const pagination = document.getElementById('pagination');
+                        if (pagination) pagination.innerHTML = '';
+                        return;
+                    }
+                    
+                    const paginationContainer = document.getElementById('pagination');
+                    if (!paginationContainer) return;
+                    
+                    let paginationHTML = '';
+                    
+                    // Botón anterior
+                    if (this.currentPage > 1) {
+                        paginationHTML += `
+                            <button class="page-btn prev" onclick="offersManager.changePage(${this.currentPage - 1})">
+                                <i class="fas fa-chevron-left"></i> Anterior
+                            </button>
+                        `;
+                    }
+                    
+                    // Números de página
+                    const maxVisiblePages = 5;
+                    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                    
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+                    
+                    for (let i = startPage; i <= endPage; i++) {
+                        paginationHTML += `
+                            <button class="page-btn ${i === this.currentPage ? 'active' : ''}" 
+                                    onclick="offersManager.changePage(${i})">
+                                ${i}
+                            </button>
+                        `;
+                    }
+                    
+                    // Botón siguiente
+                    if (this.currentPage < totalPages) {
+                        paginationHTML += `
+                            <button class="page-btn next" onclick="offersManager.changePage(${this.currentPage + 1})">
+                                Siguiente <i class="fas fa-chevron-right"></i>
+                            </button>
+                        `;
+                    }
+                    
+                    paginationContainer.innerHTML = paginationHTML;
+                }
+                
+                changePage(page) {
+                    if (page < 1 || page > Math.ceil(this.discountedProducts.length / this.productsPerPage)) {
+                        return;
+                    }
+                    
+                    this.currentPage = page;
+                    this.showDiscountedProducts();
+                    
+                    // Scroll suave hacia arriba
+                    window.scrollTo({
+                        top: document.querySelector('.products-grid').offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+                
+                setupEventListeners() {
+                    // Filtro de orden
+                    const sortFilter = document.getElementById('sort-filter');
+                    if (sortFilter) {
+                        sortFilter.addEventListener('change', (e) => {
+                            this.sortBy = e.target.value;
+                            this.showDiscountedProducts();
+                        });
+                    }
+                    
+                    // Botón filtrar
+                    const filterBtn = document.getElementById('filter-btn');
+                    if (filterBtn) {
+                        filterBtn.addEventListener('click', () => {
+                            this.showDiscountedProducts();
+                        });
+                    }
+                    
+                    // Botón reset
+                    const resetBtn = document.getElementById('reset-btn');
+                    if (resetBtn) {
+                        resetBtn.addEventListener('click', () => {
+                            this.sortBy = 'newest';
+                            const sortFilter = document.getElementById('sort-filter');
+                            if (sortFilter) sortFilter.value = 'newest';
+                            this.showDiscountedProducts();
+                            this.showNotification('Filtros restablecidos', 'info');
+                        });
+                    }
+                }
+                
+                addToCart(productId) {
+                    // Obtener carrito actual
+                    let cart = JSON.parse(localStorage.getItem('mabel_cart')) || [];
+                    
+                    // Buscar producto
+                    const product = this.discountedProducts.find(p => p.id == productId);
+                    if (!product) {
+                        this.showNotification('Producto no encontrado', 'error');
+                        return;
+                    }
+                    
+                    if (product.stock <= 0) {
+                        this.showNotification('Producto agotado', 'error');
+                        return;
+                    }
+                    
+                    // Verificar si ya existe
+                    const existingIndex = cart.findIndex(item => item.id == productId);
+                    
+                    const precioFinal = this.calculateDiscountedPrice(product);
+                    
+                    if (existingIndex >= 0) {
+                        // Actualizar cantidad
+                        const nuevaCantidad = cart[existingIndex].quantity + 1;
+                        const stockDisponible = product.stock;
+                        
+                        if (nuevaCantidad > stockDisponible) {
+                            this.showNotification(`Solo quedan ${stockDisponible} unidades disponibles`, 'error');
+                            return;
+                        }
+                        
+                        cart[existingIndex].quantity = nuevaCantidad;
+                        this.showNotification(`Cantidad actualizada: ${product.nombre}`, 'success');
+                    } else {
+                        // Agregar nuevo item
+                        cart.push({
+                            id: product.id,
+                            nombre: product.nombre,
+                            precio: precioFinal,
+                            precio_original: parseFloat(product.precio),
+                            imagen: product.imagen || '/public/images/default-product.jpg',
+                            categoria: product.categoria,
+                            quantity: 1,
+                            stock: product.stock,
+                            sku: product.sku || `SKU-${product.id}`
+                        });
+                        this.showNotification(`"${product.nombre}" agregado al carrito`, 'success');
+                    }
+                    
+                    // Guardar en localStorage
+                    localStorage.setItem('mabel_cart', JSON.stringify(cart));
+                    
+                    // Actualizar contador del carrito
+                    this.updateCartCount();
+                }
+                
+                updateCartCount() {
+                    const cart = JSON.parse(localStorage.getItem('mabel_cart')) || [];
+                    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                    
+                    document.querySelectorAll('.cart-count').forEach(element => {
+                        if (element) {
+                            element.textContent = totalItems;
+                            element.style.display = totalItems > 0 ? 'inline-block' : 'none';
+                        }
+                    });
+                }
+                
+                showNotification(message, type = 'info') {
+                    // Eliminar notificaciones anteriores
+                    const existingNotifications = document.querySelectorAll('.notification');
+                    existingNotifications.forEach(notif => notif.remove());
+                    
+                    // Crear notificación
+                    const notification = document.createElement('div');
+                    notification.className = `notification notification-${type}`;
+                    
+                    const icons = {
+                        success: 'check-circle',
+                        error: 'exclamation-circle',
+                        info: 'info-circle'
+                    };
+                    
+                    notification.innerHTML = `
+                        <i class="fas fa-${icons[type] || 'info-circle'}"></i>
+                        <span>${message}</span>
+                        <button class="notification-close">&times;</button>
+                    `;
+                    
+                    // Estilos
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        padding: 15px 20px;
+                        background: ${type === 'success' ? '#d4edda' : 
+                                    type === 'error' ? '#f8d7da' : '#d1ecf1'};
+                        color: ${type === 'success' ? '#155724' : 
+                                type === 'error' ? '#721c24' : '#0c5460'};
+                        border-left: 4px solid ${type === 'success' ? '#28a745' : 
+                                        type === 'error' ? '#dc3545' : '#17a2b8'};
+                        border-radius: 4px;
+                        z-index: 10000;
+                        animation: slideInRight 0.3s ease;
+                        max-width: 350px;
+                        font-size: 14px;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    `;
+                    
+                    document.body.appendChild(notification);
+                    
+                    // Botón cerrar
+                    const closeBtn = notification.querySelector('.notification-close');
+                    if (closeBtn) {
+                        closeBtn.onclick = () => {
+                            notification.style.animation = 'slideOutRight 0.3s ease';
+                            setTimeout(() => notification.remove(), 300);
+                        };
+                    }
+                    
+                    // Auto-remover después de 5 segundos
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.style.animation = 'slideOutRight 0.3s ease';
+                            setTimeout(() => notification.remove(), 300);
+                        }
+                    }, 5000);
+                }
+                
+                showError() {
+                    const loadingElement = document.getElementById('loading');
+                    if (loadingElement) {
+                        loadingElement.innerHTML = `
+                            <div style="text-align: center; color: #666;">
+                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                <p>Error cargando ofertas</p>
+                                <button onclick="location.reload()" class="btn btn-small" style="margin-top: 15px;">
+                                    <i class="fas fa-redo"></i> Reintentar
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            };
+            
+            // Inicializar
+            window.offersManager.init();
+            
+            // Header scroll effect
+            const header = document.getElementById('mainHeader');
+            if (header) {
+                window.addEventListener('scroll', function() {
+                    if (window.scrollY > 100) {
+                        header.classList.add('scrolled');
+                    } else {
+                        header.classList.remove('scrolled');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

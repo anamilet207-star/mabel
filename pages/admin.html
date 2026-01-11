@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel | Mabel Activewear</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <!-- ICONOS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  
+  <style>
+    /* Estilos adicionales para admin */
+    .admin-layout {
+        display: flex;
+        min-height: 100vh;
+        background: #f8f8f8;
+    }
+    
+    .admin-sidebar {
+        width: 250px;
+        background: #000;
+        color: white;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+    }
+    
+    .admin-logo {
+        padding: 30px 20px;
+        border-bottom: 1px solid #333;
+    }
+    
+    .admin-logo h2 {
+        color: white;
+        font-size: 20px;
+        font-weight: 300;
+        letter-spacing: 2px;
+        margin: 0;
+    }
+    
+    .admin-logo span {
+        color: #ccc;
+        font-size: 12px;
+        letter-spacing: 1px;
+    }
+    
+    .admin-nav {
+        padding: 20px 0;
+    }
+    
+    .admin-nav-link {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px 20px;
+        color: #ccc;
+        text-decoration: none;
+        border-left: 3px solid transparent;
+        transition: all 0.3s;
+    }
+    
+    .admin-nav-link:hover,
+    .admin-nav-link.active {
+        background: #333;
+        color: white;
+        border-left-color: white;
+    }
+    
+    .admin-nav-link i {
+        width: 20px;
+        text-align: center;
+    }
+    
+    .admin-main {
+        flex: 1;
+        margin-left: 250px;
+        min-height: 100vh;
+    }
+    
+    .admin-header {
+        background: white;
+        padding: 20px 30px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .admin-header h1 {
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 2px;
+        margin: 0;
+    }
+    
+    .admin-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 15px;
+        background: #f8f8f8;
+        border-radius: 4px;
+    }
+    
+    .admin-user i {
+        color: #666;
+    }
+    
+    .admin-content {
+        padding: 30px;
+    }
+    
+    /* Dashboard */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .dashboard-card {
+        background: white;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .dashboard-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .dashboard-card-icon {
+        width: 50px;
+        height: 50px;
+        background: #000;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    
+    .dashboard-card-value {
+        font-size: 32px;
+        font-weight: 300;
+        margin-bottom: 5px;
+    }
+    
+    .dashboard-card-label {
+        color: #666;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Tablas */
+    .admin-table-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    
+    .admin-table-header {
+        padding: 20px 25px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .admin-table-title {
+        font-size: 18px;
+        font-weight: 300;
+        letter-spacing: 2px;
+        margin: 0;
+    }
+    
+    .admin-table-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .search-input {
+        padding: 8px 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        width: 250px;
+    }
+    
+    .btn-primary {
+        background: #000;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.3s;
+    }
+    
+    .btn-primary:hover {
+        background: #333;
+    }
+    
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .admin-table th {
+        background: #f8f8f8;
+        padding: 15px;
+        text-align: left;
+        font-weight: 500;
+        color: #666;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .admin-table td {
+        padding: 15px;
+        border-bottom: 1px solid #f8f8f8;
+    }
+    
+    .admin-table tr:hover {
+        background: #f8f8f8;
+    }
+    
+    /* Estados */
+    .status-active {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .status-inactive {
+        background: #ffebee;
+        color: #c62828;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .order-status {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .order-status.pendiente {
+        background: #fff3e0;
+        color: #ef6c00;
+    }
+    
+    .order-status.procesando {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .order-status.enviado {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+    
+    .order-status.entregado {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+    
+    .order-status.cancelado {
+        background: #ffebee;
+        color: #c62828;
+    }
+    
+    /* Stock badges */
+    .stock-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        min-width: 40px;
+        text-align: center;
+    }
+    
+    .stock-badge.in-stock {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+    
+    .stock-badge.low-stock {
+        background: #fff3e0;
+        color: #ef6c00;
+    }
+    
+    .stock-badge.out-of-stock {
+        background: #ffebee;
+        color: #c62828;
+    }
+    
+    /* Array cells */
+    .array-cell {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+        color: #666;
+    }
+    
+    /* Table actions */
+    .table-actions {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+    
+    .action-btn:hover {
+        background: #f8f8f8;
+    }
+    
+    .action-btn.edit:hover {
+        border-color: #2196f3;
+        color: #2196f3;
+    }
+    
+    .action-btn.delete:hover {
+        border-color: #f44336;
+        color: #f44336;
+    }
+    
+    .action-btn.discount:hover {
+        border-color: #4caf50;
+        color: #4caf50;
+    }
+    
+    .action-btn.view:hover {
+        border-color: #ff9800;
+        color: #ff9800;
+    }
+    
+    /* Loading and empty states */
+    .loading-cell,
+    .empty-cell {
+        text-align: center;
+        padding: 60px !important;
+        color: #666;
+    }
+    
+    .loading-cell i,
+    .empty-cell i {
+        font-size: 24px;
+        margin-bottom: 15px;
+        display: block;
+    }
+    
+    /* Product thumbnail */
+    .product-thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #eee;
+    }
+    
+    /* Role badges */
+    .role-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .role-admin {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .role-client {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+    
+    /* Filters */
+    .filters-container {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .filter-select {
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        min-width: 200px;
+    }
+    
+    /* Modal styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 8px;
+        max-width: 800px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+    }
+    
+    .modal-header {
+        padding: 25px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-header h3 {
+        margin: 0;
+        font-weight: 300;
+        letter-spacing: 1px;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #666;
+        cursor: pointer;
+        padding: 5px;
+        line-height: 1;
+    }
+    
+    .modal-body {
+        padding: 25px;
+    }
+    
+    .modal-footer {
+        padding: 25px;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+    }
+    
+    .btn-secondary {
+        background: #f8f8f8;
+        color: #333;
+        border: 1px solid #ddd;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    
+    .btn-secondary:hover {
+        background: #eee;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: #666;
+        font-weight: 500;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #000;
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+    }
+    
+    .form-check input[type="checkbox"] {
+        margin: 0;
+    }
+    
+    .checkbox label {
+        margin: 0;
+    }
+    
+    /* Order modal styles */
+    .order-section {
+        margin-bottom: 30px;
+    }
+    
+    .order-section h4 {
+        margin: 0 0 15px 0;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .order-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        background: #f8f8f8;
+        padding: 20px;
+        border-radius: 4px;
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .info-item strong {
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .order-items-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #f8f8f8;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .order-items-table th {
+        background: #eee;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 500;
+        color: #666;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .order-items-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .order-item-product {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .order-item-product img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    
+    .status-update-form {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+    }
+    
+    .status-update-form select {
+        flex: 1;
+    }
+    
+    /* User info grid */
+    .user-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    /* Discount styles */
+    .discount-badge {
+        background: #4caf50;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .original-price {
+        text-decoration: line-through;
+        color: #999;
+    }
+    
+    .discount-price {
+        color: #4caf50;
+        font-weight: 500;
+    }
+    
+    .discount-product {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .discount-product img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    
+    /* Discount type selector */
+    .discount-type-selector {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    /* Notifications */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 4px;
+        z-index: 9999;
+        animation: slideInRight 0.3s ease;
+        max-width: 350px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .notification-success {
+        background: #d4edda;
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+    
+    .notification-error {
+        background: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .notification-warning {
+        background: #fff3cd;
+        color: #856404;
+        border-left: 4px solid #ffc107;
+    }
+    
+    .notification-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        margin-left: auto;
+        color: inherit;
+        opacity: 0.7;
+    }
+    
+    .notification-close:hover {
+        opacity: 1;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .admin-sidebar {
+            width: 70px;
+        }
+        
+        .admin-main {
+            margin-left: 70px;
+        }
+        
+        .admin-logo span,
+        .admin-nav-link span {
+            display: none;
+        }
+        
+        .admin-nav-link {
+            justify-content: center;
+            padding: 15px;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .filters-container {
+            flex-direction: column;
+        }
+        
+        .search-input {
+            width: 100%;
+        }
+        
+        .admin-table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .modal-content {
+            margin: 0;
+            max-height: 100vh;
+            border-radius: 0;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .admin-header {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+        
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .table-actions {
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .action-btn {
+            width: 100%;
+        }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LAYOUT -->
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <div class="admin-logo">
+        <h2>MABEL</h2>
+        <span>ADMIN PANEL</span>
+      </div>
+
+      <nav class="admin-nav">
+        <a href="#" class="admin-nav-link active" data-section="dashboard">
+          <i class="fas fa-chart-line"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="#" class="admin-nav-link" data-section="products">
+          <i class="fas fa-box"></i>
+          <span>Productos</span>
+        </a>
+
+        <a href="#" class="admin-nav-link" data-section="orders">
+          <i class="fas fa-receipt"></i>
+          <span>Órdenes</span>
+        </a>
+
+        <a href="#" class="admin-nav-link" data-section="users">
+          <i class="fas fa-users"></i>
+          <span>Usuarios</span>
+        </a>
+
+        <a href="#" class="admin-nav-link logout">
+          <i class="fas fa-right-from-bracket"></i>
+          <span>Cerrar Sesión</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="admin-main">
+
+      <!-- HEADER -->
+      <header class="admin-header">
+        <h1 id="section-title">Dashboard</h1>
+        <div class="admin-user">
+          <i class="fas fa-user-circle"></i>
+          <span id="admin-name">Administrador</span>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <section class="admin-content">
+        <!-- El contenido se carga dinámicamente aquí -->
+      </section>
+    </main>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="/js/admin.js"></script>
+</body>
+</html>

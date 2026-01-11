@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de Compras - Mabel Activewear</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/cart.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <!-- Header Superior -->
+    <div class="top-bar">
+        <div class="container top-bar-content">
+            <div class="top-bar-text">
+                ENVÍO GRATIS EN PEDIDOS SUPERIORES A $50
+            </div>
+            <ul class="top-bar-links">
+                <li><a href="/envios">Envíos</a></li>
+                <li><a href="/ayuda" class="active">Ayuda</a></li>
+                <li><a href="/contacto">Contacto</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Header Principal -->
+    <header class="main-header" id="mainHeader">
+        <div class="container header-container">
+            <!-- Logo -->
+            <a href="/" class="logo">
+                <img src="/public/icons/logo-mabel.png" class="logo-png" alt="Mabel Activewear">
+            </a>
+            
+
+            <!-- Navegación Principal -->
+            <nav class="main-nav">
+                <ul class="nav-menu">
+                    <li><a href="/shop">NOVEDADES</a></li>
+                    <li><a href="/shop?category=leggings">LEGGINGS</a></li>
+                    <li><a href="/shop?category=tops">TOPS</a></li>
+                    <li><a href="/shop?category=sets">SETS</a></li>
+                    <li><a href="/shop?category=accesorios">ACCESORIOS</a></li>
+                </ul>
+            </nav>
+
+            <!-- Iconos -->
+            <div class="header-icons">
+                <a href="/account" class="icon-link" title="Mi Cuenta">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="#" class="icon-link" id="searchToggle" title="Buscar">
+                    <i class="fas fa-search"></i>
+                </a>
+                <a href="/cart" class="icon-link active" title="Carrito">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="cart-count">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Cart Section -->
+    <section class="cart-section">
+        <div class="cart-container">
+            <div class="cart-header">
+                <h1><i class="fas fa-shopping-bag"></i> Tu Carrito</h1>
+                <a href="/shop" class="continue-shopping">
+                    <i class="fas fa-arrow-left"></i> Seguir Comprando
+                </a>
+            </div>
+            
+            <div class="cart-content">
+                <div class="cart-items" id="cart-items">
+                    <!-- Los items del carrito se cargarán aquí -->
+                    <div class="empty-cart">
+                        <i class="fas fa-shopping-bag fa-3x"></i>
+                        <h2>Tu carrito está vacío</h2>
+                        <p>Agrega productos para continuar con tu compra</p>
+                        <a href="/shop" class="btn">Ver Tienda</a>
+                    </div>
+                </div>
+                
+                <div class="cart-summary">
+                    <div class="summary-card">
+                        <h3>Resumen del Pedido</h3>
+                        
+                        <div class="summary-details">
+                            <div class="summary-row">
+                                <span>Subtotal</span>
+                                <span id="subtotal">$0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Envío</span>
+                                <span id="shipping">Gratis</span>
+                            </div>
+                            <div class="summary-divider"></div>
+                            <div class="summary-row total">
+                                <span>Total</span>
+                                <span id="total">$0.00</span>
+                            </div>
+                        </div>
+                        
+                        <button id="checkout-btn" class="btn checkout-btn" disabled>
+                            Proceder al Pago
+                        </button>
+                        
+                        <div class="secure-checkout">
+                            <i class="fas fa-lock"></i>
+                            <span>Checkout seguro</span>
+                        </div>
+                        
+                        <div class="payment-methods">
+                            <p>Aceptamos:</p>
+                            <div class="payment-icons">
+                                <i class="fab fa-cc-visa"></i>
+                                <i class="fab fa-cc-mastercard"></i>
+                                <i class="fab fa-cc-amex"></i>
+                                <i class="fab fa-cc-paypal"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="cart-features">
+                        <div class="feature">
+                            <i class="fas fa-shipping-fast"></i>
+                            <div>
+                                <h4>Envío Gratis</h4>
+                                <p>En compras mayores a $50</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-shield-alt"></i>
+                            <div>
+                                <h4>Compra Segura</h4>
+                                <p>Protegemos tus datos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Mabel Activewear</h3>
+                <p>Ropa deportiva femenina de alta calidad. Diseñada para mujeres activas que valoran el estilo y el rendimiento.</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Ayuda</h3>
+                <ul class="footer-links">
+                    <li><a href="/contact">Contacto</a></li>
+                    <li><a href="/shipping">Envíos</a></li>
+                    <li><a href="/ayuda" class="active">Ayuda</a></li>
+                    <li><a href="/faq">Preguntas Frecuentes</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Contacto</h3>
+                <ul class="footer-links">
+                    <li><i class="fas fa-envelope"></i> info@mabelactivewear.com</li>
+                    <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
+                    <li><i class="fas fa-map-marker-alt"></i> Ciudad, País</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <p>&copy; 2024 Mabel Activewear. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="/js/cart-page.js"></script>
+
+    <script>
+        // Ocultar la línea del envío al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ocultar la fila de envío
+            const shippingRow = document.querySelector('.summary-row:nth-child(2)');
+            if (shippingRow) {
+                shippingRow.style.display = 'none';
+            }
+            
+            // Asegurarse de que el total muestre solo el subtotal
+            function updateTotals() {
+                const subtotalElement = document.getElementById('subtotal');
+                const totalElement = document.getElementById('total');
+                
+                if (subtotalElement && totalElement) {
+                    const subtotalText = subtotalElement.textContent;
+                    // Hacer que el total sea igual al subtotal
+                    totalElement.textContent = subtotalText;
+                }
+            }
+            
+            // Actualizar cada vez que cambie el carrito
+            updateTotals();
+            
+            // También podrías observar cambios en el localStorage
+            window.addEventListener('storage', function() {
+                updateTotals();
+            });
+        });
+        </script>
+</body>
+</html>

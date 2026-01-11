@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Crear Cuenta | Mabel Activewear</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- CSS GLOBAL + AUTH -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/auth.css">
+
+    <!-- ICONOS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f8f8;
+            font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        .auth-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .auth-form-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        .auth-form-title {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #000;
+        }
+        
+        .auth-submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .auth-submit-btn:hover {
+            background-color: #333;
+        }
+        
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .auth-switch a {
+            color: #000;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+        
+        .auth-message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .auth-message.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .auth-message.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER SIMPLE -->
+<header class="main-header" style="background: white; border-bottom: 1px solid #eee;">
+    <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <a href="/" class="logo" style="text-decoration: none; color: #000; font-size: 24px; font-weight: 300; letter-spacing: 2px;">
+            MABEL ACTIVEWEAR
+        </a>
+        <a href="/login" class="btn-outline" style="padding: 10px 20px; border: 1px solid #000; color: #000; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; font-size: 12px;">
+            Iniciar sesión
+        </a>
+    </div>
+</header>
+
+<!-- HERO -->
+<section class="auth-hero" style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #f8f8f8 0%, #fff 100%);">
+    <h1 class="auth-title" style="font-size: 36px; font-weight: 300; letter-spacing: 4px; margin-bottom: 15px;">
+        Crear cuenta
+    </h1>
+    <p class="auth-subtitle" style="color: #666; max-width: 600px; margin: 0 auto;">
+        Regístrate para disfrutar de una experiencia personalizada
+    </p>
+</section>
+
+<!-- FORM -->
+<section class="auth-section" style="padding: 40px 0 100px;">
+    <div class="auth-container">
+        <div class="auth-form-container">
+            <h2 class="auth-form-title">Registro</h2>
+
+            <!-- MENSAJES -->
+            <div id="auth-message" class="auth-message" style="display:none;"></div>
+
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" name="nombre" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Apellido *</label>
+                    <input type="text" name="apellido" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email *</label>
+                    <input type="email" name="email" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Teléfono (opcional)</label>
+                    <input type="text" name="telefono" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Contraseña *</label>
+                    <input type="password" name="password" class="form-input" required minlength="6">
+                    <small style="color: #666; font-size: 12px;">Mínimo 6 caracteres</small>
+                </div>
+
+                <button type="submit" class="auth-submit-btn">
+                    Crear cuenta
+                </button>
+
+                <div class="auth-switch">
+                    ¿Ya tienes cuenta?
+                    <a href="/login">Inicia sesión</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- JS -->
+<script src="/js/auth.js"></script>
+
+</body>
+</html>

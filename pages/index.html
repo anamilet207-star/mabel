@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mabel Activewear - Ropa Deportiva Femenina Elegante</title>
+    
+    <!-- Meta Tags -->
+    <meta name="description" content="Ropa deportiva femenina de alta calidad. Diseñada para mujeres activas que valoran el estilo y el rendimiento.">
+    <meta name="keywords" content="ropa deportiva, leggings, tops deportivos, sets deportivos, mujer, fitness, gym">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>M</text></svg>">
+    
+    <style>
+        /* Estilos iniciales para evitar FOUC */
+        body { opacity: 0; transition: opacity 0.3s ease; }
+        body.loaded { opacity: 1; }
+        
+        /* Estilos de emergencia para imágenes */
+        .hero-bg-image, .category-image {
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
+        }
+        
+        /* Hero con imagen de fondo */
+        .hero-with-bg {
+            position: relative;
+            height: 90vh;
+            min-height: 600px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+        
+        .hero-bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+        }
+        
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+        
+        /* Categorías grid */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .category-card {
+            position: relative;
+            height: 400px;
+            overflow: hidden;
+            border-radius: 8px;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .category-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .category-card:hover .category-image {
+            transform: scale(1.05);
+        }
+        
+        .category-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            padding: 30px;
+        }
+        
+        .category-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .category-description {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .category-link {
+            display: inline-block;
+            padding: 8px 20px;
+            background: white;
+            color: black;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        .product-count {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 10px;
+        }
+        
+        /* Hero gradient text */
+        .hero-gradient-text {
+            background: linear-gradient(45deg, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Superior -->
+    <div class="top-bar">
+        <div class="container top-bar-content">
+            <div class="top-bar-text">
+                ENVÍO GRATIS EN PEDIDOS SUPERIORES A $50
+            </div>
+            <ul class="top-bar-links">
+                <li><a href="/envios">Envíos</a></li>
+                <li><a href="/ayuda">Ayuda</a></li>
+                <li><a href="/contacto">Contacto</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Header Principal -->
+    <header class="main-header" id="mainHeader">
+        <div class="container header-container">
+            <!-- Logo -->
+            <a href="/" class="logo">
+                <img src="/public/icons/logo-mabel.png" class="logo-png" alt="Mabel Activewear">
+            </a>
+            
+            
+            
+
+            <!-- Navegación Principal -->
+            <nav class="main-nav">
+                <ul class="nav-menu">
+                    <li><a href="/shop" class="active">NOVEDADES</a></li>
+                    <li><a href="/shop?category=leggings">LEGGINGS</a></li>
+                    <li><a href="/shop?category=tops">TOPS</a></li>
+                    <li><a href="/shop?category=sets">SETS</a></li>
+                    <li><a href="/shop?category=accesorios">ACCESORIOS</a></li>
+                    <li><a href="/ofertas">OFERTAS</a></li>
+                </ul>
+            </nav>
+
+            <!-- Iconos -->
+            <div class="header-icons">
+                <a href="./pages/login.html" class="icon-link" title="Mi Cuenta">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="#" class="icon-link" id="searchToggle" title="Buscar">
+                    <i class="fas fa-search"></i>
+                </a>
+                <a href="./pages/cart.html" class="icon-link" title="Carrito">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="cart-count">0</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Barra de Búsqueda -->
+        <div class="search-overlay" id="searchOverlay">
+            <div class="container">
+                <div class="search-container">
+                    <input type="text" placeholder="¿Qué estás buscando?" class="search-input" id="searchInput">
+                    <button class="search-close" id="searchClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section CON IMAGEN -->
+    <section class="hero hero-with-bg">
+        <!-- Imagen de fondo del Hero -->
+        <img src="https://i.pinimg.com/1200x/5e/91/83/5e91833526282a3fe2a50ca2877be10a.jpg" 
+             alt="Mujer haciendo ejercicio con ropa deportiva Mabel Activewear"
+             class="hero-bg-image">
+        
+        <!-- Overlay para mejor legibilidad -->
+        <div class="hero-overlay"></div>
+        
+        <div class="container">
+            <div class="hero-content fade-in">
+                <div class="hero-subtitle">COLECCIÓN PRIMAVERA 2026</div>
+                <h1 class="hero-title hero-gradient-text">ELEVÁ TU ENTRENAMIENTO</h1>
+                <p class="hero-text">
+                    Descubre nuestra colección exclusiva de ropa deportiva diseñada para mujeres que buscan 
+                    comodidad, estilo y máximo rendimiento en cada movimiento.
+                </p>
+                <a href="./pages/shop.html" class="btn btn-light">DESCUBRIR COLECCIÓN</a>
+                
+                <!-- Estadísticas rápidas -->
+                <div class="hero-stats" style="margin-top: 40px; display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
+                    <div class="stat-item">
+                        <div class="stat-number" style="font-size: 24px; font-weight: 600;">+</div>
+                        <div class="stat-label" style="font-size: 12px; letter-spacing: 1px;">PRODUCTOS</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" style="font-size: 24px; font-weight: 600;">+</div>
+                        <div class="stat-label" style="font-size: 12px; letter-spacing: 1px;">CLIENTES</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" style="font-size: 24px; font-weight: 600;">★</div>
+                        <div class="stat-label" style="font-size: 12px; letter-spacing: 1px;">VALORACIÓN</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Productos Destacados -->
+    <section class="section featured-products">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">PRODUCTOS DESTACADOS</h2>
+                <p class="section-subtitle">
+                    Nuestros productos más populares, diseñados para ofrecerte confort y estilo en cada entrenamiento.
+                </p>
+            </div>
+            
+            <div class="products-grid" id="featuredProducts">
+                <!-- Los productos se cargarán dinámicamente -->
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Cargando productos destacados...</p>
+                </div>
+            </div>
+            
+            <div class="text-center" style="margin-top: 60px;">
+                <a href="./pages/shop.html" class="btn btn-outline">VER TODOS LOS PRODUCTOS</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categorías CON IMÁGENES REALES -->
+    <section class="section categories" style="background-color: #f8f8f8; padding: 100px 0;">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">EXPLORA CATEGORÍAS</h2>
+                <p class="section-subtitle">
+                    Encuentra el outfit perfecto para cada tipo de entrenamiento y ocasión.
+                </p>
+            </div>
+            
+            <div class="categories-grid">
+                <!-- Leggings -->
+                <a href="./pages/shop.html?category=leggings" class="category-card fade-in" style="animation-delay: 0.1s;">
+                    <img src="https://i.pinimg.com/736x/39/85/df/3985dfeed23ef3f3826a880aad7e2fee.jpg" 
+                         alt="Leggings deportivos Mabel Activewear"
+                         class="category-image">
+                    <div class="category-overlay">
+                        <h3 class="category-title">LEGGINGS</h3>
+                        <p class="category-description">
+                            Alta compresión, tecnología dry-fit y máximo confort para tus entrenamientos más intensos.
+                        </p>
+                        <span class="category-link">EXPLORAR COLECCIÓN</span>
+                        <div class="product-count" id="leggings-count">Cargando...</div>
+                    </div>
+                </a>
+                
+                <!-- Tops -->
+                <a href="./pages/shop.html?category=tops" class="category-card fade-in" style="animation-delay: 0.2s;">
+                    <img src="https://i.pinimg.com/1200x/04/63/35/046335bd63dd047927caed948df357d8.jpg" 
+                         alt="Tops deportivos Mabel Activewear"
+                         class="category-image">
+                    <div class="category-overlay">
+                        <h3 class="category-title">TOPS DEPORTIVOS</h3>
+                        <p class="category-description">
+                            Soporte máximo, diseño moderno y tejidos transpirables para mayor comodidad.
+                        </p>
+                        <span class="category-link">EXPLORAR COLECCIÓN</span>
+                        <div class="product-count" id="tops-count">Cargando...</div>
+                    </div>
+                </a>
+                
+                <!-- Sets -->
+                <a href="./pages/shop.html?category=sets" class="category-card fade-in" style="animation-delay: 0.3s;">
+                    <img src="https://i.pinimg.com/736x/71/c0/7c/71c07cc6d83a49c5357fbdeba406e7f4.jpg" 
+                         alt="Sets deportivos Mabel Activewear"
+                         class="category-image">
+                    <div class="category-overlay">
+                        <h3 class="category-title">SETS COMPLETOS</h3>
+                        <p class="category-description">
+                            Combinaciones perfectamente coordinadas para un look deportivo impecable.
+                        </p>
+                        <span class="category-link">EXPLORAR COLECCIÓN</span>
+                        <div class="product-count" id="sets-count">Cargando...</div>
+                    </div>
+                </a>
+            </div>
+            
+            <!-- Categorías adicionales en fila -->
+            <div class="mini-categories" style="display: flex; justify-content: center; gap: 20px; margin-top: 40px; flex-wrap: wrap;">
+                <a href="./pages/shop.html?category=shorts" class="mini-category" style="text-align: center;">
+                    <div class="mini-category-icon" style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <i class="fas fa-running" style="font-size: 24px; color: #333;"></i>
+                    </div>
+                    <span style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600;">Shorts</span>
+                </a>
+                
+                <a href="./pages/shop.html?category=accesorios" class="mini-category" style="text-align: center;">
+                    <div class="mini-category-icon" style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <i class="fas fa-water" style="font-size: 24px; color: #333;"></i>
+                    </div>
+                    <span style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600;">Accesorios</span>
+                </a>
+                
+                <a href="./pages/shop.html?category=jackets" class="mini-category" style="text-align: center;">
+                    <div class="mini-category-icon" style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <i class="fas fa-wind" style="font-size: 24px; color: #333;"></i>
+                    </div>
+                    <span style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600;">Chaquetas</span>
+                </a>
+                
+                <a href="./pages/shop.html?category=sports-bras" class="mini-category" style="text-align: center;">
+                    <div class="mini-category-icon" style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <i class="fas fa-heart" style="font-size: 24px; color: #333;"></i>
+                    </div>
+                    <span style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600;">Sports Bras</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Beneficios -->
+    <section class="section benefits">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">POR QUÉ ELEGIRNOS</h2>
+                <p class="section-subtitle">
+                    Comprometidos con la calidad, el diseño y tu comodidad en cada producto.
+                </p>
+            </div>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card fade-in" style="animation-delay: 0.1s;">
+                    <div class="benefit-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h3 class="benefit-title">ENVÍO</h3>
+                    <p class="benefit-text">
+                        Envío atraves de su paqueteria de elección.
+                    </p>
+                </div>
+                
+                <div class="benefit-card fade-in" style="animation-delay: 0.2s;">
+                    <div class="benefit-icon">
+                        <i class="fas fa-undo-alt"></i>
+                    </div>
+                    <h3 class="benefit-title">PRODUCTOS NUEVOS</h3>
+                    <p class="benefit-text">
+                        traemos siempre productos nuevos para que tengas de donde elegir.
+                    </p>
+                </div>
+                
+                <div class="benefit-card fade-in" style="animation-delay: 0.3s;">
+                    <div class="benefit-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="benefit-title">COMPRA SEGURA</h3>
+                    <p class="benefit-text">
+                        Pago 100% seguro con encriptación SSL para proteger tu información.
+                    </p>
+                </div>
+                
+                <div class="benefit-card fade-in" style="animation-delay: 0.4s;">
+                    <div class="benefit-icon">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <h3 class="benefit-title">CALIDAD GARANTIZADA</h3>
+                    <p class="benefit-text">
+                        Productos de alta calidad con materiales premium y durabilidad comprobada.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonios -->
+    <section class="section testimonials" style="background-color: #000; color: white; padding: 100px 0;">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title" style="color: white;">LO QUE DICEN NUESTRAS CLIENTAS</h2>
+                <p class="section-subtitle" style="color: #ccc;">
+                    Descubre la experiencia de mujeres reales con Mabel Activewear.
+                </p>
+            </div>
+            
+            <div class="testimonials-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 50px;">
+                <div class="testimonial-card" style="background: #111; padding: 30px; border-radius: 8px;">
+                    <div class="testimonial-rating" style="color: #ffd700; margin-bottom: 15px;">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" style="font-style: italic; margin-bottom: 20px;">
+                        "Los leggings son increíbles. Se sienten como una segunda piel y el material es de alta calidad. ¡Mi nueva marca favorita!"
+                    </p>
+                    <div class="testimonial-author">
+                        <strong>Ana Martínez</strong>
+                        <span style="color: #999; font-size: 12px;">· Hace 2 semanas</span>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card" style="background: #111; padding: 30px; border-radius: 8px;">
+                    <div class="testimonial-rating" style="color: #ffd700; margin-bottom: 15px;">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" style="font-style: italic; margin-bottom: 20px;">
+                        "La comodidad y el estilo perfectos. Los tops deportivos ofrecen un soporte excelente sin sacrificar el diseño."
+                    </p>
+                    <div class="testimonial-author">
+                        <strong>Carolina López</strong>
+                        <span style="color: #999; font-size: 12px;">· Hace 1 mes</span>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card" style="background: #111; padding: 30px; border-radius: 8px;">
+                    <div class="testimonial-rating" style="color: #ffd700; margin-bottom: 15px;">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" style="font-style: italic; margin-bottom: 20px;">
+                        "Los sets son perfectos para combinar sin pensar. La calidad supera por mucho el precio. ¡Totalmente recomendado!"
+                    </p>
+                    <div class="testimonial-author">
+                        <strong>María González</strong>
+                        <span style="color: #999; font-size: 12px;">· Hace 3 meses</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="newsletter-section">
+        <div class="container">
+            <div class="newsletter-content fade-in">
+                <h2 class="newsletter-title">SUSCRÍBETE A NUESTRO NEWSLETTER</h2>
+                <p class="newsletter-text">
+                    Sé la primera en conocer nuestras nuevas colecciones, ofertas exclusivas y consejos de entrenamiento.
+                </p>
+                <form class="newsletter-form" id="newsletterForm">
+                    <input type="email" placeholder="Tu correo electrónico" required>
+                    <button type="submit" class="btn">SUSCRIBIRSE</button>
+                </form>
+                <p class="privacy-notice" style="margin-top: 20px; font-size: 12px; opacity: 0.7;">
+                    Al suscribirte aceptas nuestra <a href="/privacidad" style="color: inherit; text-decoration: underline;">Política de Privacidad</a>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <!-- Información de la Empresa -->
+                <div class="footer-section">
+                    <h3>MABEL ACTIVEWEAR</h3>
+                    <p>
+                        Ropa deportiva femenina de alta calidad. Diseñada para mujeres activas 
+                        que valoran el estilo, el rendimiento y la comodidad en cada movimiento.
+                    </p>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/mabelactivewear?igsh=MWkwdXc2c2UxczIyOA%3D%3D&utm_source=qr" class="social-link" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.tiktok.com/@mabelactivewear?_r=1&_t=ZT-92yGafISwbG" class="social-link" aria-label="TikTok">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Pinterest">
+                            <i class="fab fa-pinterest-p"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Enlaces Rápidos -->
+                <div class="footer-section">
+                    <h3>ENLACES RÁPIDOS</h3>
+                    <ul class="footer-links">
+                        <li><a href="./pages/shop.html">Tienda</a></li>
+                        <li><a href="./pages/shop.html">Nueva Colección</a></li>
+                        <li><a href="./pages/ofertas.html">Ofertas</a></li>
+                        <li><a href="#">Guía de Tallas</a></li>
+                        <li><a href="./pages/shop.html">Colección Verano</a></li>
+                    </ul>
+                </div>
+
+                <!-- Ayuda -->
+                <div class="footer-section">
+                    <h3>AYUDA</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Contacto</a></li>
+                        <li><a href="#">Envíos</a></li>
+                        <li><a href="#">Preguntas Frecuentes</a></li>
+                        <li><a href="#">Política de Privacidad</a></li>
+                        <li><a href="#">Términos y Condiciones</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contacto -->
+                <div class="footer-section">
+                    <h3>CONTACTO</h3>
+                    <ul class="footer-links">
+                        <li>
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:info@mabelactivewear.com">Albasotofranco05@gmail.com</a>
+                        </li>
+                        <li>
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:+15551234567">+1 (849) 220-2292</a>
+                        </li>
+                        <li>
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Ciudad, País</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-clock"></i>
+                            <span>Lun-Dom: 9:00-18:00</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="copyright">
+                    &copy; 2024 MABEL ACTIVEWEAR. TODOS LOS DERECHOS RESERVADOS.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="./js/script.js"></script>
+    
+    <script>
+        // Script de inicialización mejorado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Marcar body como cargado
+            document.body.classList.add('loaded');
+            
+            // Header scroll effect
+            const header = document.getElementById('mainHeader');
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 100) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+            
+            // Funcionalidad de búsqueda
+            const searchToggle = document.getElementById('searchToggle');
+            const searchOverlay = document.getElementById('searchOverlay');
+            const searchClose = document.getElementById('searchClose');
+            const searchInput = document.getElementById('searchInput');
+            
+            if (searchToggle && searchOverlay) {
+                searchToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    searchOverlay.style.display = 'block';
+                    setTimeout(() => {
+                        searchOverlay.style.opacity = '1';
+                        if (searchInput) searchInput.focus();
+                    }, 10);
+                });
+                
+                searchClose.addEventListener('click', function() {
+                    searchOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        searchOverlay.style.display = 'none';
+                    }, 300);
+                });
+                
+                // Cerrar búsqueda al hacer clic fuera
+                searchOverlay.addEventListener('click', function(e) {
+                    if (e.target === searchOverlay) {
+                        searchOverlay.style.opacity = '0';
+                        setTimeout(() => {
+                            searchOverlay.style.display = 'none';
+                        }, 300);
+                    }
+                });
+                
+                // Buscar al presionar Enter
+                if (searchInput) {
+                    searchInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            const query = this.value.trim();
+                            if (query) {
+                                window.location.href = `./pages/shop.html?search=${encodeURIComponent(query)}`;
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Newsletter form
+            const newsletterForm = document.getElementById('newsletterForm');
+            if (newsletterForm) {
+                newsletterForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const email = this.querySelector('input[type="email"]').value;
+                    
+                    // Simular envío
+                    const submitBtn = this.querySelector('button');
+                    const originalText = submitBtn.textContent;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    submitBtn.disabled = true;
+                    
+                    setTimeout(() => {
+                        alert('¡Gracias por suscribirte! Te hemos enviado un email de confirmación.');
+                        this.reset();
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    }, 1500);
+                });
+            }
+            
+            // Cargar productos destacados
+            loadFeaturedProducts();
+            
+            // Cargar contadores de categorías
+            loadCategoryCounts();
+            
+            // Inicializar contador del carrito
+            updateCartCount();
+        });
+        
+        async function loadFeaturedProducts() {
+            const container = document.getElementById('featuredProducts');
+            if (!container) return;
+            
+            try {
+                // URL corregida para el API
+                const response = await fetch('/api/products');
+                if (!response.ok) throw new Error('Error al cargar productos');
+                
+                const products = await response.json();
+                
+                // Filtrar productos activos y con stock
+                const featured = products
+                    .filter(p => p.activo !== false && p.stock > 0)
+                    .slice(0, 4); // Primeros 4 productos
+                
+                if (featured.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-products" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                            <i class="fas fa-box-open fa-2x" style="color: #ccc; margin-bottom: 20px;"></i>
+                            <h3 style="margin-bottom: 10px; font-weight: 300;">Próximamente nuevos productos</h3>
+                            <p style="color: #666;">Estamos preparando nuestra colección</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = featured.map(product => `
+                    <div class="product-card fade-in">
+                        <div class="product-image">
+                            <a href="./pages/product-detail.html?id=${product.id}">
+                                <img src="${product.imagen || './public/images/default-product.jpg'}" 
+                                     alt="${product.nombre}"
+                                     onerror="this.src='./public/images/default-product.jpg'"
+                                     style="width: 100%; height: 300px; object-fit: cover;">
+                            </a>
+                            ${product.stock <= 5 ? 
+                                '<span class="product-badge" style="background: #ff9500;">ÚLTIMAS UNIDADES</span>' : ''}
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category">${formatCategory(product.categoria)}</div>
+                            <h3 class="product-name">
+                                <a href="./pages/product-detail.html?id=${product.id}">${product.nombre}</a>
+                            </h3>
+                            <div class="product-price">$${parseFloat(product.precio).toFixed(2)}</div>
+                            <div class="product-actions">
+                                <button class="btn btn-small" onclick="addToCart(${product.id})">
+                                    AGREGAR AL CARRITO
+                                </button>
+                                <a href="./pages/product-detail.html?id=${product.id}" class="btn btn-small btn-outline">
+                                    VER DETALLES
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error cargando productos:', error);
+                container.innerHTML = `
+                    <div class="error-state" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                        <i class="fas fa-exclamation-triangle fa-2x" style="color: #ccc; margin-bottom: 20px;"></i>
+                        <p>No se pudieron cargar los productos. Intenta recargar la página.</p>
+                        <button onclick="location.reload()" class="btn btn-small" style="margin-top: 15px;">
+                            <i class="fas fa-redo"></i> Reintentar
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        async function loadCategoryCounts() {
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) return;
+                
+                const products = await response.json();
+                
+                // Contar productos por categoría
+                const categories = ['leggings', 'tops', 'sets', 'shorts', 'accesorios'];
+                
+                categories.forEach(category => {
+                    const count = products.filter(p => 
+                        p.categoria === category && p.activo !== false
+                    ).length;
+                    
+                    const countElement = document.getElementById(`${category}-count`);
+                    if (countElement) {
+                        countElement.textContent = `${count} productos`;
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error cargando contadores:', error);
+            }
+        }
+        
+        function formatCategory(category) {
+            const categories = {
+                'leggings': 'LEGGINGS',
+                'tops': 'TOPS',
+                'sets': 'SETS',
+                'shorts': 'SHORTS',
+                'accesorios': 'ACCESORIOS',
+                'jackets': 'CHAQUETAS',
+                'sports-bras': 'SPORTS BRAS',
+                'pants': 'PANTALONES'
+            };
+            return categories[category] || category.toUpperCase();
+        }
+        
+        function addToCart(productId) {
+            // Obtener carrito actual
+            let cart = JSON.parse(localStorage.getItem('mabel_cart')) || [];
+            
+            // Buscar si ya existe
+            const existingIndex = cart.findIndex(item => item.id == productId);
+            
+            if (existingIndex >= 0) {
+                // Actualizar cantidad
+                cart[existingIndex].quantity += 1;
+                showNotification(`Cantidad actualizada del producto`, 'success');
+            } else {
+                // Agregar nuevo (simulación)
+                cart.push({
+                    id: productId,
+                    quantity: 1,
+                    nombre: `Producto ${productId}`,
+                    precio: 49.99
+                });
+                showNotification('Producto agregado al carrito', 'success');
+            }
+            
+            // Guardar
+            localStorage.setItem('mabel_cart', JSON.stringify(cart));
+            
+            // Actualizar contador
+            updateCartCount();
+        }
+        
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('mabel_cart')) || [];
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            
+            document.querySelectorAll('.cart-count').forEach(element => {
+                if (element) {
+                    element.textContent = totalItems;
+                    element.style.display = totalItems > 0 ? 'inline-block' : 'none';
+                }
+            });
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Crear notificación simple
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+                color: ${type === 'success' ? '#155724' : '#721c24'};
+                border-radius: 4px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+            
+            // Agregar estilos de animación si no existen
+            if (!document.querySelector('#notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    @keyframes slideOut {
+                        from { transform: translateX(0); opacity: 1; }
+                        to { transform: translateX(100%); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+    </script>
+</body>
+</html>

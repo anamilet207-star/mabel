@@ -1,0 +1,284 @@
+/* ============================================
+   ESTILOS PARA PAGOS
+   ============================================ */
+
+/* Stripe Elements */
+.StripeElement {
+    box-sizing: border-box;
+    height: 48px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    transition: border-color 0.3s ease;
+}
+
+.StripeElement--focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.StripeElement--invalid {
+    border-color: #fa755a;
+}
+
+.StripeElement--webkit-autofill {
+    background-color: #fefde5 !important;
+}
+
+/* Contenedor de tarjeta */
+#card-element-container {
+    margin-bottom: 20px;
+}
+
+/* Errores de tarjeta */
+#card-errors {
+    color: #fa755a;
+    font-size: 14px;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #fff5f5;
+    border-radius: 4px;
+    display: none;
+}
+
+#card-errors.show {
+    display: block;
+}
+
+/* Contenedor de PayPal */
+.paypal-container {
+    margin: 20px 0;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.paypal-container iframe {
+    width: 100% !important;
+}
+
+/* Transferencia bancaria */
+.transfer-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    border-left: 4px solid #17a2b8;
+}
+
+.bank-transfer-instructions {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.instructions-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.instructions-header i {
+    color: #28a745;
+    margin-bottom: 20px;
+}
+
+.instructions-content {
+    margin-bottom: 40px;
+}
+
+.bank-info, .instructions-steps, .important-notes {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.bank-info h3, .instructions-steps h3, .important-notes h3 {
+    color: #333;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.info-value {
+    color: #333;
+}
+
+.info-value.amount {
+    font-weight: 700;
+    color: #28a745;
+    font-size: 18px;
+}
+
+.instructions-steps ol {
+    margin-left: 20px;
+}
+
+.instructions-steps li {
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.important-notes ul {
+    margin-left: 20px;
+    color: #666;
+}
+
+.instructions-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 30px 0;
+}
+
+.email-confirmation {
+    text-align: center;
+    padding: 20px;
+    background: #e8f5e9;
+    border-radius: 8px;
+    margin-top: 30px;
+}
+
+/* Iconos de métodos de pago */
+.payment-icons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.payment-icons i {
+    font-size: 24px;
+    color: #666;
+}
+
+.payment-icons .fa-cc-visa { color: #1a1f71; }
+.payment-icons .fa-cc-mastercard { color: #eb001b; }
+.payment-icons .fa-cc-amex { color: #2e77bc; }
+
+/* Alertas de pago */
+.payment-alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.payment-alert.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.payment-alert.error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.payment-alert.info {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+/* Loader para pagos */
+.payment-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+}
+
+.payment-loader i {
+    font-size: 48px;
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+/* Botones de pago */
+.payment-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.payment-btn.stripe {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.payment-btn.paypal {
+    background: #ffc439;
+    color: #001c64;
+}
+
+.payment-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.payment-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .instructions-actions {
+        flex-direction: column;
+    }
+    
+    .instructions-actions .btn {
+        width: 100%;
+    }
+    
+    .bank-transfer-instructions {
+        padding: 15px;
+        margin: 0;
+        border-radius: 0;
+    }
+}
