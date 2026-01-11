@@ -2,50 +2,6 @@
    ESTILOS PARA PAGOS
    ============================================ */
 
-/* Stripe Elements */
-.StripeElement {
-    box-sizing: border-box;
-    height: 48px;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: white;
-    transition: border-color 0.3s ease;
-}
-
-.StripeElement--focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-}
-
-.StripeElement--invalid {
-    border-color: #fa755a;
-}
-
-.StripeElement--webkit-autofill {
-    background-color: #fefde5 !important;
-}
-
-/* Contenedor de tarjeta */
-#card-element-container {
-    margin-bottom: 20px;
-}
-
-/* Errores de tarjeta */
-#card-errors {
-    color: #fa755a;
-    font-size: 14px;
-    margin: 10px 0;
-    padding: 10px;
-    background-color: #fff5f5;
-    border-radius: 4px;
-    display: none;
-}
-
-#card-errors.show {
-    display: block;
-}
-
 /* Contenedor de PayPal */
 .paypal-container {
     margin: 20px 0;
@@ -240,11 +196,6 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-}
-
-.payment-btn.stripe {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
 }
 
 .payment-btn.paypal {

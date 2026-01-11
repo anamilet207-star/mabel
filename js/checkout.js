@@ -10,18 +10,12 @@ class CheckoutManager {
         this.discount = 0;
         this.orderSummary = {};
         this.paymentConfig = null;
-        this.stripe = null;
-        this.elements = null;
-        this.cardElement = null;
         this.paypalButtons = null;
         this.init();
     }
 
     async init() {
         console.log('💰 Inicializando checkout...');
-        
-        // Cargar Stripe.js dinámicamente si no está cargado
-        await this.loadStripeJS();
         
         // Cargar carrito
         this.loadCart();
@@ -44,28 +38,6 @@ class CheckoutManager {
         console.log('✅ Checkout inicializado');
     }
 
-    async loadStripeJS() {
-        // Verificar si Stripe ya está cargado
-        if (typeof Stripe !== 'undefined') {
-            return;
-        }
-        
-        return new Promise((resolve) => {
-            const script = document.createElement('script');
-            script.src = 'https://js.stripe.com/v3/';
-            script.async = true;
-            script.onload = () => {
-                console.log('✅ Stripe.js cargado');
-                resolve();
-            };
-            script.onerror = () => {
-                console.warn('⚠️ No se pudo cargar Stripe.js');
-                resolve();
-            };
-            document.head.appendChild(script);
-        });
-    }
-
     async loadPaymentConfig() {
         try {
             // Cargar configuración desde el servidor
@@ -76,21 +48,12 @@ class CheckoutManager {
             
             this.paymentConfig = config;
             
-            // Inicializar Stripe si existe la clave
-            if (config.stripePublicKey && typeof Stripe !== 'undefined') {
-                this.stripe = Stripe(config.stripePublicKey);
-                console.log('✅ Stripe inicializado');
-            } else {
-                console.warn('⚠️ Stripe no disponible');
-            }
-            
             console.log('✅ Configuración de pagos cargada');
         } catch (error) {
             console.error('❌ Error cargando configuración de pagos:', error);
             this.paymentConfig = {
-                stripePublicKey: 'pk_test_TYooMQauvdEDq54NiTphI7jx',
                 currency: 'USD',
-                paymentMethods: ['card', 'paypal', 'transfer']
+                paymentMethods: ['paypal', 'transfer']
             };
         }
     }
@@ -1131,56 +1094,46 @@ class CheckoutManager {
         }
     }
 
-    // EN TU checkout.js, busca la función togglePaymentForm y reemplázala con:
-
-togglePaymentForm(paymentMethod) {
-    console.log('💳 Cambiando método de pago:', paymentMethod);
-    
-    // Obtener los contenedores por sus IDs correctos
-    const paypalContainer = document.getElementById('paypal-button-container');
-    const transferInfo = document.getElementById('transfer-info');
-    
-    // Ocultar todos los contenedores
-    if (paypalContainer) {
-        paypalContainer.style.display = 'none';
-        paypalContainer.innerHTML = '';
-    }
-    
-    if (transferInfo) {
-        transferInfo.style.display = 'none';
-    }
-
-    // En tu checkout.js, después de togglePaymentForm, agrega:
-console.log('🔍 Elementos encontrados:');
-console.log('PayPal container:', document.getElementById('paypal-button-container'));
-console.log('Transfer info:', document.getElementById('transfer-info'));
-console.log('Radio transfer:', document.getElementById('payment-transfer'));
-console.log('Radio seleccionado:', document.querySelector('input[name="payment"]:checked')?.value);
-    
-    // Mostrar el contenedor del método seleccionado
-    switch (paymentMethod) {
-        case 'paypal':
-            if (paypalContainer) {
-                paypalContainer.style.display = 'block';
-                setTimeout(() => this.initializePayPal(), 100);
-            }
-            break;
-            
-        case 'transfer':
-            if (transferInfo) {
-                transferInfo.style.display = 'block';
+    togglePaymentForm(paymentMethod) {
+        console.log('💳 Cambiando método de pago:', paymentMethod);
+        
+        // Obtener los contenedores por sus IDs correctos
+        const paypalContainer = document.getElementById('paypal-button-container');
+        const transferInfo = document.getElementById('transfer-info');
+        
+        // Ocultar todos los contenedores
+        if (paypalContainer) {
+            paypalContainer.style.display = 'none';
+            paypalContainer.innerHTML = '';
+        }
+        
+        if (transferInfo) {
+            transferInfo.style.display = 'none';
+        }
+        
+        // Mostrar el contenedor del método seleccionado
+        switch (paymentMethod) {
+            case 'paypal':
+                if (paypalContainer) {
+                    paypalContainer.style.display = 'block';
+                    setTimeout(() => this.initializePayPal(), 100);
+                }
+                break;
                 
-                // También puedes calcular y actualizar el total para el mensaje de WhatsApp
-                const orderData = this.collectOrderData();
-                this.updateWhatsAppLink(orderData.total);
-            }
-            break;
-            
-        default:
-            console.log('⚠️ Método de pago no reconocido:', paymentMethod);
+            case 'transfer':
+                if (transferInfo) {
+                    transferInfo.style.display = 'block';
+                    
+                    // También puedes calcular y actualizar el total para el mensaje de WhatsApp
+                    const orderData = this.collectOrderData();
+                    this.updateWhatsAppLink(orderData.total);
+                }
+                break;
+                
+            default:
+                console.log('⚠️ Método de pago no reconocido:', paymentMethod);
+        }
     }
-}
-
 
     updateWhatsAppLink(total) {
         const whatsappBtn = document.querySelector('.whatsapp-direct-button a');
@@ -1860,30 +1813,6 @@ function formatPhoneNumber(input) {
             e.target.value = value;
         });
     }
-}
-
-// En checkout.js
-function processOrder() {
-    // 1. Obtener datos del formulario
-    const orderData = {
-        customer: getFormData(),
-        cart: cartManager.loadCart(),
-        total: calculateTotal(),
-        orderId: generateOrderId(),
-        date: new Date().toISOString()
-    };
-    
-    // 2. Guardar en localStorage o mostrar para transferencia
-    saveOrderToLocalStorage(orderData);
-    
-    // 3. Preparar mensaje de WhatsApp
-    const whatsappMessage = createWhatsAppMessage(orderData);
-    
-    // 4. Redirigir a WhatsApp
-    window.open(`https://wa.me/18292202292?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
-    
-    // 5. Vaciar carrito
-    cartManager.clearCart();
 }
 
 function saveOrderToLocalStorage(orderData) {

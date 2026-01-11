@@ -453,998 +453,997 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="/js/product-detail.js"></script>
+   <script src="/js/product-detail.js"></script>
     
-    <script>
-        // Sistema completo de reseñas
-        class ReviewsManager {
-            constructor() {
-                this.productId = this.getProductId();
-                this.reviewsKey = `mabel_reviews_${this.productId}`;
-                this.reviews = this.loadReviews();
-                this.init();
+<script>
+    // Sistema completo de reseñas
+    class ReviewsManager {
+        constructor() {
+            this.productId = this.getProductId();
+            this.reviewsKey = `mabel_reviews_${this.productId}`;
+            this.reviews = this.loadReviews();
+            this.init();
+        }
+        
+        getProductId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id') || 'default';
+        }
+        
+        loadReviews() {
+            try {
+                const stored = localStorage.getItem(this.reviewsKey);
+                return stored ? JSON.parse(stored) : this.getInitialReviews();
+            } catch (error) {
+                console.error('Error cargando reseñas:', error);
+                return this.getInitialReviews();
             }
-            
-            getProductId() {
-                const urlParams = new URLSearchParams(window.location.search);
-                return urlParams.get('id') || 'default';
-            }
-            
-            loadReviews() {
-                try {
-                    const stored = localStorage.getItem(this.reviewsKey);
-                    return stored ? JSON.parse(stored) : this.getInitialReviews();
-                } catch (error) {
-                    console.error('Error cargando reseñas:', error);
-                    return this.getInitialReviews();
+        }
+        
+        getInitialReviews() {
+            return [
+                {
+                    id: 1,
+                    rating: 5,
+                    title: "¡Increíble calidad!",
+                    comment: "Los leggings son súper cómodos y la tela es de excelente calidad. Los uso para yoga y running.",
+                    author: "Ana G.",
+                    date: "2024-03-15",
+                    verified: true
+                },
+                {
+                    id: 2,
+                    rating: 4,
+                    title: "Muy buena compra",
+                    comment: "Me encanta el ajuste y el diseño. Lo único es que se mancha fácil con el polvo del gimnasio.",
+                    author: "María L.",
+                    date: "2024-03-10",
+                    verified: true
+                },
+                {
+                    id: 3,
+                    rating: 5,
+                    title: "Perfectos para entrenar",
+                    comment: "La mejor compra que he hecho en ropa deportiva. Transpira bien y no se desliza durante los ejercicios.",
+                    author: "Carlos R.",
+                    date: "2024-03-05",
+                    verified: false
                 }
+            ];
+        }
+        
+        saveReviews() {
+            try {
+                localStorage.setItem(this.reviewsKey, JSON.stringify(this.reviews));
+            } catch (error) {
+                console.error('Error guardando reseñas:', error);
             }
+        }
+        
+        addReview(rating, title, comment) {
+            const newReview = {
+                id: Date.now(),
+                rating: parseInt(rating),
+                title: title.trim(),
+                comment: comment.trim(),
+                author: "Tú",
+                date: new Date().toISOString().split('T')[0],
+                verified: false,
+                isNew: true
+            };
             
-            getInitialReviews() {
-                return [
-                    {
-                        id: 1,
-                        rating: 5,
-                        title: "¡Increíble calidad!",
-                        comment: "Los leggings son súper cómodos y la tela es de excelente calidad. Los uso para yoga y running.",
-                        author: "Ana G.",
-                        date: "2024-03-15",
-                        verified: true
-                    },
-                    {
-                        id: 2,
-                        rating: 4,
-                        title: "Muy buena compra",
-                        comment: "Me encanta el ajuste y el diseño. Lo único es que se mancha fácil con el polvo del gimnasio.",
-                        author: "María L.",
-                        date: "2024-03-10",
-                        verified: true
-                    },
-                    {
-                        id: 3,
-                        rating: 5,
-                        title: "Perfectos para entrenar",
-                        comment: "La mejor compra que he hecho en ropa deportiva. Transpira bien y no se desliza durante los ejercicios.",
-                        author: "Carlos R.",
-                        date: "2024-03-05",
-                        verified: false
-                    }
-                ];
-            }
+            this.reviews.unshift(newReview);
+            this.saveReviews();
+            this.renderReviews();
+            this.updateStats();
             
-            saveReviews() {
-                try {
-                    localStorage.setItem(this.reviewsKey, JSON.stringify(this.reviews));
-                } catch (error) {
-                    console.error('Error guardando reseñas:', error);
-                }
-            }
-            
-            addReview(rating, title, comment) {
-                const newReview = {
-                    id: Date.now(),
-                    rating: parseInt(rating),
-                    title: title.trim(),
-                    comment: comment.trim(),
-                    author: "Tú",
-                    date: new Date().toISOString().split('T')[0],
-                    verified: false,
-                    isNew: true
+            return newReview;
+        }
+        
+        calculateStats() {
+            if (this.reviews.length === 0) {
+                return {
+                    average: 0,
+                    total: 0,
+                    distribution: {5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
                 };
-                
-                this.reviews.unshift(newReview);
-                this.saveReviews();
-                this.renderReviews();
-                this.updateStats();
-                
-                return newReview;
             }
             
-            calculateStats() {
-                if (this.reviews.length === 0) {
-                    return {
-                        average: 0,
-                        total: 0,
-                        distribution: {5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
-                    };
+            const total = this.reviews.length;
+            const sum = this.reviews.reduce((acc, review) => acc + review.rating, 0);
+            const average = sum / total;
+            
+            const distribution = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
+            this.reviews.forEach(review => {
+                distribution[review.rating]++;
+            });
+            
+            return {
+                average: average.toFixed(1),
+                total,
+                distribution
+            };
+        }
+        
+        renderReviews() {
+            const reviewsList = document.getElementById('reviews-list');
+            if (!reviewsList) return;
+            
+            if (this.reviews.length === 0) {
+                reviewsList.innerHTML = `
+                    <div class="no-reviews">
+                        <i class="far fa-comment-dots fa-3x"></i>
+                        <h3>Sin reseñas todavía</h3>
+                        <p>¡Sé el primero en compartir tu experiencia con este producto!</p>
+                        <button class="btn" id="first-review-btn">
+                            <i class="fas fa-pen"></i> Escribir primera reseña
+                        </button>
+                    </div>
+                `;
+                
+                const firstReviewBtn = document.getElementById('first-review-btn');
+                if (firstReviewBtn) {
+                    firstReviewBtn.addEventListener('click', () => {
+                        document.getElementById('write-review-btn').click();
+                    });
                 }
                 
-                const total = this.reviews.length;
-                const sum = this.reviews.reduce((acc, review) => acc + review.rating, 0);
-                const average = sum / total;
-                
-                const distribution = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
-                this.reviews.forEach(review => {
-                    distribution[review.rating]++;
+                return;
+            }
+            
+            reviewsList.innerHTML = this.reviews.map(review => `
+                <div class="review-item ${review.isNew ? 'new-review' : ''}" data-review-id="${review.id}">
+                    <div class="review-header">
+                        <div class="review-author">
+                            <div class="author-avatar">
+                                ${review.author.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="author-info">
+                                <h4>${review.author}</h4>
+                                ${review.verified ? '<span class="verified-badge"><i class="fas fa-check-circle"></i> Compra verificada</span>' : ''}
+                                ${review.isNew ? '<span class="new-badge"><i class="fas fa-star"></i> Nueva</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="review-date">
+                            ${this.formatDate(review.date)}
+                        </div>
+                    </div>
+                    
+                    <div class="review-rating">
+                        ${this.renderStars(review.rating)}
+                        <span class="rating-value">${review.rating}.0</span>
+                    </div>
+                    
+                    <h3 class="review-title">${review.title}</h3>
+                    <p class="review-comment">${review.comment}</p>
+                    
+                    <div class="review-helpful">
+                        <span class="helpful-text">¿Te resultó útil esta reseña?</span>
+                        <button class="helpful-btn" onclick="reviewsManager.markHelpful(${review.id})">
+                            <i class="far fa-thumbs-up"></i> Sí
+                        </button>
+                        <span class="helpful-count" id="helpful-${review.id}">0</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Remover la clase 'new' después de mostrar
+            setTimeout(() => {
+                this.reviews.forEach(review => delete review.isNew);
+            }, 3000);
+        }
+        
+        renderStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= rating) {
+                    stars += '<i class="fas fa-star"></i>';
+                } else {
+                    stars += '<i class="far fa-star"></i>';
+                }
+            }
+            return stars;
+        }
+        
+        updateStats() {
+            const stats = this.calculateStats();
+            const reviewsStats = document.getElementById('reviews-stats');
+            
+            if (!reviewsStats) return;
+            
+            reviewsStats.innerHTML = `
+                <div class="rating-overview">
+                    <div class="average-rating">
+                        <span class="rating-number">${stats.average}</span>
+                        <div class="stars">
+                            ${this.renderStars(stats.average)}
+                        </div>
+                        <span class="total-reviews">${stats.total} ${stats.total === 1 ? 'reseña' : 'reseñas'}</span>
+                    </div>
+                    
+                    <div class="rating-distribution">
+                        ${[5, 4, 3, 2, 1].map(stars => {
+                            const count = stats.distribution[stars] || 0;
+                            const percentage = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0;
+                            return `
+                                <div class="distribution-row">
+                                    <span class="stars-label">${stars} estrellas</span>
+                                    <div class="distribution-bar">
+                                        <div class="bar-fill" style="width: ${percentage}%"></div>
+                                    </div>
+                                    <span class="distribution-count">${count}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        
+        markHelpful(reviewId) {
+            const helpfulKey = `mabel_helpful_${reviewId}`;
+            let helpfulCount = parseInt(localStorage.getItem(helpfulKey)) || 0;
+            helpfulCount++;
+            localStorage.setItem(helpfulKey, helpfulCount.toString());
+            
+            const helpfulElement = document.getElementById(`helpful-${reviewId}`);
+            if (helpfulElement) {
+                helpfulElement.textContent = helpfulCount;
+            }
+            
+            // Mostrar notificación
+            this.showNotification('¡Gracias por tu feedback!', 'success');
+        }
+        
+        showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        initReviewModal() {
+            const writeReviewBtn = document.getElementById('write-review-btn');
+            const reviewModal = document.getElementById('review-modal');
+            const closeModal = document.getElementById('close-modal');
+            const cancelReview = document.getElementById('cancel-review');
+            const reviewForm = document.getElementById('review-form');
+            
+            if (!writeReviewBtn || !reviewModal) return;
+            
+            // Abrir modal
+            writeReviewBtn.addEventListener('click', () => {
+                reviewModal.style.display = 'flex';
+                setTimeout(() => {
+                    reviewModal.classList.add('active');
+                }, 10);
+            });
+            
+            // Cerrar modal
+            const closeModalFunc = () => {
+                reviewModal.classList.remove('active');
+                setTimeout(() => {
+                    reviewModal.style.display = 'none';
+                    reviewForm.reset();
+                    document.querySelectorAll('.star-selector').forEach(star => {
+                        star.classList.remove('selected');
+                    });
+                }, 300);
+            };
+            
+            if (closeModal) closeModal.addEventListener('click', closeModalFunc);
+            if (cancelReview) cancelReview.addEventListener('click', closeModalFunc);
+            
+            // Cerrar al hacer clic fuera
+            reviewModal.addEventListener('click', (e) => {
+                if (e.target === reviewModal) {
+                    closeModalFunc();
+                }
+            });
+            
+            // Estrellas interactivas
+            const stars = document.querySelectorAll('.star-selector');
+            let selectedRating = 0;
+            
+            stars.forEach((star, index) => {
+                star.addEventListener('click', () => {
+                    selectedRating = index + 1;
+                    stars.forEach((s, i) => {
+                        s.classList.toggle('selected', i <= index);
+                    });
                 });
                 
-                return {
-                    average: average.toFixed(1),
-                    total,
-                    distribution
-                };
-            }
-            
-            renderReviews() {
-                const reviewsList = document.getElementById('reviews-list');
-                if (!reviewsList) return;
+                star.addEventListener('mouseover', () => {
+                    stars.forEach((s, i) => {
+                        s.classList.toggle('hover', i <= index);
+                    });
+                });
                 
-                if (this.reviews.length === 0) {
-                    reviewsList.innerHTML = `
-                        <div class="no-reviews">
-                            <i class="far fa-comment-dots fa-3x"></i>
-                            <h3>Sin reseñas todavía</h3>
-                            <p>¡Sé el primero en compartir tu experiencia con este producto!</p>
-                            <button class="btn" id="first-review-btn">
-                                <i class="fas fa-pen"></i> Escribir primera reseña
-                            </button>
-                        </div>
-                    `;
-                    
-                    const firstReviewBtn = document.getElementById('first-review-btn');
-                    if (firstReviewBtn) {
-                        firstReviewBtn.addEventListener('click', () => {
-                            document.getElementById('write-review-btn').click();
-                        });
-                    }
-                    
+                star.addEventListener('mouseout', () => {
+                    stars.forEach(s => s.classList.remove('hover'));
+                });
+            });
+            
+            // Enviar reseña
+            reviewForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                if (selectedRating === 0) {
+                    this.showNotification('Por favor, selecciona una calificación', 'error');
                     return;
                 }
                 
-                reviewsList.innerHTML = this.reviews.map(review => `
-                    <div class="review-item ${review.isNew ? 'new-review' : ''}" data-review-id="${review.id}">
-                        <div class="review-header">
-                            <div class="review-author">
-                                <div class="author-avatar">
-                                    ${review.author.charAt(0).toUpperCase()}
-                                </div>
-                                <div class="author-info">
-                                    <h4>${review.author}</h4>
-                                    ${review.verified ? '<span class="verified-badge"><i class="fas fa-check-circle"></i> Compra verificada</span>' : ''}
-                                    ${review.isNew ? '<span class="new-badge"><i class="fas fa-star"></i> Nueva</span>' : ''}
-                                </div>
-                            </div>
-                            <div class="review-date">
-                                ${this.formatDate(review.date)}
-                            </div>
-                        </div>
-                        
-                        <div class="review-rating">
-                            ${this.renderStars(review.rating)}
-                            <span class="rating-value">${review.rating}.0</span>
-                        </div>
-                        
-                        <h3 class="review-title">${review.title}</h3>
-                        <p class="review-comment">${review.comment}</p>
-                        
-                        <div class="review-helpful">
-                            <span class="helpful-text">¿Te resultó útil esta reseña?</span>
-                            <button class="helpful-btn" onclick="reviewsManager.markHelpful(${review.id})">
-                                <i class="far fa-thumbs-up"></i> Sí
-                            </button>
-                            <span class="helpful-count" id="helpful-${review.id}">0</span>
-                        </div>
-                    </div>
-                `).join('');
+                const title = document.getElementById('review-title').value.trim();
+                const comment = document.getElementById('review-comment').value.trim();
                 
-                // Remover la clase 'new' después de mostrar
-                setTimeout(() => {
-                    this.reviews.forEach(review => delete review.isNew);
-                }, 3000);
-            }
-            
-            renderStars(rating) {
-                let stars = '';
-                for (let i = 1; i <= 5; i++) {
-                    if (i <= rating) {
-                        stars += '<i class="fas fa-star"></i>';
-                    } else {
-                        stars += '<i class="far fa-star"></i>';
-                    }
-                }
-                return stars;
-            }
-            
-            updateStats() {
-                const stats = this.calculateStats();
-                const reviewsStats = document.getElementById('reviews-stats');
-                
-                if (!reviewsStats) return;
-                
-                reviewsStats.innerHTML = `
-                    <div class="rating-overview">
-                        <div class="average-rating">
-                            <span class="rating-number">${stats.average}</span>
-                            <div class="stars">
-                                ${this.renderStars(stats.average)}
-                            </div>
-                            <span class="total-reviews">${stats.total} ${stats.total === 1 ? 'reseña' : 'reseñas'}</span>
-                        </div>
-                        
-                        <div class="rating-distribution">
-                            ${[5, 4, 3, 2, 1].map(stars => {
-                                const count = stats.distribution[stars] || 0;
-                                const percentage = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0;
-                                return `
-                                    <div class="distribution-row">
-                                        <span class="stars-label">${stars} estrellas</span>
-                                        <div class="distribution-bar">
-                                            <div class="bar-fill" style="width: ${percentage}%"></div>
-                                        </div>
-                                        <span class="distribution-count">${count}</span>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-            
-            formatDate(dateString) {
-                const date = new Date(dateString);
-                return date.toLocaleDateString('es-ES', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            }
-            
-            markHelpful(reviewId) {
-                const helpfulKey = `mabel_helpful_${reviewId}`;
-                let helpfulCount = parseInt(localStorage.getItem(helpfulKey)) || 0;
-                helpfulCount++;
-                localStorage.setItem(helpfulKey, helpfulCount.toString());
-                
-                const helpfulElement = document.getElementById(`helpful-${reviewId}`);
-                if (helpfulElement) {
-                    helpfulElement.textContent = helpfulCount;
+                if (!title || !comment) {
+                    this.showNotification('Por favor, completa todos los campos', 'error');
+                    return;
                 }
                 
-                // Mostrar notificación
-                this.showNotification('¡Gracias por tu feedback!', 'success');
-            }
-            
-            showNotification(message, type) {
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                notification.innerHTML = `
-                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
-                    <span>${message}</span>
-                `;
+                // Agregar reseña
+                this.addReview(selectedRating, title, comment);
                 
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.classList.add('show');
-                }, 10);
-                
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                    setTimeout(() => {
-                        if (notification.parentNode) {
-                            notification.parentNode.removeChild(notification);
-                        }
-                    }, 300);
-                }, 3000);
-            }
-            
-            initReviewModal() {
-                const writeReviewBtn = document.getElementById('write-review-btn');
-                const reviewModal = document.getElementById('review-modal');
-                const closeModal = document.getElementById('close-modal');
-                const cancelReview = document.getElementById('cancel-review');
-                const reviewForm = document.getElementById('review-form');
-                
-                if (!writeReviewBtn || !reviewModal) return;
-                
-                // Abrir modal
-                writeReviewBtn.addEventListener('click', () => {
-                    reviewModal.style.display = 'flex';
-                    setTimeout(() => {
-                        reviewModal.classList.add('active');
-                    }, 10);
-                });
+                // Mostrar confirmación
+                this.showNotification('¡Gracias por tu reseña! Se ha publicado exitosamente.', 'success');
                 
                 // Cerrar modal
-                const closeModalFunc = () => {
-                    reviewModal.classList.remove('active');
-                    setTimeout(() => {
-                        reviewModal.style.display = 'none';
-                        reviewForm.reset();
-                        document.querySelectorAll('.star-selector').forEach(star => {
-                            star.classList.remove('selected');
-                        });
-                    }, 300);
-                };
+                closeModalFunc();
                 
-                if (closeModal) closeModal.addEventListener('click', closeModalFunc);
-                if (cancelReview) cancelReview.addEventListener('click', closeModalFunc);
-                
-                // Cerrar al hacer clic fuera
-                reviewModal.addEventListener('click', (e) => {
-                    if (e.target === reviewModal) {
-                        closeModalFunc();
-                    }
-                });
-                
-                // Estrellas interactivas
-                const stars = document.querySelectorAll('.star-selector');
-                let selectedRating = 0;
-                
-                stars.forEach((star, index) => {
-                    star.addEventListener('click', () => {
-                        selectedRating = index + 1;
-                        stars.forEach((s, i) => {
-                            s.classList.toggle('selected', i <= index);
-                        });
+                // Desplazar a las reseñas
+                setTimeout(() => {
+                    document.getElementById('product-reviews-section').scrollIntoView({
+                        behavior: 'smooth'
                     });
-                    
-                    star.addEventListener('mouseover', () => {
-                        stars.forEach((s, i) => {
-                            s.classList.toggle('hover', i <= index);
-                        });
-                    });
-                    
-                    star.addEventListener('mouseout', () => {
-                        stars.forEach(s => s.classList.remove('hover'));
-                    });
-                });
-                
-                // Enviar reseña
-                reviewForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    
-                    if (selectedRating === 0) {
-                        this.showNotification('Por favor, selecciona una calificación', 'error');
-                        return;
-                    }
-                    
-                    const title = document.getElementById('review-title').value.trim();
-                    const comment = document.getElementById('review-comment').value.trim();
-                    
-                    if (!title || !comment) {
-                        this.showNotification('Por favor, completa todos los campos', 'error');
-                        return;
-                    }
-                    
-                    // Agregar reseña
-                    this.addReview(selectedRating, title, comment);
-                    
-                    // Mostrar confirmación
-                    this.showNotification('¡Gracias por tu reseña! Se ha publicado exitosamente.', 'success');
-                    
-                    // Cerrar modal
-                    closeModalFunc();
-                    
-                    // Desplazar a las reseñas
-                    setTimeout(() => {
-                        document.getElementById('product-reviews-section').scrollIntoView({
-                            behavior: 'smooth'
-                        });
-                    }, 500);
-                });
-            }
+                }, 500);
+            });
+        }
+        
+        init() {
+            this.updateStats();
+            this.renderReviews();
+            this.initReviewModal();
             
-            init() {
-                this.updateStats();
-                this.renderReviews();
-                this.initReviewModal();
-                
-                // Inicializar acordeones
-                const firstAccordion = document.querySelector('.accordion-item');
-                if (firstAccordion) {
-                    firstAccordion.classList.add('active');
-                    const content = firstAccordion.querySelector('.accordion-content');
-                    if (content) {
-                        content.style.maxHeight = content.scrollHeight + 'px';
-                    }
+            // Inicializar acordeones
+            const firstAccordion = document.querySelector('.accordion-item');
+            if (firstAccordion) {
+                firstAccordion.classList.add('active');
+                const content = firstAccordion.querySelector('.accordion-content');
+                if (content) {
+                    content.style.maxHeight = content.scrollHeight + 'px';
                 }
             }
         }
+    }
+    
+    // Función para alternar acordeón
+    function toggleAccordion(header) {
+        const item = header.closest('.accordion-item');
+        const content = item.querySelector('.accordion-content');
+        const icon = header.querySelector('.accordion-icon');
         
-        // Función para alternar acordeón
-        function toggleAccordion(header) {
-            const item = header.closest('.accordion-item');
-            const content = item.querySelector('.accordion-content');
-            const icon = header.querySelector('.accordion-icon');
+        if (item.classList.contains('active')) {
+            item.classList.remove('active');
+            content.style.maxHeight = '0';
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            // Cerrar otros acordeones
+            document.querySelectorAll('.accordion-item.active').forEach(otherItem => {
+                otherItem.classList.remove('active');
+                otherItem.querySelector('.accordion-content').style.maxHeight = '0';
+                otherItem.querySelector('.accordion-icon').style.transform = 'rotate(0deg)';
+            });
             
-            if (item.classList.contains('active')) {
-                item.classList.remove('active');
-                content.style.maxHeight = '0';
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                // Cerrar otros acordeones
-                document.querySelectorAll('.accordion-item.active').forEach(otherItem => {
-                    otherItem.classList.remove('active');
-                    otherItem.querySelector('.accordion-content').style.maxHeight = '0';
-                    otherItem.querySelector('.accordion-icon').style.transform = 'rotate(0deg)';
-                });
-                
-                // Abrir este
-                item.classList.add('active');
-                content.style.maxHeight = content.scrollHeight + 'px';
-                icon.style.transform = 'rotate(180deg)';
-            }
+            // Abrir este
+            item.classList.add('active');
+            content.style.maxHeight = content.scrollHeight + 'px';
+            icon.style.transform = 'rotate(180deg)';
         }
+    }
+    
+    // Actualizar contador del carrito
+    function updateCartCount() {
+        const cart = JSON.parse(localStorage.getItem('mabel_cart')) || [];
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
         
+        const cartCount = document.querySelector('.cart-count');
+        if (cartCount) {
+            cartCount.textContent = totalItems;
+            cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
+        }
+    }
+    
+    // Inicializar todo cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function() {
         // Actualizar contador del carrito
-        function updateCartCount() {
-            const cart = JSON.parse(localStorage.getItem('mabel_cart')) || [];
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            
-            const cartCount = document.querySelector('.cart-count');
-            if (cartCount) {
-                cartCount.textContent = totalItems;
-                cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
-            }
-        }
+        updateCartCount();
         
-        // Inicializar todo cuando el DOM esté listo
-        document.addEventListener('DOMContentLoaded', function() {
-            // Actualizar contador del carrito
-            updateCartCount();
-            
-            // Inicializar sistema de reseñas
-            window.reviewsManager = new ReviewsManager();
-        });
-        
-        // Añadir estilos CSS para las reseñas
-        document.addEventListener('DOMContentLoaded', function() {
-            // Verificar si los estilos de reseñas ya están cargados
-            if (!document.querySelector('#reviews-styles')) {
-                const style = document.createElement('style');
-                style.id = 'reviews-styles';
-                style.textContent = `
-                    /* Estilos completos para reseñas */
-                    .product-reviews-section {
-                        margin-top: 80px;
-                        padding-top: 60px;
-                        border-top: 1px solid #e0e0e0;
-                    }
-                    
+        // Inicializar sistema de reseñas
+        window.reviewsManager = new ReviewsManager();
+    });
+    
+    // Añadir estilos CSS para las reseñas
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar si los estilos de reseñas ya están cargados
+        if (!document.querySelector('#reviews-styles')) {
+            const style = document.createElement('style');
+            style.id = 'reviews-styles';
+            style.textContent = `
+                /* Estilos completos para reseñas */
+                .product-reviews-section {
+                    margin-top: 80px;
+                    padding-top: 60px;
+                    border-top: 1px solid #e0e0e0;
+                }
+                
+                .reviews-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 40px;
+                }
+                
+                .reviews-header h2 {
+                    font-size: 24px;
+                    font-weight: 300;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                }
+                
+                .write-review-btn {
+                    padding: 12px 30px;
+                    background-color: #000;
+                    color: #fff;
+                    border: 1px solid #000;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                
+                .write-review-btn:hover {
+                    background-color: transparent;
+                    color: #000;
+                }
+                
+                .reviews-stats {
+                    margin-bottom: 40px;
+                }
+                
+                .rating-overview {
+                    display: flex;
+                    gap: 50px;
+                    align-items: flex-start;
+                }
+                
+                .average-rating {
+                    text-align: center;
+                    min-width: 150px;
+                }
+                
+                .rating-number {
+                    display: block;
+                    font-size: 48px;
+                    font-weight: 300;
+                    color: #000;
+                    margin-bottom: 5px;
+                }
+                
+                .stars {
+                    font-size: 18px;
+                    color: #ffd700;
+                    letter-spacing: 2px;
+                    margin-bottom: 5px;
+                }
+                
+                .stars i {
+                    margin: 0 1px;
+                }
+                
+                .total-reviews {
+                    font-size: 14px;
+                    color: #666;
+                }
+                
+                .rating-distribution {
+                    flex: 1;
+                }
+                
+                .distribution-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    margin-bottom: 8px;
+                }
+                
+                .stars-label {
+                    width: 80px;
+                    font-size: 13px;
+                    color: #666;
+                }
+                
+                .distribution-bar {
+                    flex: 1;
+                    height: 8px;
+                    background-color: #eee;
+                    border-radius: 4px;
+                    overflow: hidden;
+                }
+                
+                .bar-fill {
+                    height: 100%;
+                    background-color: #000;
+                    border-radius: 4px;
+                    transition: width 0.5s ease;
+                }
+                
+                .distribution-count {
+                    width: 30px;
+                    font-size: 13px;
+                    color: #666;
+                    text-align: right;
+                }
+                
+                .reviews-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 30px;
+                }
+                
+                .review-item {
+                    padding: 25px;
+                    border: 1px solid #eee;
+                    border-radius: 8px;
+                    background-color: #fff;
+                    transition: all 0.3s ease;
+                }
+                
+                .review-item.new-review {
+                    border-color: #ffd700;
+                    box-shadow: 0 0 0 1px #ffd700;
+                    animation: pulse 2s ease;
+                }
+                
+                @keyframes pulse {
+                    0%, 100% { box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.3); }
+                    50% { box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.1); }
+                }
+                
+                .review-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 15px;
+                }
+                
+                .review-author {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+                
+                .author-avatar {
+                    width: 40px;
+                    height: 40px;
+                    background-color: #000;
+                    color: #fff;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    font-size: 16px;
+                }
+                
+                .author-info h4 {
+                    margin: 0 0 5px 0;
+                    font-size: 14px;
+                    font-weight: 600;
+                }
+                
+                .verified-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;
+                    font-size: 12px;
+                    color: #34c759;
+                    background-color: rgba(52, 199, 89, 0.1);
+                    padding: 3px 8px;
+                    border-radius: 12px;
+                }
+                
+                .new-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;
+                    font-size: 12px;
+                    color: #ff9500;
+                    background-color: rgba(255, 149, 0, 0.1);
+                    padding: 3px 8px;
+                    border-radius: 12px;
+                    margin-left: 8px;
+                }
+                
+                .review-date {
+                    font-size: 13px;
+                    color: #999;
+                }
+                
+                .review-rating {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 15px;
+                }
+                
+                .review-rating .stars {
+                    font-size: 16px;
+                }
+                
+                .rating-value {
+                    font-size: 14px;
+                    color: #666;
+                    font-weight: 500;
+                }
+                
+                .review-title {
+                    margin: 0 0 10px 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #000;
+                }
+                
+                .review-comment {
+                    margin: 0 0 15px 0;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    color: #666;
+                }
+                
+                .review-helpful {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-size: 13px;
+                    color: #666;
+                }
+                
+                .helpful-btn {
+                    background: none;
+                    border: 1px solid #ddd;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                
+                .helpful-btn:hover {
+                    background-color: #f5f5f5;
+                    border-color: #ccc;
+                }
+                
+                .helpful-count {
+                    font-weight: 500;
+                }
+                
+                .no-reviews {
+                    text-align: center;
+                    padding: 60px 20px;
+                }
+                
+                .no-reviews i {
+                    font-size: 48px;
+                    color: #e0e0e0;
+                    margin-bottom: 20px;
+                }
+                
+                .no-reviews h3 {
+                    font-size: 20px;
+                    margin-bottom: 10px;
+                    color: #000;
+                }
+                
+                .no-reviews p {
+                    color: #666;
+                    margin-bottom: 20px;
+                }
+                
+                .review-modal {
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    z-index: 10000;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 20px;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                }
+                
+                .review-modal.active {
+                    opacity: 1;
+                }
+                
+                .modal-content {
+                    background-color: #fff;
+                    width: 100%;
+                    max-width: 600px;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 5px 30px rgba(0,0,0,0.1);
+                    transform: translateY(20px);
+                    transition: transform 0.3s ease;
+                }
+                
+                .review-modal.active .modal-content {
+                    transform: translateY(0);
+                }
+                
+                .modal-header {
+                    padding: 25px 30px;
+                    border-bottom: 1px solid #e0e0e0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    background-color: #fafafa;
+                }
+                
+                .modal-header h3 {
+                    font-size: 20px;
+                    font-weight: 300;
+                    letter-spacing: 2px;
+                    text-transform: uppercase;
+                    margin: 0;
+                }
+                
+                .close-modal {
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    color: #666;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    line-height: 1;
+                }
+                
+                .close-modal:hover {
+                    color: #000;
+                }
+                
+                .modal-body {
+                    padding: 30px;
+                }
+                
+                .rating-input {
+                    margin-bottom: 25px;
+                }
+                
+                .rating-input label {
+                    display: block;
+                    margin-bottom: 10px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #333;
+                }
+                
+                .stars-selector {
+                    display: flex;
+                    gap: 10px;
+                    font-size: 28px;
+                    color: #e0e0e0;
+                }
+                
+                .star-selector {
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                
+                .star-selector.selected {
+                    color: #ffd700;
+                }
+                
+                .star-selector.hover {
+                    color: #ffd700;
+                    transform: scale(1.1);
+                }
+                
+                .star-selector:hover {
+                    transform: scale(1.1);
+                }
+                
+                .form-group {
+                    margin-bottom: 20px;
+                }
+                
+                .form-group label {
+                    display: block;
+                    margin-bottom: 8px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #333;
+                }
+                
+                .form-control {
+                    width: 100%;
+                    padding: 12px 15px;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 4px;
+                    font-size: 14px;
+                    transition: all 0.3s ease;
+                }
+                
+                .form-control:focus {
+                    outline: none;
+                    border-color: #000;
+                }
+                
+                textarea.form-control {
+                    min-height: 120px;
+                    resize: vertical;
+                }
+                
+                .modal-footer {
+                    padding: 20px 30px;
+                    border-top: 1px solid #e0e0e0;
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 15px;
+                    background-color: #fafafa;
+                }
+                
+                .btn {
+                    padding: 10px 25px;
+                    background-color: #000;
+                    color: #fff;
+                    border: 1px solid #000;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    transition: all 0.3s ease;
+                }
+                
+                .btn:hover {
+                    background-color: #333;
+                }
+                
+                .btn-outline {
+                    background-color: transparent;
+                    color: #000;
+                }
+                
+                .btn-outline:hover {
+                    background-color: #f0f0f0;
+                }
+                
+                .notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    background-color: #fff;
+                    border-left: 4px solid #000;
+                    border-radius: 4px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    z-index: 10001;
+                    transform: translateX(100%);
+                    opacity: 0;
+                    transition: all 0.3s ease;
+                }
+                
+                .notification.show {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                
+                .notification.success {
+                    border-left-color: #34c759;
+                }
+                
+                .notification.error {
+                    border-left-color: #ff3b30;
+                }
+                
+                .notification i {
+                    font-size: 18px;
+                }
+                
+                .notification.success i {
+                    color: #34c759;
+                }
+                
+                .notification.error i {
+                    color: #ff3b30;
+                }
+                
+                @media (max-width: 768px) {
                     .reviews-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 40px;
-                    }
-                    
-                    .reviews-header h2 {
-                        font-size: 24px;
-                        font-weight: 300;
-                        letter-spacing: 3px;
-                        text-transform: uppercase;
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 15px;
                     }
                     
                     .write-review-btn {
-                        padding: 12px 30px;
-                        background-color: #000;
-                        color: #fff;
-                        border: 1px solid #000;
-                        text-transform: uppercase;
-                        letter-spacing: 2px;
-                        font-size: 12px;
-                        font-weight: 500;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    }
-                    
-                    .write-review-btn:hover {
-                        background-color: transparent;
-                        color: #000;
-                    }
-                    
-                    .reviews-stats {
-                        margin-bottom: 40px;
+                        width: 100%;
+                        text-align: center;
                     }
                     
                     .rating-overview {
-                        display: flex;
-                        gap: 50px;
-                        align-items: flex-start;
-                    }
-                    
-                    .average-rating {
-                        text-align: center;
-                        min-width: 150px;
-                    }
-                    
-                    .rating-number {
-                        display: block;
-                        font-size: 48px;
-                        font-weight: 300;
-                        color: #000;
-                        margin-bottom: 5px;
-                    }
-                    
-                    .stars {
-                        font-size: 18px;
-                        color: #ffd700;
-                        letter-spacing: 2px;
-                        margin-bottom: 5px;
-                    }
-                    
-                    .stars i {
-                        margin: 0 1px;
-                    }
-                    
-                    .total-reviews {
-                        font-size: 14px;
-                        color: #666;
-                    }
-                    
-                    .rating-distribution {
-                        flex: 1;
-                    }
-                    
-                    .distribution-row {
-                        display: flex;
-                        align-items: center;
-                        gap: 15px;
-                        margin-bottom: 8px;
-                    }
-                    
-                    .stars-label {
-                        width: 80px;
-                        font-size: 13px;
-                        color: #666;
-                    }
-                    
-                    .distribution-bar {
-                        flex: 1;
-                        height: 8px;
-                        background-color: #eee;
-                        border-radius: 4px;
-                        overflow: hidden;
-                    }
-                    
-                    .bar-fill {
-                        height: 100%;
-                        background-color: #000;
-                        border-radius: 4px;
-                        transition: width 0.5s ease;
-                    }
-                    
-                    .distribution-count {
-                        width: 30px;
-                        font-size: 13px;
-                        color: #666;
-                        text-align: right;
-                    }
-                    
-                    .reviews-list {
-                        display: flex;
                         flex-direction: column;
                         gap: 30px;
                     }
                     
                     .review-item {
-                        padding: 25px;
-                        border: 1px solid #eee;
-                        border-radius: 8px;
-                        background-color: #fff;
-                        transition: all 0.3s ease;
-                    }
-                    
-                    .review-item.new-review {
-                        border-color: #ffd700;
-                        box-shadow: 0 0 0 1px #ffd700;
-                        animation: pulse 2s ease;
-                    }
-                    
-                    @keyframes pulse {
-                        0%, 100% { box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.3); }
-                        50% { box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.1); }
+                        padding: 20px;
                     }
                     
                     .review-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: flex-start;
-                        margin-bottom: 15px;
+                        flex-direction: column;
+                        gap: 10px;
                     }
                     
                     .review-author {
-                        display: flex;
-                        align-items: center;
-                        gap: 15px;
-                    }
-                    
-                    .author-avatar {
-                        width: 40px;
-                        height: 40px;
-                        background-color: #000;
-                        color: #fff;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: bold;
-                        font-size: 16px;
-                    }
-                    
-                    .author-info h4 {
-                        margin: 0 0 5px 0;
-                        font-size: 14px;
-                        font-weight: 600;
-                    }
-                    
-                    .verified-badge {
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 5px;
-                        font-size: 12px;
-                        color: #34c759;
-                        background-color: rgba(52, 199, 89, 0.1);
-                        padding: 3px 8px;
-                        border-radius: 12px;
-                    }
-                    
-                    .new-badge {
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 5px;
-                        font-size: 12px;
-                        color: #ff9500;
-                        background-color: rgba(255, 149, 0, 0.1);
-                        padding: 3px 8px;
-                        border-radius: 12px;
-                        margin-left: 8px;
+                        width: 100%;
                     }
                     
                     .review-date {
-                        font-size: 13px;
-                        color: #999;
-                    }
-                    
-                    .review-rating {
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                        margin-bottom: 15px;
-                    }
-                    
-                    .review-rating .stars {
-                        font-size: 16px;
-                    }
-                    
-                    .rating-value {
-                        font-size: 14px;
-                        color: #666;
-                        font-weight: 500;
-                    }
-                    
-                    .review-title {
-                        margin: 0 0 10px 0;
-                        font-size: 16px;
-                        font-weight: 600;
-                        color: #000;
-                    }
-                    
-                    .review-comment {
-                        margin: 0 0 15px 0;
-                        font-size: 14px;
-                        line-height: 1.6;
-                        color: #666;
-                    }
-                    
-                    .review-helpful {
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                        font-size: 13px;
-                        color: #666;
-                    }
-                    
-                    .helpful-btn {
-                        background: none;
-                        border: 1px solid #ddd;
-                        padding: 5px 10px;
-                        border-radius: 4px;
-                        font-size: 12px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    }
-                    
-                    .helpful-btn:hover {
-                        background-color: #f5f5f5;
-                        border-color: #ccc;
-                    }
-                    
-                    .helpful-count {
-                        font-weight: 500;
-                    }
-                    
-                    .no-reviews {
-                        text-align: center;
-                        padding: 60px 20px;
-                    }
-                    
-                    .no-reviews i {
-                        font-size: 48px;
-                        color: #e0e0e0;
-                        margin-bottom: 20px;
-                    }
-                    
-                    .no-reviews h3 {
-                        font-size: 20px;
-                        margin-bottom: 10px;
-                        color: #000;
-                    }
-                    
-                    .no-reviews p {
-                        color: #666;
-                        margin-bottom: 20px;
-                    }
-                    
-                    .review-modal {
-                        display: none;
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        background-color: rgba(0, 0, 0, 0.5);
-                        z-index: 10000;
-                        justify-content: center;
-                        align-items: center;
-                        padding: 20px;
-                        opacity: 0;
-                        transition: opacity 0.3s ease;
-                    }
-                    
-                    .review-modal.active {
-                        opacity: 1;
+                        align-self: flex-start;
                     }
                     
                     .modal-content {
-                        background-color: #fff;
-                        width: 100%;
-                        max-width: 600px;
-                        border-radius: 8px;
-                        overflow: hidden;
-                        box-shadow: 0 5px 30px rgba(0,0,0,0.1);
-                        transform: translateY(20px);
-                        transition: transform 0.3s ease;
-                    }
-                    
-                    .review-modal.active .modal-content {
-                        transform: translateY(0);
-                    }
-                    
-                    .modal-header {
-                        padding: 25px 30px;
-                        border-bottom: 1px solid #e0e0e0;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        background-color: #fafafa;
-                    }
-                    
-                    .modal-header h3 {
-                        font-size: 20px;
-                        font-weight: 300;
-                        letter-spacing: 2px;
-                        text-transform: uppercase;
-                        margin: 0;
-                    }
-                    
-                    .close-modal {
-                        background: none;
-                        border: none;
-                        font-size: 24px;
-                        color: #666;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        line-height: 1;
-                    }
-                    
-                    .close-modal:hover {
-                        color: #000;
-                    }
-                    
-                    .modal-body {
-                        padding: 30px;
-                    }
-                    
-                    .rating-input {
-                        margin-bottom: 25px;
-                    }
-                    
-                    .rating-input label {
-                        display: block;
-                        margin-bottom: 10px;
-                        font-size: 14px;
-                        font-weight: 500;
-                        color: #333;
-                    }
-                    
-                    .stars-selector {
-                        display: flex;
-                        gap: 10px;
-                        font-size: 28px;
-                        color: #e0e0e0;
-                    }
-                    
-                    .star-selector {
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    }
-                    
-                    .star-selector.selected {
-                        color: #ffd700;
-                    }
-                    
-                    .star-selector.hover {
-                        color: #ffd700;
-                        transform: scale(1.1);
-                    }
-                    
-                    .star-selector:hover {
-                        transform: scale(1.1);
-                    }
-                    
-                    .form-group {
-                        margin-bottom: 20px;
-                    }
-                    
-                    .form-group label {
-                        display: block;
-                        margin-bottom: 8px;
-                        font-size: 14px;
-                        font-weight: 500;
-                        color: #333;
-                    }
-                    
-                    .form-control {
-                        width: 100%;
-                        padding: 12px 15px;
-                        border: 1px solid #e0e0e0;
-                        border-radius: 4px;
-                        font-size: 14px;
-                        transition: all 0.3s ease;
-                    }
-                    
-                    .form-control:focus {
-                        outline: none;
-                        border-color: #000;
-                    }
-                    
-                    textarea.form-control {
-                        min-height: 120px;
-                        resize: vertical;
+                        margin: 20px;
                     }
                     
                     .modal-footer {
-                        padding: 20px 30px;
-                        border-top: 1px solid #e0e0e0;
-                        display: flex;
-                        justify-content: flex-end;
-                        gap: 15px;
-                        background-color: #fafafa;
+                        flex-direction: column;
                     }
                     
                     .btn {
-                        padding: 10px 25px;
-                        background-color: #000;
-                        color: #fff;
-                        border: 1px solid #000;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        font-size: 14px;
-                        font-weight: 500;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                        transition: all 0.3s ease;
+                        width: 100%;
                     }
-                    
-                    .btn:hover {
-                        background-color: #333;
-                    }
-                    
-                    .btn-outline {
-                        background-color: transparent;
-                        color: #000;
-                    }
-                    
-                    .btn-outline:hover {
-                        background-color: #f0f0f0;
-                    }
-                    
-                    .notification {
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        padding: 15px 20px;
-                        background-color: #fff;
-                        border-left: 4px solid #000;
-                        border-radius: 4px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                        z-index: 10001;
-                        transform: translateX(100%);
-                        opacity: 0;
-                        transition: all 0.3s ease;
-                    }
-                    
-                    .notification.show {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                    
-                    .notification.success {
-                        border-left-color: #34c759;
-                    }
-                    
-                    .notification.error {
-                        border-left-color: #ff3b30;
-                    }
-                    
-                    .notification i {
-                        font-size: 18px;
-                    }
-                    
-                    .notification.success i {
-                        color: #34c759;
-                    }
-                    
-                    .notification.error i {
-                        color: #ff3b30;
-                    }
-                    
-                    @media (max-width: 768px) {
-                        .reviews-header {
-                            flex-direction: column;
-                            align-items: flex-start;
-                            gap: 15px;
-                        }
-                        
-                        .write-review-btn {
-                            width: 100%;
-                            text-align: center;
-                        }
-                        
-                        .rating-overview {
-                            flex-direction: column;
-                            gap: 30px;
-                        }
-                        
-                        .review-item {
-                            padding: 20px;
-                        }
-                        
-                        .review-header {
-                            flex-direction: column;
-                            gap: 10px;
-                        }
-                        
-                        .review-author {
-                            width: 100%;
-                        }
-                        
-                        .review-date {
-                            align-self: flex-start;
-                        }
-                        
-                        .modal-content {
-                            margin: 20px;
-                        }
-                        
-                        .modal-footer {
-                            flex-direction: column;
-                        }
-                        
-                        .btn {
-                            width: 100%;
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        });
-    </script>
-    
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    });
+</script>
 </body>
 </html>

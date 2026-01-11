@@ -1,6 +1,8 @@
-// server.js - VERSIÓN COMPLETA CON MÚLTIPLES IMÁGENES
+// 🔕 Stripe desactivado permanentemente - Código eliminado
+
+// server.js - VERSIÓN COMPLETA CON MÚLTIPLES IMÁGENES (SIN STRIPE)
 require('dotenv').config();
-console.log('STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY);
+
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
@@ -12,13 +14,11 @@ const multer = require('multer');
 // Importar configuración de base de datos
 const { query } = require('./env/db.js');
 
-// Importar SDKs de pago
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// Importar SDK de PayPal
 const paypal = require('@paypal/checkout-server-sdk');
 
 const app = express();
 const PORT = 3000;
-
 
 // ================= CONFIGURACIÓN MULTER PARA SUBIR IMÁGENES =================
 const storage = multer.diskStorage({
@@ -52,8 +52,6 @@ const upload = multer({
         }
     }
 });
-
-
 
 // ================= FUNCIONES AUXILIARES =================
 
@@ -389,139 +387,16 @@ app.get('/api/payments/config', (req, res) => {
     console.log('🔧 Enviando configuración de pagos al frontend');
     
     res.json({
-        stripePublicKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx',
         paypalClientId: process.env.PAYPAL_CLIENT_ID || 'test',
         currency: 'USD',
         environment: process.env.NODE_ENV || 'development',
         country: 'DO', // República Dominicana
-        paymentMethods: ['card', 'paypal', 'transfer'],
+        paymentMethods: ['paypal', 'transfer'],
         features: {
-            stripe: true,
             paypal: true,
             bankTransfer: true
         }
     });
-});
-
-// ========== STRIPE ==========
-
-// Crear Payment Intent de Stripe
-app.post('/api/orders', async (req, res) => {
-    try {
-        const { amount, orderData } = req.body;
-        
-        // Validar monto mínimo
-        const minAmount = 50; // $0.50 USD mínimo para Stripe
-        const amountInCents = Math.round(parseFloat(amount) * 100);
-        
-        if (amountInCents < minAmount) {
-            return res.status(400).json({ 
-                error: 'El monto mínimo de pago es $0.50 USD' 
-            });
-        }
-        
-        // Crear Payment Intent
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: amountInCents,
-            currency: 'usd',
-            metadata: {
-                userId: req.session.userId,
-                orderData: JSON.stringify(orderData)
-            },
-            shipping: orderData.shipping_method !== 'digital' ? {
-                name: `${orderData.cliente.nombre} ${orderData.cliente.apellido}`,
-                address: {
-                    line1: orderData.cliente.direccion,
-                    city: orderData.cliente.ciudad,
-                    state: orderData.cliente.region,
-                    postal_code: orderData.cliente.codigo_postal,
-                    country: orderData.cliente.pais
-                },
-                phone: orderData.cliente.telefono
-            } : undefined,
-            description: `Compra Mabel Activewear - ${orderData.cliente.email}`
-        });
-        
-        res.json({
-            clientSecret: paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id
-        });
-        
-    } catch (error) {
-        console.error('❌ Error creando Payment Intent:', error);
-        res.status(500).json({ 
-            error: 'Error procesando pago',
-            details: error.message 
-        });
-    }
-});
-
-// Webhook de Stripe para eventos de pago
-app.post('/api/payments/stripe-webhook', express.raw({type: 'application/json'}), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    let event;
-    
-    try {
-        event = stripe.webhooks.constructEvent(
-            req.body,
-            sig,
-            process.env.STRIPE_WEBHOOK_SECRET
-        );
-    } catch (err) {
-        console.error('❌ Error de verificación de webhook:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-    
-    // Manejar eventos de pago
-    switch (event.type) {
-        case 'payment_intent.succeeded':
-            const paymentIntent = event.data.object;
-            console.log('✅ Pago completado:', paymentIntent.id);
-            
-            // Aquí actualizarías la orden en tu base de datos
-            try {
-                const orderData = JSON.parse(paymentIntent.metadata.orderData);
-                
-                // Crear orden en tu sistema
-                await query(
-                    `INSERT INTO pedidos (
-                        usuario_id, total, subtotal, shipping_cost, discount,
-                        estado, metodo_pago, stripe_payment_id,
-                        direccion_envio, ciudad_envio, provincia_envio,
-                        telefono_contacto, email_cliente, nombre_cliente
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-                    [
-                        paymentIntent.metadata.userId,
-                        paymentIntent.amount / 100,
-                        orderData.subtotal,
-                        orderData.shipping_cost,
-                        orderData.discount,
-                        'completado',
-                        'stripe',
-                        paymentIntent.id,
-                        orderData.cliente.direccion,
-                        orderData.cliente.ciudad,
-                        orderData.cliente.region,
-                        orderData.cliente.telefono,
-                        orderData.cliente.email,
-                        `${orderData.cliente.nombre} ${orderData.cliente.apellido}`
-                    ]
-                );
-                
-                console.log('✅ Orden creada desde webhook');
-                
-            } catch (dbError) {
-                console.error('❌ Error creando orden desde webhook:', dbError);
-            }
-            break;
-            
-        case 'payment_intent.payment_failed':
-            const failedPayment = event.data.object;
-            console.error('❌ Pago fallido:', failedPayment.id);
-            break;
-    }
-    
-    res.json({received: true});
 });
 
 // ========== PAYPAL ==========
@@ -991,7 +866,6 @@ app.delete('/api/admin/images/:imageName', requireAuth, requireAdmin, async (req
 });
 
 // ================= API - USUARIOS REALES =================
-// ================= API - USUARIOS REALES =================
 
 // Obtener todos los usuarios (con estadísticas reales)
 app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
@@ -1249,6 +1123,7 @@ app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
 // ================= API - USUARIO =================
 app.get('/api/users/:id', requireAuth, async (req, res) => {
     try {
@@ -1648,6 +1523,10 @@ app.post('/api/orders', requireAuth, async (req, res) => {
         
         console.log('🛒 Creando pedido para usuario:', userId);
         
+        // Calcular totales
+        const subtotal = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+        const shipping_cost = 0; // Gratis por ahora
+        const total = subtotal + shipping_cost;
         
         // Simulación de pedido
         const order = {
@@ -2678,24 +2557,6 @@ app.get('/api/create-test-data', async (req, res) => {
     }
 });
 
-// ================= MANEJO DE ERRORES =================
-app.use((req, res, next) => {
-    console.log(`❌ 404: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ 
-        error: 'Ruta no encontrada',
-        method: req.method,
-        url: req.originalUrl
-    });
-});
-
-app.use((err, req, res, next) => {
-    console.error('🔥 Error del servidor:', err);
-    res.status(500).json({ 
-        error: 'Error interno del servidor',
-        message: err.message
-    });
-});
-
 // ================= API - RESEÑAS DE PRODUCTOS =================
 
 // Obtener reseñas de un producto
@@ -2894,6 +2755,24 @@ app.delete('/api/admin/reviews/:id', requireAuth, requireAdmin, async (req, res)
     }
 });
 
+// ================= MANEJO DE ERRORES =================
+app.use((req, res, next) => {
+    console.log(`❌ 404: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({ 
+        error: 'Ruta no encontrada',
+        method: req.method,
+        url: req.originalUrl
+    });
+});
+
+app.use((err, req, res, next) => {
+    console.error('🔥 Error del servidor:', err);
+    res.status(500).json({ 
+        error: 'Error interno del servidor',
+        message: err.message
+    });
+});
+
 // ================= INICIAR SERVIDOR =================
 app.listen(PORT, () => {
     console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}`);
@@ -2913,16 +2792,4 @@ app.listen(PORT, () => {
     console.log(`\n👤 CREDENCIALES:`);
     console.log(`   • Admin: admin@gmail.com / admin123`);
     console.log(`\n✅ Listo para usar!`);
-});
-
-app.post('/api/payments/create-stripe-payment', async (req, res) => {
-    console.log('📨 Petición recibida en create-stripe-payment');
-    console.log('👤 Usuario en sesión:', req.session.userId);
-    console.log('📦 Body recibido:', req.body);
-    
-    // Simular respuesta exitosa para pruebas
-    res.json({
-        clientSecret: 'pi_test_secret_123456',
-        paymentIntentId: 'pi_123456789'
-    });
 });

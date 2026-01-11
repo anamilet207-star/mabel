@@ -4,63 +4,254 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tienda - Mabel Activewear</title>
-    <link rel="stylesheet" href="./css/style.css">
-    <link rel="stylesheet" href="./css/shop.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/shop.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Header (copiar de index.html) -->
-    
-    <main class="shop-main">
-        <div class="container">
-            <h1>TIENDA</h1>
-            <div class="filters">
-                <select id="category-filter">
-                    <option value="">Todas las categorías</option>
-                    <option value="leggings">Leggings</option>
-                    <option value="tops">Tops</option>
-                    <option value="sets">Sets</option>
-                    <option value="shorts">Shorts</option>
-                </select>
+    <!-- Header Superior -->
+    <div class="top-bar">
+        <div class="container top-bar-content">
+            <div class="top-bar-text">
+                ENVÍO GRATIS EN PEDIDOS SUPERIORES A $50
             </div>
+            <ul class="top-bar-links">
+                <li><a href="/envios">Envíos</a></li>
+                <li><a href="/devoluciones">Devoluciones</a></li>
+                <li><a href="/contacto">Contacto</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Header Principal -->
+    <header class="main-header" id="mainHeader">
+        <div class="container header-container">
+            <!-- Logo -->
+            <a href="/" class="logo">
+                <img src="/public/icons/logo-mabel.png" class="logo-png" alt="Mabel Activewear">
+            </a>
             
-            <div class="products-grid" id="products-grid">
-                <!-- Productos se cargarán aquí -->
+
+            <!-- Navegación Principal -->
+            <nav class="main-nav">
+                <ul class="nav-menu">
+                    <li><a href="/shop" class="active">NOVEDADES</a></li>
+                    <li><a href="/shop?category=leggings">LEGGINGS</a></li>
+                    <li><a href="/shop?category=tops">TOPS</a></li>
+                    <li><a href="/shop?category=sets">SETS</a></li>
+                    <li><a href="/shop?category=accesorios">ACCESORIOS</a></li>
+                    <li><a href="/ofertas">OFERTAS</a></li>
+                </ul>
+            </nav>
+
+            <!-- Iconos -->
+            <div class="header-icons">
+                <a href="/account" class="icon-link" title="Mi Cuenta">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="#" class="icon-link" id="searchToggle" title="Buscar">
+                    <i class="fas fa-search"></i>
+                </a>
+                <a href="/cart" class="icon-link" title="Carrito">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="cart-count">0</span>
+                </a>
             </div>
         </div>
-    </main>
+    </header>
+
+    <!-- Hero de Tienda -->
+    <section class="shop-hero">
+        <div class="container">
+            <h1 class="shop-hero-title">TIENDA</h1>
+            <p class="shop-hero-subtitle">
+                Descubre nuestra colección completa de ropa deportiva diseñada para el máximo rendimiento y estilo.
+            </p>
+        </div>
+    </section>
+
+    <!-- Filtros -->
+    <section class="shop-filters">
+        <div class="container">
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label class="filter-label">CATEGORÍA</label>
+                    <select id="category-filter" class="filter-select">
+                        <option value="">Todas las categorías</option>
+                        <option value="leggings">Leggings</option>
+                        <option value="tops">Tops</option>
+                        <option value="sets">Sets</option>
+                        <option value="shorts">Shorts</option>
+                        <option value="accesorios">Accesorios</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">ORDENAR POR</label>
+                    <select id="sort-filter" class="filter-select">
+                        <option value="newest">Novedades</option>
+                        <option value="price-low">Precio: Menor a Mayor</option>
+                        <option value="price-high">Precio: Mayor a Menor</option>
+                        <option value="name">Nombre A-Z</option>
+                    </select>
+                </div>
+                
+                <div class="filter-buttons">
+                    <button id="filter-btn" class="filter-btn">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <button id="reset-btn" class="filter-btn secondary">
+                        <i class="fas fa-redo"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Productos -->
+    <section class="products-section">
+        <div class="container">
+            <div class="products-grid" id="productsGrid">
+                <!-- Loading state -->
+                <div id="loading" class="loading-state" style="grid-column: 1 / -1; text-align: center; padding: 60px;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Cargando productos...</p>
+                </div>
+                
+                <!-- No products state (hidden by default) -->
+                <div id="no-products" class="no-results" style="display: none;">
+                    <i class="fas fa-search fa-3x"></i>
+                    <h3>No se encontraron productos</h3>
+                    <p>Intenta con otros filtros o categorías</p>
+                </div>
+                
+                <!-- Los productos se cargarán dinámicamente aquí -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <!-- Información de la Empresa -->
+                <div class="footer-section">
+                    <h3>MABEL ACTIVEWEAR</h3>
+                    <p>
+                        Ropa deportiva femenina de alta calidad. Diseñada para mujeres activas 
+                        que valoran el estilo, el rendimiento y la comodidad en cada movimiento.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="TikTok">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Pinterest">
+                            <i class="fab fa-pinterest-p"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Enlaces Rápidos -->
+                <div class="footer-section">
+                    <h3>ENLACES RÁPIDOS</h3>
+                    <ul class="footer-links">
+                        <li><a href="/shop">Tienda</a></li>
+                        <li><a href="/nueva-coleccion">Nueva Colección</a></li>
+                        <li><a href="/ofertas">Ofertas</a></li>
+                        <li><a href="/tallas">Guía de Tallas</a></li>
+                        <li><a href="/coleccion-verano">Colección Verano</a></li>
+                    </ul>
+                </div>
+
+                <!-- Ayuda -->
+                <div class="footer-section">
+                    <h3>AYUDA</h3>
+                    <ul class="footer-links">
+                        <li><a href="/contacto">Contacto</a></li>
+                        <li><a href="/envios">Envíos y Devoluciones</a></li>
+                        <li><a href="/preguntas-frecuentes">Preguntas Frecuentes</a></li>
+                        <li><a href="/politica-privacidad">Política de Privacidad</a></li>
+                        <li><a href="/terminos-condiciones">Términos y Condiciones</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contacto -->
+                <div class="footer-section">
+                    <h3>CONTACTO</h3>
+                    <ul class="footer-links">
+                        <li>
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:info@mabelactivewear.com">info@mabelactivewear.com</a>
+                        </li>
+                        <li>
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:+15551234567">+1 (555) 123-4567</a>
+                        </li>
+                        <li>
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Ciudad, País</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-clock"></i>
+                            <span>Lun-Vie: 9:00-18:00</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="copyright">
+                    &copy; 2024 MABEL ACTIVEWEAR. TODOS LOS DERECHOS RESERVADOS.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="/js/script.js"></script>
+    <script src="/js/shop-script.js"></script>
     
-    <script src="./js/shop.js"></script>
     <script>
-        // Cargar productos
-        async function loadProducts() {
-            try {
-                const response = await fetch('./data/products.json');
-                const data = await response.json();
-                displayProducts(data.products);
-            } catch (error) {
-                console.error('Error:', error);
+        // Script de inicialización específico para shop
+        document.addEventListener('DOMContentLoaded', function() {
+            // Header scroll effect
+            const header = document.getElementById('mainHeader');
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 100) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+            
+            // Actualizar contador del carrito
+            updateCartCount();
+            
+            console.log('✅ Tienda cargada');
+        });
+        
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('mabel_cart')) || [];
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            
+            const cartCount = document.querySelector('.cart-count');
+            if (cartCount) {
+                cartCount.textContent = totalItems;
+                cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
             }
         }
         
-        function displayProducts(products) {
-            const container = document.getElementById('products-grid');
-            container.innerHTML = products.map(product => `
-                <div class="product-card">
-                    <img src="${product.imagen}" alt="${product.nombre}">
-                    <h3>${product.nombre}</h3>
-                    <p class="price">
-                        ${product.precio_final ? 
-                            `<span class="old-price">$${product.precio}</span> 
-                             <span class="new-price">$${product.precio_final}</span>` : 
-                            `$${product.precio}`}
-                    </p>
-                    <a href="./product-detail.html?id=${product.id}" class="btn">Ver detalle</a>
-                </div>
-            `).join('');
+        function addToCart(productId) {
+            console.log('Agregar al carrito:', productId);
+            // Esta función será manejada por shop-script.js
         }
-        
-        document.addEventListener('DOMContentLoaded', loadProducts);
     </script>
 </body>
 </html>
