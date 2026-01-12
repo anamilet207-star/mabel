@@ -1,7 +1,7 @@
 const { Pool } = require('pg');
 
 // URL de conexión proporcionada por Railway
-const connectionString = 'postgresql://postgres:nZOCKIxGXyucDITEUOfDIrvZPuWSCOFI@postgres.railway.internal:5432/railway';
+const connectionString = 'postgresql://postgres:xyJIYArDuYnEcbcFFaIRLAjohMzGvmfF@postgres.railway.internal:5432/railway';
 
 // Configuración de conexión a PostgreSQL
 const pool = new Pool({
