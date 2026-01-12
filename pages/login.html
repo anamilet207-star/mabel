@@ -13,51 +13,73 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    body {
-        background-color: #f8f8f8;
-        font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+    /* ========== HERO MÁS PEQUEÑO ========== */
+    .auth-hero {
+        text-align: center;
+        padding: 40px 20px; /* Reducido de 60px 20px */
+        background: linear-gradient(135deg, #f8f8f8 0%, #fff 100%);
+    }
+    
+    .auth-title {
+        font-size: 28px; /* Reducido de 36px */
+        font-weight: 300;
+        letter-spacing: 3px; /* Reducido de 4px */
+        margin-bottom: 10px; /* Reducido de 15px */
+    }
+    
+    .auth-subtitle {
+        color: #666;
+        max-width: 500px;
+        margin: 0 auto;
+        font-size: 14px; /* Reducido */
+    }
+    
+    /* ========== FORMULARIO MÁS COMPACTO ========== */
+    .auth-section {
+        padding: 20px 0 60px; /* Reducido de 40px 0 100px */
     }
     
     .auth-container {
         max-width: 500px;
         margin: 0 auto;
-        padding: 40px 20px;
+        padding: 20px; /* Reducido de 40px 20px */
     }
     
     .auth-form-container {
         background: white;
-        padding: 40px;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        padding: 30px; /* Reducido de 40px */
+        border-radius: 6px; /* Reducido de 8px */
+        box-shadow: 0 3px 15px rgba(0,0,0,0.05); /* Reducido de 0 4px 20px */
     }
     
     .auth-form-title {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 25px; /* Reducido de 30px */
         font-weight: 300;
-        letter-spacing: 2px;
+        letter-spacing: 1.5px; /* Reducido de 2px */
         text-transform: uppercase;
+        font-size: 18px;
     }
     
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 15px; /* Reducido de 20px */
     }
     
     .form-label {
         display: block;
-        margin-bottom: 8px;
-        font-size: 13px;
+        margin-bottom: 6px; /* Reducido de 8px */
+        font-size: 12px; /* Reducido de 13px */
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px; /* Reducido de 1px */
         color: #666;
     }
     
     .form-input {
         width: 100%;
-        padding: 12px 15px;
+        padding: 10px 12px; /* Reducido de 12px 15px */
         border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 14px;
+        border-radius: 3px; /* Reducido de 4px */
+        font-size: 13px; /* Reducido de 14px */
         transition: border-color 0.3s;
     }
     
@@ -72,35 +94,41 @@
     
     .toggle-password {
         position: absolute;
-        right: 15px;
+        right: 12px; /* Reducido de 15px */
         top: 50%;
         transform: translateY(-50%);
         background: none;
         border: none;
         color: #666;
         cursor: pointer;
-        padding: 5px;
+        padding: 4px; /* Reducido de 5px */
+        font-size: 14px;
     }
     
     .form-options {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin: 20px 0;
+        margin: 15px 0; /* Reducido de 20px 0 */
     }
     
     .remember-me {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px; /* Reducido de 8px */
         color: #666;
-        font-size: 14px;
+        font-size: 13px; /* Reducido de 14px */
+    }
+    
+    .remember-me input[type="checkbox"] {
+        width: 14px; /* Reducido */
+        height: 14px; /* Reducido */
     }
     
     .forgot-password {
         color: #666;
         text-decoration: none;
-        font-size: 14px;
+        font-size: 13px; /* Reducido de 14px */
     }
     
     .forgot-password:hover {
@@ -109,16 +137,17 @@
     
     .auth-submit-btn {
         width: 100%;
-        padding: 15px;
+        padding: 12px; /* Reducido de 15px */
         background: #000;
         color: white;
         border: none;
-        border-radius: 4px;
-        font-size: 14px;
+        border-radius: 3px; /* Reducido de 4px */
+        font-size: 12px; /* Reducido de 14px */
         text-transform: uppercase;
-        letter-spacing: 2px;
+        letter-spacing: 1.5px; /* Reducido de 2px */
         cursor: pointer;
         transition: background-color 0.3s;
+        margin-top: 10px;
     }
     
     .auth-submit-btn:hover {
@@ -127,8 +156,9 @@
     
     .auth-switch {
         text-align: center;
-        margin-top: 20px;
+        margin-top: 15px; /* Reducido de 20px */
         color: #666;
+        font-size: 13px;
     }
     
     .auth-switch a {
@@ -142,10 +172,11 @@
     }
     
     .auth-message {
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 4px;
+        padding: 12px; /* Reducido de 15px */
+        margin-bottom: 15px; /* Reducido de 20px */
+        border-radius: 3px; /* Reducido de 4px */
         text-align: center;
+        font-size: 13px;
     }
     
     .auth-message.error {
@@ -159,22 +190,115 @@
         color: #2e7d32;
         border: 1px solid #c8e6c9;
     }
+    
+    /* ========== MEDIA QUERIES ========== */
+    @media (min-width: 768px) {
+        .auth-hero {
+            padding: 50px 20px; /* Un poco más en tablet */
+        }
+        
+        .auth-title {
+            font-size: 32px; /* Un poco más en tablet */
+        }
+        
+        .auth-form-container {
+            padding: 35px; /* Un poco más en tablet */
+        }
+        
+        .auth-form-title {
+            font-size: 20px; /* Un poco más en tablet */
+        }
+        
+        .form-input {
+            padding: 11px 14px;
+            font-size: 14px;
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        .auth-title {
+            font-size: 34px; /* Un poco más en desktop */
+        }
+        
+        .auth-form-title {
+            font-size: 22px; /* Un poco más en desktop */
+        }
+    }
+    
+    @media (max-width: 360px) {
+        .auth-hero {
+            padding: 30px 15px;
+        }
+        
+        .auth-title {
+            font-size: 24px;
+            letter-spacing: 2px;
+        }
+        
+        .auth-subtitle {
+            font-size: 13px;
+            padding: 0 10px;
+        }
+        
+        .auth-container {
+            padding: 15px;
+        }
+        
+        .auth-form-container {
+            padding: 20px;
+        }
+        
+        .auth-form-title {
+            font-size: 16px;
+        }
+        
+        .form-input {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+        
+        .toggle-password {
+            right: 10px;
+            font-size: 12px;
+        }
+        
+        .form-options {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .remember-me {
+            font-size: 12px;
+        }
+        
+        .forgot-password {
+            font-size: 12px;
+            align-self: flex-end;
+        }
+    }
+    
+    /* Estilos base del body */
+    body {
+        background-color: #f8f8f8;
+        font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+    }
   </style>
 </head>
 <body>
 
-<!-- HERO -->
-<section class="auth-hero" style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #f8f8f8 0%, #fff 100%);">
-    <h1 class="auth-title" style="font-size: 36px; font-weight: 300; letter-spacing: 4px; margin-bottom: 15px;">
+<!-- HERO MÁS COMPACTO -->
+<section class="auth-hero">
+    <h1 class="auth-title">
         MABEL ACTIVEWEAR
     </h1>
-    <p class="auth-subtitle" style="color: #666; max-width: 600px; margin: 0 auto;">
+    <p class="auth-subtitle">
         Inicia sesión para acceder a tu cuenta y continuar tu experiencia de compra.
     </p>
 </section>
 
-<!-- LOGIN -->
-<section class="auth-section" style="padding: 40px 0 100px;">
+<!-- LOGIN MÁS COMPACTO -->
+<section class="auth-section">
     <div class="auth-container">
         <div class="auth-form-container">
             <h2 class="auth-form-title">Iniciar Sesión</h2>

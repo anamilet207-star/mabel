@@ -8,177 +8,94 @@
     <link rel="stylesheet" href="/css/shop.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Agrega estos estilos CSS para hacer el menú más pequeño -->
     <style>
-        /* Estilos adicionales para el menú responsive */
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #333;
-            cursor: pointer;
-            padding: 5px;
-            z-index: 1001;
+        /* ========== MENÚ MÁS PEQUEÑO ========== */
+        .top-bar {
+            padding: 4px 0;
+            font-size: 9px;
+        }
+        
+        .top-bar-content {
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .top-bar-links {
+            font-size: 8px;
+            gap: 12px;
+        }
+        
+        .main-header {
+            padding: 6px 0;
+        }
+        
+        .logo img {
+            max-height: 25px;
         }
         
         .header-icons {
-            display: flex;
-            align-items: center;
-            gap: 20px;
+            font-size: 12px;
+            gap: 12px;
         }
         
-        /* Estilos para móviles */
-        @media (max-width: 992px) {
-            .menu-toggle {
-                display: block;
-                order: 1;
-            }
-            
-            .logo {
-                order: 2;
-                margin-left: 15px;
-            }
-            
-            .header-icons {
-                order: 3;
-                margin-left: auto;
-            }
-            
-            .header-container {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 15px 0;
-            }
-            
-            .main-nav {
-                position: fixed;
-                top: 0;
-                right: -100%;
-                width: 80%;
-                max-width: 400px;
-                height: 100vh;
-                background-color: white;
-                box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-                transition: right 0.3s ease;
-                z-index: 1000;
-                padding-top: 80px;
-                overflow-y: auto;
-            }
-            
-            .main-nav.active {
-                right: 0;
-            }
-            
-            .nav-menu {
-                flex-direction: column;
-                padding: 0 20px;
-            }
-            
-            .nav-menu li {
-                width: 100%;
-                margin: 0;
-                border-bottom: 1px solid #eee;
-            }
-            
-            .nav-menu li:last-child {
-                border-bottom: none;
-            }
-            
-            .nav-menu a {
-                display: block;
-                padding: 15px 0;
-                font-size: 16px;
-                text-align: left;
-            }
-            
-            .nav-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0,0,0,0.5);
-                z-index: 999;
-            }
-            
-            .nav-overlay.active {
-                display: block;
-            }
-            
-            .close-menu {
-                position: absolute;
-                top: 20px;
-                right: 20px;
-                background: none;
-                border: none;
-                font-size: 24px;
-                color: #333;
-                cursor: pointer;
-                z-index: 1002;
-            }
-            
-            /* Ajustes para el hero en móviles */
-            .shop-hero-title {
-                font-size: 32px;
-            }
-            
-            .shop-hero-subtitle {
-                font-size: 16px;
-            }
-            
-            /* Ajustes para filtros en móviles */
-            .filters-container {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .filter-group {
-                width: 100%;
-            }
-            
-            .filter-buttons {
-                width: 100%;
-                display: flex;
-                gap: 10px;
-            }
-            
-            .filter-btn {
-                flex: 1;
-            }
+        .cart-count {
+            font-size: 7px;
+            width: 10px;
+            height: 10px;
+            top: -6px;
+            right: -6px;
         }
         
-        @media (max-width: 768px) {
+        .main-nav {
+            margin-top: 6px;
+        }
+        
+        .nav-menu {
+            gap: 6px;
+            padding-bottom: 3px;
+            min-height: 28px;
+        }
+        
+        .nav-menu li a {
+            font-size: 9px;
+            padding: 4px 6px;
+        }
+        
+        /* ========== HERO DE TIENDA MÁS PEQUEÑO ========== */
+        .shop-hero {
+            padding: 30px 0; /* Reducido de 60px */
+        }
+        
+        .shop-hero-title {
+            font-size: 32px; /* Reducido de 48px */
+            margin-bottom: 10px; /* Reducido de 20px */
+        }
+        
+        .shop-hero-subtitle {
+            font-size: 14px; /* Reducido de 18px */
+            max-width: 500px; /* Reducido de 600px */
+        }
+        
+        /* ========== MEDIA QUERIES ========== */
+        @media (min-width: 768px) {
+            .top-bar {
+                padding: 6px 0;
+                font-size: 10px;
+            }
+            
             .top-bar-content {
-                flex-direction: column;
-                text-align: center;
-                gap: 10px;
-                padding: 10px 0;
+                flex-direction: row;
             }
             
             .top-bar-links {
-                justify-content: center;
+                font-size: 9px;
             }
             
-            .shop-hero {
-                padding: 40px 0;
-            }
-            
-            .products-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
-            }
-            
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 30px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .products-grid {
-                grid-template-columns: 1fr;
+            .main-header {
+                padding: 10px 0;
             }
             
             .logo img {
@@ -186,28 +103,110 @@
             }
             
             .header-icons {
+                font-size: 14px;
                 gap: 15px;
             }
             
-            .icon-link {
-                font-size: 18px;
+            .main-nav {
+                margin-top: 0;
+            }
+            
+            .nav-menu {
+                gap: 10px;
+                padding-bottom: 0;
+            }
+            
+            .nav-menu li a {
+                font-size: 10px;
+                padding: 6px 8px;
             }
             
             .cart-count {
-                width: 16px;
-                height: 16px;
-                font-size: 10px;
-                line-height: 16px;
+                font-size: 8px;
+                width: 12px;
+                height: 12px;
+                top: -7px;
+                right: -7px;
+            }
+            
+            .shop-hero {
+                padding: 40px 0; /* Un poco más en tablet */
+            }
+            
+            .shop-hero-title {
+                font-size: 36px; /* Un poco más en tablet */
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .top-bar {
+                font-size: 11px;
+            }
+            
+            .nav-menu {
+                gap: 15px;
+            }
+            
+            .nav-menu li a {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            
+            .shop-hero-title {
+                font-size: 40px; /* Un poco más en desktop */
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .top-bar {
+                font-size: 8px;
+                padding: 3px 0;
+            }
+            
+            .top-bar-links {
+                gap: 8px;
+                font-size: 7px;
+            }
+            
+            .logo img {
+                max-height: 22px;
+            }
+            
+            .header-icons {
+                font-size: 11px;
+                gap: 10px;
+            }
+            
+            .nav-menu {
+                gap: 4px;
+            }
+            
+            .nav-menu li a {
+                font-size: 8px;
+                padding: 3px 5px;
+            }
+            
+            .shop-hero {
+                padding: 20px 0; /* Aún más pequeño en móviles pequeños */
+            }
+            
+            .shop-hero-title {
+                font-size: 28px;
+            }
+            
+            .shop-hero-subtitle {
+                font-size: 12px;
+                max-width: 300px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header Superior -->
+    <!-- Header Superior MÁS PEQUEÑO -->
     <div class="top-bar">
         <div class="container top-bar-content">
             <div class="top-bar-text">
-                ENVÍO GRATIS EN PEDIDOS SUPERIORES A $50
+                ENVÍO A LA PAQUETERIA DE TU ELECCIÓN
             </div>
             <ul class="top-bar-links">
                 <li><a href="/envios">Envíos</a></li>
@@ -217,24 +216,17 @@
         </div>
     </div>
 
-    <!-- Header Principal -->
+    <!-- Header Principal MÁS COMPACTO -->
     <header class="main-header" id="mainHeader">
         <div class="container header-container">
-            <!-- Botón menú hamburguesa -->
-            <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
-                <i class="fas fa-bars"></i>
-            </button>
-            
-            <!-- Logo -->
+            <!-- Logo más pequeño -->
             <a href="/" class="logo">
                 <img src="/public/icons/logo-mabel.png" class="logo-png" alt="Mabel Activewear">
             </a>
             
-            <!-- Navegación Principal -->
-            <nav class="main-nav" id="mainNav">
-                <button class="close-menu" id="closeMenu" aria-label="Cerrar menú">
-                    <i class="fas fa-times"></i>
-                </button>
+
+            <!-- Navegación Principal MÁS COMPACTA -->
+            <nav class="main-nav">
                 <ul class="nav-menu">
                     <li><a href="/shop" class="active">NOVEDADES</a></li>
                     <li><a href="/shop?category=leggings">LEGGINGS</a></li>
@@ -244,11 +236,8 @@
                     <li><a href="/ofertas">OFERTAS</a></li>
                 </ul>
             </nav>
-            
-            <!-- Overlay para cerrar menú -->
-            <div class="nav-overlay" id="navOverlay"></div>
 
-            <!-- Iconos -->
+            <!-- Iconos más pequeños -->
             <div class="header-icons">
                 <a href="/account" class="icon-link" title="Mi Cuenta">
                     <i class="fas fa-user"></i>
@@ -264,7 +253,7 @@
         </div>
     </header>
 
-    <!-- Hero de Tienda -->
+    <!-- Hero de Tienda MÁS PEQUEÑO -->
     <section class="shop-hero">
         <div class="container">
             <h1 class="shop-hero-title">TIENDA</h1>
@@ -274,6 +263,7 @@
         </div>
     </section>
 
+    <!-- El resto del HTML permanece igual -->
     <!-- Filtros -->
     <section class="shop-filters">
         <div class="container">
@@ -424,35 +414,6 @@
     <script>
         // Script de inicialización específico para shop
         document.addEventListener('DOMContentLoaded', function() {
-            // Elementos del menú móvil
-            const menuToggle = document.getElementById('menuToggle');
-            const closeMenu = document.getElementById('closeMenu');
-            const mainNav = document.getElementById('mainNav');
-            const navOverlay = document.getElementById('navOverlay');
-            
-            // Abrir menú
-            menuToggle.addEventListener('click', function() {
-                mainNav.classList.add('active');
-                navOverlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            });
-            
-            // Cerrar menú
-            function closeMobileMenu() {
-                mainNav.classList.remove('active');
-                navOverlay.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-            
-            closeMenu.addEventListener('click', closeMobileMenu);
-            navOverlay.addEventListener('click', closeMobileMenu);
-            
-            // Cerrar menú al hacer clic en un enlace
-            const navLinks = document.querySelectorAll('.nav-menu a');
-            navLinks.forEach(link => {
-                link.addEventListener('click', closeMobileMenu);
-            });
-            
             // Header scroll effect
             const header = document.getElementById('mainHeader');
             window.addEventListener('scroll', function() {
@@ -466,19 +427,7 @@
             // Actualizar contador del carrito
             updateCartCount();
             
-            // Ajustar menú según el tamaño de pantalla
-            function handleResize() {
-                if (window.innerWidth > 992) {
-                    // Si la pantalla es grande, asegurarse de que el menú esté visible
-                    mainNav.classList.remove('active');
-                    navOverlay.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            }
-            
-            window.addEventListener('resize', handleResize);
-            
-            console.log('✅ Tienda cargada con menú responsive');
+            console.log('✅ Tienda cargada');
         });
         
         function updateCartCount() {

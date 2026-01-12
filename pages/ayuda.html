@@ -15,199 +15,352 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        /* Estilos específicos para ayuda */
+        /* ========== MENÚ MÁS PEQUEÑO ========== */
+        .top-bar {
+            padding: 4px 0;
+            font-size: 9px;
+        }
+        
+        .top-bar-content {
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .top-bar-links {
+            font-size: 8px;
+            gap: 12px;
+        }
+        
+        .main-header {
+            padding: 6px 0;
+        }
+        
+        .logo img {
+            max-height: 25px;
+        }
+        
+        .header-icons {
+            font-size: 12px;
+            gap: 12px;
+        }
+        
+        .cart-count {
+            font-size: 7px;
+            width: 10px;
+            height: 10px;
+            top: -6px;
+            right: -6px;
+        }
+        
+        .main-nav {
+            margin-top: 6px;
+        }
+        
+        .nav-menu {
+            gap: 6px;
+            padding-bottom: 3px;
+            min-height: 28px;
+        }
+        
+        .nav-menu li a {
+            font-size: 9px;
+            padding: 4px 6px;
+        }
+        
+        /* ========== HERO MÁS PEQUEÑO ========== */
         .help-hero {
-            background: linear-gradient(135deg, #f8f8f8 0%, #e8e8e8 100%);
-            padding: 80px 0;
-            text-align: center;
+            padding: 50px 0; /* Reducido de 80px 0 */
         }
         
         .help-hero-title {
-            font-size: 48px;
-            font-weight: 300;
-            letter-spacing: 3px;
-            margin-bottom: 20px;
-            color: #333;
+            font-size: 32px; /* Reducido de 48px */
+            letter-spacing: 2px; /* Reducido de 3px */
+            margin-bottom: 15px; /* Reducido de 20px */
         }
         
         .help-hero-subtitle {
-            font-size: 18px;
-            color: #666;
-            max-width: 600px;
-            margin: 0 auto;
+            font-size: 14px; /* Reducido de 18px */
+            max-width: 500px;
         }
         
+        /* ========== SECCIÓN AYUDA MÁS COMPACTA ========== */
         .help-section {
-            padding: 80px 0;
+            padding: 40px 0; /* Reducido de 80px 0 */
         }
         
         .help-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 15px; /* Reducido de 0 20px */
         }
         
         .help-categories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin-bottom: 60px;
+            gap: 20px; /* Reducido de 30px */
+            margin-bottom: 40px; /* Reducido de 60px */
         }
         
         .help-category {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-            text-decoration: none;
-            color: #333;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        
-        .help-category:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            padding: 20px; /* Reducido de 30px */
+            border-radius: 6px; /* Reducido de 8px */
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08); /* Reducido de 0 4px 15px */
         }
         
         .help-category-icon {
-            width: 70px;
-            height: 70px;
-            background: #f8f8f8;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 24px;
-            color: #333;
+            width: 50px; /* Reducido de 70px */
+            height: 50px; /* Reducido de 70px */
+            margin: 0 auto 15px; /* Reducido de 0 auto 20px */
+            font-size: 18px; /* Reducido de 24px */
         }
         
         .help-category-title {
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 10px;
+            font-size: 16px; /* Reducido de 18px */
+            margin-bottom: 8px; /* Reducido de 10px */
         }
         
         .help-category-desc {
-            font-size: 14px;
-            color: #666;
+            font-size: 12px; /* Reducido de 14px */
         }
         
+        /* ========== CONTENIDO PRINCIPAL MÁS COMPACTO ========== */
         .help-content {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 25px; /* Reducido de 40px */
+            border-radius: 6px; /* Reducido de 8px */
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08); /* Reducido de 0 4px 15px */
         }
         
         .help-tabs {
-            display: flex;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 30px;
-            overflow-x: auto;
+            margin-bottom: 25px; /* Reducido de 30px */
         }
         
         .help-tab {
-            padding: 15px 25px;
-            background: none;
-            border: none;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            color: #666;
-            cursor: pointer;
-            white-space: nowrap;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-        }
-        
-        .help-tab.active {
-            color: #333;
-            border-bottom-color: #333;
-        }
-        
-        .help-tab-content {
-            display: none;
-        }
-        
-        .help-tab-content.active {
-            display: block;
+            padding: 12px 18px; /* Reducido de 15px 25px */
+            font-size: 12px; /* Reducido de 14px */
         }
         
         .tab-title {
-            font-size: 24px;
-            font-weight: 400;
-            margin-bottom: 30px;
-            color: #333;
+            font-size: 20px; /* Reducido de 24px */
+            margin-bottom: 20px; /* Reducido de 30px */
         }
         
         .faq-list {
-            margin-bottom: 40px;
+            margin-bottom: 30px; /* Reducido de 40px */
         }
         
         .faq-item-help {
-            border: 1px solid #eee;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            overflow: hidden;
+            margin-bottom: 10px; /* Reducido de 15px */
+            border-radius: 3px; /* Reducido de 4px */
         }
         
         .faq-question-help {
-            padding: 20px;
-            background: #f8f8f8;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 500;
+            padding: 15px; /* Reducido de 20px */
+            font-size: 14px;
         }
         
         .faq-answer-help {
-            padding: 20px;
-            display: none;
-            color: #666;
-            line-height: 1.6;
+            padding: 15px; /* Reducido de 20px */
+            font-size: 13px;
         }
         
-        .faq-item-help.active .faq-answer-help {
-            display: block;
-        }
-        
+        /* ========== POLÍTICAS Y TÉRMINOS MÁS COMPACTOS ========== */
         .policy-content, .terms-content {
-            line-height: 1.8;
-            color: #666;
+            font-size: 14px;
+            line-height: 1.6; /* Reducido de 1.8 */
         }
         
         .policy-content h3, .terms-content h3 {
-            color: #333;
-            margin: 30px 0 15px;
-            font-size: 18px;
+            margin: 20px 0 10px; /* Reducido de 30px 0 15px */
+            font-size: 16px; /* Reducido de 18px */
         }
         
         .policy-content ul, .terms-content ul {
-            padding-left: 20px;
-            margin: 15px 0;
+            margin: 10px 0; /* Reducido de 15px 0 */
         }
         
         .policy-content li, .terms-content li {
+            margin-bottom: 8px; /* Reducido de 10px */
+            font-size: 13px;
+        }
+        
+        /* ========== CTA DE CONTACTO MÁS COMPACTO ========== */
+        .contact-cta {
+            margin-top: 40px; /* Reducido de 60px */
+            padding-top: 25px; /* Reducido de 40px */
+        }
+        
+        .contact-cta h3 {
+            font-size: 18px;
             margin-bottom: 10px;
         }
         
-        .contact-cta {
-            text-align: center;
-            margin-top: 60px;
-            padding-top: 40px;
-            border-top: 1px solid #eee;
+        .contact-cta p {
+            margin-bottom: 15px; /* Reducido de 20px */
+            font-size: 14px;
         }
         
-        @media (max-width: 768px) {
+        /* ========== FOOTER MÁS COMPACTO ========== */
+        .main-footer {
+            padding: 25px 0 15px;
+        }
+        
+        .footer-section h3 {
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        
+        .footer-links li {
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+        
+        /* ========== MEDIA QUERIES ========== */
+        @media (min-width: 768px) {
+            .top-bar {
+                padding: 6px 0;
+                font-size: 10px;
+            }
+            
+            .top-bar-content {
+                flex-direction: row;
+            }
+            
+            .top-bar-links {
+                font-size: 9px;
+            }
+            
+            .main-header {
+                padding: 10px 0;
+            }
+            
+            .logo img {
+                max-height: 30px;
+            }
+            
+            .header-icons {
+                font-size: 14px;
+                gap: 15px;
+            }
+            
+            .main-nav {
+                margin-top: 0;
+            }
+            
+            .nav-menu {
+                gap: 10px;
+                padding-bottom: 0;
+            }
+            
+            .nav-menu li a {
+                font-size: 10px;
+                padding: 6px 8px;
+            }
+            
+            .cart-count {
+                font-size: 8px;
+                width: 12px;
+                height: 12px;
+                top: -7px;
+                right: -7px;
+            }
+            
+            .help-hero {
+                padding: 60px 0; /* Un poco más en tablet */
+            }
+            
             .help-hero-title {
-                font-size: 36px;
+                font-size: 36px; /* Un poco más en tablet */
+            }
+            
+            .help-hero-subtitle {
+                font-size: 15px; /* Un poco más en tablet */
+            }
+            
+            .help-categories {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            }
+            
+            .help-category {
+                padding: 25px; /* Un poco más en tablet */
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .top-bar {
+                font-size: 11px;
+            }
+            
+            .nav-menu {
+                gap: 15px;
+            }
+            
+            .nav-menu li a {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            
+            .help-hero-title {
+                font-size: 38px; /* Un poco más en desktop */
+            }
+            
+            .help-category {
+                min-width: 230px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .top-bar {
+                font-size: 8px;
+                padding: 3px 0;
+            }
+            
+            .top-bar-links {
+                gap: 8px;
+                font-size: 7px;
+            }
+            
+            .logo img {
+                max-height: 22px;
+            }
+            
+            .header-icons {
+                font-size: 11px;
+                gap: 10px;
+            }
+            
+            .nav-menu {
+                gap: 4px;
+            }
+            
+            .nav-menu li a {
+                font-size: 8px;
+                padding: 3px 5px;
+            }
+            
+            .help-hero {
+                padding: 30px 0; /* Aún más pequeño en móviles pequeños */
+            }
+            
+            .help-hero-title {
+                font-size: 24px; /* Aún más pequeño en móviles pequeños */
+                letter-spacing: 1px;
+            }
+            
+            .help-hero-subtitle {
+                font-size: 12px;
+                padding: 0 10px;
+            }
+            
+            .help-container {
+                padding: 0 10px;
             }
             
             .help-categories {
                 grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .help-content {
+                padding: 15px;
             }
             
             .help-tabs {
@@ -216,17 +369,18 @@
             
             .help-tab {
                 flex: 1 0 auto;
-                text-align: center;
+                padding: 10px;
+                font-size: 11px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Top Bar -->
+    <!-- Top Bar MÁS PEQUEÑO -->
     <div class="top-bar">
         <div class="container top-bar-content">
             <div class="top-bar-text">
-                ENVÍO GRATIS EN PEDIDOS SUPERIORES A $50
+                ENVÍO A LA PAQUETERIA DE TU ELECCIÓN
             </div>
             <ul class="top-bar-links">
                 <li><a href="/envios">Envíos</a></li>
@@ -236,15 +390,15 @@
         </div>
     </div>
 
-    <!-- Header -->
+    <!-- Header MÁS COMPACTO -->
     <header class="main-header" id="mainHeader">
         <div class="container header-container">
-            <!-- Logo -->
+            <!-- Logo más pequeño -->
             <a href="/" class="logo">
                 <img src="/public/icons/logo-mabel.png" class="logo-png" alt="Mabel Activewear">
             </a>
 
-            <!-- Navegación -->
+            <!-- Navegación MÁS COMPACTA -->
             <nav class="main-nav">
                 <ul class="nav-menu">
                     <li><a href="/shop">TIENDA</a></li>
@@ -255,7 +409,7 @@
                 </ul>
             </nav>
 
-            <!-- Iconos -->
+            <!-- Iconos más pequeños -->
             <div class="header-icons">
                 <a href="/account" class="icon-link" title="Mi Cuenta">
                     <i class="fas fa-user"></i>
@@ -268,7 +422,7 @@
         </div>
     </header>
 
-    <!-- Hero -->
+    <!-- Hero MÁS COMPACTO -->
     <section class="help-hero">
         <div class="container">
             <h1 class="help-hero-title">CENTRO DE AYUDA</h1>
@@ -278,7 +432,7 @@
         </div>
     </section>
 
-    <!-- Categorías de Ayuda -->
+    <!-- Categorías de Ayuda MÁS COMPACTAS -->
     <section class="help-section">
         <div class="help-container">
             <div class="help-categories">
@@ -307,7 +461,7 @@
                 </a>
             </div>
             
-            <!-- Contenido Principal -->
+            <!-- Contenido Principal MÁS COMPACTO -->
             <div class="help-content">
                 <div class="help-tabs">
                     <button class="help-tab active" data-tab="faq">Preguntas Frecuentes</button>
@@ -374,29 +528,23 @@
                     <div class="policy-content">
                         <h3>Tiempos de Envío</h3>
                         <ul>
-                            <li><strong>Envío Nacional:</strong> 3-5 días hábiles</li>
-                            <li><strong>Envío Internacional:</strong> 7-14 días hábiles</li>
-                            <li><strong>Envío Express:</strong> 1-3 días hábiles (disponible para algunos destinos)</li>
+                            <li><strong>Envío Nacional:</strong> Depende de la paqueteria que eliga</li>
+                          
                         </ul>
                         
                         <h3>Costos de Envío</h3>
                         <ul>
-                            <li>Envío gratuito en pedidos superiores a $50</li>
-                            <li>Envío Nacional: $5.99 (pedidos menores a $50)</li>
-                            <li>Envío Internacional: Los costos varían según el destino</li>
-                            <li>Envío Express: $15.99 adicionales</li>
+                            <li>Esto tambien depende de su paqueteria</li>
                         </ul>
                         
                         <h3>Seguimiento de Pedidos</h3>
                         <p>
-                            Todos los pedidos incluyen número de seguimiento. Recibirás actualizaciones por email 
-                            cuando tu pedido sea despachado y durante el proceso de entrega.
+                            Cuando tu pedido sea entregado a la paqueteria se enviara un correo de confirmación.
                         </p>
                         
                         <h3>Destinos Internacionales</h3>
                         <p>
-                            Actualmente realizamos envíos a: Estados Unidos, Canadá, México, 
-                            países de la Unión Europea, Reino Unido, Australia y Nueva Zelanda.
+                            Actualmente realizamos envíos a: Republica Dominicana
                         </p>
                     </div>
                 </div>
@@ -511,11 +659,11 @@
                     </div>
                 </div>
                 
-                <!-- CTA de Contacto -->
+                <!-- CTA de Contacto MÁS COMPACTO -->
                 <div class="contact-cta">
                     <h3>¿No encontraste lo que buscabas?</h3>
-                    <p style="margin-bottom: 20px;">Nuestro equipo de soporte está aquí para ayudarte.</p>
-                    <a href="/contacto" class="btn" style="display: inline-block;">
+                    <p>Nuestro equipo de soporte está aquí para ayudarte.</p>
+                    <a href="/contacto" class="btn" style="display: inline-block; padding: 10px 20px; font-size: 12px;">
                         <i class="fas fa-envelope"></i> Contactar Soporte
                     </a>
                 </div>
@@ -523,14 +671,14 @@
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Footer MÁS COMPACTO -->
     <footer class="main-footer">
         <div class="container">
             <div class="footer-content">
                 <!-- Información de la Empresa -->
                 <div class="footer-section">
                     <h3>MABEL ACTIVEWEAR</h3>
-                    <p>
+                    <p style="font-size: 12px;">
                         Ropa deportiva femenina de alta calidad. Diseñada para mujeres activas 
                         que valoran el estilo, el rendimiento y la comodidad en cada movimiento.
                     </p>
@@ -586,7 +734,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p class="copyright">
+                <p class="copyright" style="font-size: 11px;">
                     &copy; 2024 MABEL ACTIVEWEAR. TODOS LOS DERECHOS RESERVADOS.
                 </p>
             </div>

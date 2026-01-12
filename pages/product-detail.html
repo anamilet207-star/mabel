@@ -15,19 +15,219 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     
+    <!-- Agrega estos estilos para hacer el menú más pequeño -->
     <style>
+        /* ========== MENÚ MÁS PEQUEÑO ========== */
+        .top-bar {
+            padding: 4px 0;
+            font-size: 9px;
+        }
+        
+        .top-bar-content {
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .top-bar-links {
+            font-size: 8px;
+            gap: 12px;
+        }
+        
+        .main-header {
+            padding: 6px 0;
+        }
+        
+        .logo img {
+            max-height: 25px;
+        }
+        
+        .header-icons {
+            font-size: 12px;
+            gap: 12px;
+        }
+        
+        .cart-count {
+            font-size: 7px;
+            width: 10px;
+            height: 10px;
+            top: -6px;
+            right: -6px;
+        }
+        
+        .main-nav {
+            margin-top: 6px;
+        }
+        
+        .nav-menu {
+            gap: 6px;
+            padding-bottom: 3px;
+            min-height: 28px;
+        }
+        
+        .nav-menu li a {
+            font-size: 9px;
+            padding: 4px 6px;
+        }
+        
+        /* ========== BREADCRUMB MÁS PEQUEÑO ========== */
+        .breadcrumb {
+            padding: 10px 0; /* Reducido */
+            margin-top: 5px; /* Reducido */
+            font-size: 11px; /* Reducido */
+        }
+        
+        .breadcrumb i {
+            font-size: 9px; /* Reducido */
+            margin: 0 5px; /* Reducido */
+        }
+        
+        /* ========== TÍTULO DEL PRODUCTO MÁS PEQUEÑO ========== */
+        .product-title {
+            font-size: 22px; /* Reducido de 28px */
+            margin-bottom: 8px; /* Reducido */
+        }
+        
+        .product-sku {
+            font-size: 11px; /* Reducido */
+            margin-bottom: 8px; /* Reducido */
+        }
+        
+        .product-price {
+            font-size: 20px; /* Reducido de 24px */
+            margin-bottom: 20px; /* Reducido */
+        }
+        
+        /* ========== MEDIA QUERIES ========== */
+        @media (min-width: 768px) {
+            .top-bar {
+                padding: 6px 0;
+                font-size: 10px;
+            }
+            
+            .top-bar-content {
+                flex-direction: row;
+            }
+            
+            .top-bar-links {
+                font-size: 9px;
+            }
+            
+            .main-header {
+                padding: 10px 0;
+            }
+            
+            .logo img {
+                max-height: 30px;
+            }
+            
+            .header-icons {
+                font-size: 14px;
+                gap: 15px;
+            }
+            
+            .main-nav {
+                margin-top: 0;
+            }
+            
+            .nav-menu {
+                gap: 10px;
+                padding-bottom: 0;
+            }
+            
+            .nav-menu li a {
+                font-size: 10px;
+                padding: 6px 8px;
+            }
+            
+            .cart-count {
+                font-size: 8px;
+                width: 12px;
+                height: 12px;
+                top: -7px;
+                right: -7px;
+            }
+            
+            .breadcrumb {
+                font-size: 12px;
+                padding: 12px 0;
+            }
+            
+            .product-title {
+                font-size: 24px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .top-bar {
+                font-size: 11px;
+            }
+            
+            .nav-menu {
+                gap: 15px;
+            }
+            
+            .nav-menu li a {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            
+            .product-title {
+                font-size: 26px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .top-bar {
+                font-size: 8px;
+                padding: 3px 0;
+            }
+            
+            .top-bar-links {
+                gap: 8px;
+                font-size: 7px;
+            }
+            
+            .logo img {
+                max-height: 22px;
+            }
+            
+            .header-icons {
+                font-size: 11px;
+                gap: 10px;
+            }
+            
+            .nav-menu {
+                gap: 4px;
+            }
+            
+            .nav-menu li a {
+                font-size: 8px;
+                padding: 3px 5px;
+            }
+            
+            .breadcrumb {
+                font-size: 10px;
+                padding: 8px 0;
+            }
+            
+            .product-title {
+                font-size: 20px;
+            }
+        }
+        
         /* Estilos minimalistas de carga */
         .loading-state {
             text-align: center;
-            padding: 100px 20px;
+            padding: 80px 20px; /* Reducido */
             color: #666;
             font-weight: 300;
             letter-spacing: 1px;
         }
         
         .loading-state i {
-            font-size: 24px;
-            margin-bottom: 20px;
+            font-size: 20px; /* Reducido */
+            margin-bottom: 15px; /* Reducido */
             color: #999;
             animation: spin 1s linear infinite;
         }
@@ -39,46 +239,64 @@
         
         /* Estilos para la sección de modelo */
         .model-image-placeholder {
-            width: 80px;
-            height: 80px;
+            width: 70px; /* Reducido */
+            height: 70px; /* Reducido */
             border-radius: 50%;
             background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #999;
-            font-size: 12px;
+            font-size: 11px; /* Reducido */
             font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px; /* Reducido */
         }
     </style>
 </head>
 <body>
-    <!-- Header Elegante -->
-    <header class="main-header">
+    <!-- Header Superior MÁS PEQUEÑO -->
+    <div class="top-bar">
+        <div class="container top-bar-content">
+            <div class="top-bar-text">
+                ENVÍO A LA PAQUETERIA DE TU ELECCIÓN
+            </div>
+            <ul class="top-bar-links">
+                <li><a href="/envios">Envíos</a></li>
+                <li><a href="/ayuda" class="active">Ayuda</a></li>
+                <li><a href="/contacto">Contacto</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Header Principal MÁS COMPACTO -->
+    <header class="main-header" id="mainHeader">
         <div class="container header-container">
-            <!-- Logo -->
+            <!-- Logo más pequeño -->
             <a href="/" class="logo">
                 <img src="/public/icons/logo-mabel.png" class="logo-png" alt="Mabel Activewear">
             </a>
 
-            <!-- Navegación -->
+            <!-- Navegación Principal MÁS COMPACTA -->
             <nav class="main-nav">
                 <ul class="nav-menu">
-                    <li><a href="/shop">TIENDA</a></li>
+                    <li><a href="/shop">NOVEDADES</a></li>
                     <li><a href="/shop?category=leggings">LEGGINGS</a></li>
                     <li><a href="/shop?category=tops">TOPS</a></li>
                     <li><a href="/shop?category=sets">SETS</a></li>
+                    <li><a href="/shop?category=accesorios">ACCESORIOS</a></li>
                 </ul>
             </nav>
 
-            <!-- Iconos -->
+            <!-- Iconos más pequeños -->
             <div class="header-icons">
                 <a href="/account" class="icon-link" title="Mi Cuenta">
                     <i class="fas fa-user"></i>
                 </a>
-                <a href="/cart" class="icon-link" title="Carrito">
+                <a href="#" class="icon-link" id="searchToggle" title="Buscar">
+                    <i class="fas fa-search"></i>
+                </a>
+                <a href="/cart" class="icon-link active" title="Carrito">
                     <i class="fas fa-shopping-bag"></i>
                     <span class="cart-count">0</span>
                 </a>
@@ -86,7 +304,7 @@
         </div>
     </header>
 
-    <!-- Breadcrumb Elegante -->
+    <!-- Breadcrumb Elegante MÁS COMPACTO -->
     <nav class="breadcrumb">
         <div class="container">
             <a href="/">Inicio</a>
@@ -248,7 +466,7 @@
                 <!-- esta parte no se ve en la pagina y asi tiene que ser pero no lo quito por si acaso -->
                 <div class="accordion-item">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
-                        <h4>ENVÍOS Y DEVOLUCIONES</h4>
+                        <h4>ENVÍOS </h4>
                         <span class="accordion-icon">▼</span>
                     </div>
                     <div class="accordion-content">
@@ -256,24 +474,12 @@
                             <div class="shipping-item">
                                 <i class="fas fa-shipping-fast"></i>
                                 <div>
-                                    <h5>Envío Estándar</h5>
-                                    <p>3-5 días hábiles • Gratis en pedidos superiores a $50</p>
+                                    <h5>Envío</h5>
+                                    <p>Envios a la paqueteria de tu elección</p>
                                 </div>
                             </div>
-                            <div class="shipping-item">
-                                <i class="fas fa-rocket"></i>
-                                <div>
-                                    <h5>Envío Express</h5>
-                                    <p>1-2 días hábiles • $10 adicionales</p>
-                                </div>
-                            </div>
-                            <div class="shipping-item">
-                                <i class="fas fa-undo-alt"></i>
-                                <div>
-                                    <h5>Devoluciones</h5>
-                                    <p>30 días para cambios o devoluciones • Gratuitas</p>
-                                </div>
-                            </div>
+                            
+                            <
                         </div>
                     </div>
                 </div>
@@ -446,7 +652,7 @@
 
             <div class="footer-bottom">
                 <p class="copyright">
-                    &copy; 2024 MABEL ACTIVEWEAR. TODOS LOS DERECHOS RESERVADOS.
+                    &copy; 2026 MABEL ACTIVEWEAR. TODOS LOS DERECHOS RESERVADOS.
                 </p>
             </div>
         </div>

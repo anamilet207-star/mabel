@@ -15,32 +15,291 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     
+    <!-- Agrega estos estilos para hacer el menú más pequeño -->
     <style>
-        /* Estilos específicos para contacto */
-        .contact-hero {
-            background: linear-gradient(135deg, #000 0%, #333 100%);
-            color: white;
-            padding: 80px 0;
-            text-align: center;
+        /* ========== TOP BAR MÁS PEQUEÑO ========== */
+        .top-bar {
+            padding: 4px 0;
+            font-size: 9px;
         }
         
-        .contact-hero-title {
-            font-size: 48px;
-            font-weight: 300;
-            letter-spacing: 3px;
-            margin-bottom: 20px;
+        .top-bar-content {
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
         
-        .contact-hero-subtitle {
-            font-size: 18px;
-            opacity: 0.8;
+        .top-bar-links {
+            font-size: 8px;
+            gap: 12px;
+        }
+        
+        /* ========== HEADER MÁS PEQUEÑO ========== */
+        .main-header {
+            padding: 6px 0;
+        }
+        
+        .logo img {
+            max-height: 25px;
+        }
+        
+        .header-icons {
+            font-size: 12px;
+            gap: 12px;
+        }
+        
+        .cart-count {
+            font-size: 7px;
+            width: 10px;
+            height: 10px;
+            top: -6px;
+            right: -6px;
+        }
+        
+        .main-nav {
+            margin-top: 6px;
+        }
+        
+        .nav-menu {
+            gap: 6px;
+            padding-bottom: 3px;
+            min-height: 28px;
+        }
+        
+        .nav-menu li a {
+            font-size: 9px;
+            padding: 4px 6px;
+        }
+        
+        /* ========== HERO SECTION MÁS PEQUEÑA ========== */
+        .contact-section:first-of-type {
+            padding: 40px 0; /* Reducido de 100px */
+        }
+        
+        .contact-section:first-of-type h1 {
+            font-size: 28px; /* Reducido */
+            margin-bottom: 20px; /* Reducido */
+        }
+        
+        /* ========== FORMULARIOS MÁS PEQUEÑOS ========== */
+        .form-group {
+            margin-bottom: 15px; /* Reducido de 25px */
+        }
+        
+        .form-group label {
+            font-size: 12px; /* Reducido de 14px */
+            margin-bottom: 5px; /* Reducido de 8px */
+        }
+        
+        .form-control {
+            padding: 8px 12px; /* Reducido de 12px 15px */
+            font-size: 13px; /* Reducido de 14px */
+        }
+        
+        .submit-btn {
+            padding: 10px 20px; /* Reducido de 15px 30px */
+            font-size: 12px; /* Reducido de 14px */
+        }
+        
+        /* ========== CONTACT INFO MÁS PEQUEÑA ========== */
+        .contact-info,
+        .contact-form-container {
+            padding: 25px; /* Reducido de 40px */
+        }
+        
+        .contact-info-title {
+            font-size: 20px; /* Reducido de 24px */
+            margin-bottom: 20px; /* Reducido de 30px */
+        }
+        
+        .contact-info-item {
+            margin-bottom: 20px; /* Reducido de 30px */
+            padding-bottom: 15px; /* Reducido de 20px */
+            gap: 15px; /* Reducido de 20px */
+        }
+        
+        .contact-icon {
+            width: 40px; /* Reducido de 50px */
+            height: 40px; /* Reducido de 50px */
+            font-size: 16px; /* Reducido de 20px */
+        }
+        
+        /* ========== FAQ SECTION MÁS PEQUEÑA ========== */
+        .faq-section {
+            padding: 50px 0; /* Reducido de 80px */
+        }
+        
+        .faq-title {
+            font-size: 24px; /* Reducido de 32px */
+            margin-bottom: 30px; /* Reducido de 50px */
+        }
+        
+        .faq-question {
+            padding: 15px; /* Reducido de 20px */
+            font-size: 14px; /* Reducido */
+        }
+        
+        .faq-answer {
+            padding: 15px; /* Reducido de 20px */
+            font-size: 13px; /* Reducido */
+        }
+        
+        /* ========== MAP SECTION MÁS PEQUEÑA ========== */
+        .map-section {
+            height: 300px; /* Reducido de 400px */
+        }
+        
+        /* ========== MEDIA QUERIES ========== */
+        @media (min-width: 768px) {
+            .top-bar {
+                padding: 6px 0;
+                font-size: 10px;
+            }
+            
+            .top-bar-content {
+                flex-direction: row;
+            }
+            
+            .top-bar-links {
+                font-size: 9px;
+            }
+            
+            .main-header {
+                padding: 10px 0;
+            }
+            
+            .logo img {
+                max-height: 30px;
+            }
+            
+            .header-icons {
+                font-size: 14px;
+                gap: 15px;
+            }
+            
+            .main-nav {
+                margin-top: 0;
+            }
+            
+            .nav-menu {
+                gap: 10px;
+                padding-bottom: 0;
+            }
+            
+            .nav-menu li a {
+                font-size: 10px;
+                padding: 6px 8px;
+            }
+            
+            .cart-count {
+                font-size: 8px;
+                width: 12px;
+                height: 12px;
+                top: -7px;
+                right: -7px;
+            }
+            
+            .contact-section:first-of-type {
+                padding: 60px 0;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .top-bar {
+                font-size: 11px;
+            }
+            
+            .nav-menu {
+                gap: 15px;
+            }
+            
+            .nav-menu li a {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .top-bar {
+                font-size: 8px;
+                padding: 3px 0;
+            }
+            
+            .top-bar-links {
+                gap: 8px;
+                font-size: 7px;
+            }
+            
+            .logo img {
+                max-height: 22px;
+            }
+            
+            .header-icons {
+                font-size: 11px;
+                gap: 10px;
+            }
+            
+            .nav-menu {
+                gap: 4px;
+            }
+            
+            .nav-menu li a {
+                font-size: 8px;
+                padding: 3px 5px;
+            }
+            
+            .contact-info,
+            .contact-form-container {
+                padding: 20px 15px;
+            }
+            
+            .contact-icon {
+                width: 35px;
+                height: 35px;
+            }
+        }
+        
+        /* ========== ESTILOS EXISTENTES (ajustados) ========== */
+        .contact-section:first-of-type {
+            background-color: #f8f8f8;
+        }
+        
+        .contact-section:first-of-type .container {
             max-width: 600px;
             margin: 0 auto;
+            padding: 0 20px;
         }
         
-        .contact-section {
-            padding: 100px 0;
-            background-color: #f8f8f8;
+        .contact-section:first-of-type form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .contact-section:first-of-type input,
+        .contact-section:first-of-type textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+        }
+        
+        .contact-section:first-of-type button {
+            background: #000;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .contact-section:first-of-type button:hover {
+            background: #333;
         }
         
         .contact-container {
@@ -51,45 +310,27 @@
         
         .contact-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-            margin-top: 50px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Reducido de 300px */
+            gap: 30px; /* Reducido de 40px */
+            margin-top: 40px; /* Reducido de 50px */
         }
         
-        .contact-info {
+        .contact-info,
+        .contact-form-container {
             background: white;
-            padding: 40px;
             border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); /* Reducido de 20px */
         }
         
         .contact-info-title {
-            font-size: 24px;
             font-weight: 500;
-            margin-bottom: 30px;
             color: #333;
         }
         
         .contact-info-item {
             display: flex;
             align-items: flex-start;
-            gap: 20px;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
             border-bottom: 1px solid #eee;
-        }
-        
-        .contact-icon {
-            width: 50px;
-            height: 50px;
-            background: #f8f8f8;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: #333;
-            flex-shrink: 0;
         }
         
         .contact-details h4 {
@@ -101,45 +342,21 @@
         .contact-details p {
             margin: 0;
             color: #666;
-            font-size: 14px;
+            font-size: 13px; /* Reducido de 14px */
+            line-height: 1.5;
         }
         
-        .contact-form-container {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        
-        .form-group {
-            margin-bottom: 25px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
+        .contact-details a {
             color: #333;
-            font-size: 14px;
+            text-decoration: none;
         }
         
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            font-family: 'Montserrat', sans-serif;
-            transition: border-color 0.3s;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: #333;
+        .contact-details a:hover {
+            text-decoration: underline;
         }
         
         textarea.form-control {
-            min-height: 150px;
+            min-height: 120px; /* Reducido de 150px */
             resize: vertical;
         }
         
@@ -147,9 +364,7 @@
             background: #000;
             color: white;
             border: none;
-            padding: 15px 30px;
             border-radius: 4px;
-            font-size: 14px;
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -163,9 +378,14 @@
         }
         
         .business-hours {
-            margin-top: 40px;
-            padding-top: 30px;
+            margin-top: 25px; /* Reducido de 40px */
+            padding-top: 20px; /* Reducido de 30px */
             border-top: 1px solid #eee;
+        }
+        
+        .business-hours h4 {
+            margin-bottom: 15px; /* Reducido */
+            font-size: 16px; /* Reducido */
         }
         
         .hours-table {
@@ -178,8 +398,9 @@
         }
         
         .hours-table td {
-            padding: 10px 0;
+            padding: 8px 0; /* Reducido de 10px */
             color: #666;
+            font-size: 13px; /* Reducido */
         }
         
         .hours-table td:first-child {
@@ -188,20 +409,25 @@
         }
         
         .social-contact {
-            margin-top: 40px;
-            padding-top: 30px;
+            margin-top: 25px; /* Reducido de 40px */
+            padding-top: 20px; /* Reducido de 30px */
             border-top: 1px solid #eee;
+        }
+        
+        .social-contact h4 {
+            margin-bottom: 15px; /* Reducido */
+            font-size: 16px; /* Reducido */
         }
         
         .social-links-contact {
             display: flex;
-            gap: 15px;
-            margin-top: 20px;
+            gap: 12px; /* Reducido de 15px */
+            margin-top: 15px; /* Reducido de 20px */
         }
         
         .social-link-contact {
-            width: 40px;
-            height: 40px;
+            width: 35px; /* Reducido de 40px */
+            height: 35px; /* Reducido de 40px */
             background: #f8f8f8;
             border-radius: 50%;
             display: flex;
@@ -217,33 +443,19 @@
             color: white;
         }
         
-        .faq-section {
-            padding: 80px 0;
-            background: white;
-        }
-        
-        .faq-title {
-            text-align: center;
-            font-size: 32px;
-            font-weight: 300;
-            margin-bottom: 50px;
-            letter-spacing: 2px;
-        }
-        
         .faq-container {
             max-width: 800px;
             margin: 0 auto;
         }
         
         .faq-item {
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* Reducido de 20px */
             border: 1px solid #eee;
             border-radius: 4px;
             overflow: hidden;
         }
         
         .faq-question {
-            padding: 20px;
             background: #f8f8f8;
             cursor: pointer;
             display: flex;
@@ -253,7 +465,6 @@
         }
         
         .faq-answer {
-            padding: 20px;
             display: none;
             color: #666;
             line-height: 1.6;
@@ -268,12 +479,6 @@
             color: white;
         }
         
-        .map-section {
-            height: 400px;
-            background: #f8f8f8;
-            position: relative;
-        }
-        
         .map-placeholder {
             height: 100%;
             display: flex;
@@ -284,23 +489,14 @@
         }
         
         @media (max-width: 768px) {
-            .contact-hero-title {
-                font-size: 36px;
-            }
-            
             .contact-grid {
                 grid-template-columns: 1fr;
-            }
-            
-            .contact-info,
-            .contact-form-container {
-                padding: 30px 20px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Top Bar -->
+    <!-- Top Bar MÁS PEQUEÑO -->
     <div class="top-bar">
         <div class="container top-bar-content">
             <div class="top-bar-text">
@@ -314,26 +510,26 @@
         </div>
     </div>
 
-    <!-- Header -->
+    <!-- Header Principal MÁS COMPACTO -->
     <header class="main-header" id="mainHeader">
         <div class="container header-container">
-            <!-- Logo -->
+            <!-- Logo más pequeño -->
             <a href="/" class="logo">
                 <img src="/public/icons/logo-mabel.png" class="logo-png" alt="Mabel Activewear">
             </a>
 
-            <!-- Navegación -->
+            <!-- Navegación Principal MÁS COMPACTA -->
             <nav class="main-nav">
                 <ul class="nav-menu">
-                    <li><a href="/shop">TIENDA</a></li>
+                    <li><a href="/shop">NOVEDADES</a></li>
                     <li><a href="/shop?category=leggings">LEGGINGS</a></li>
                     <li><a href="/shop?category=tops">TOPS</a></li>
                     <li><a href="/shop?category=sets">SETS</a></li>
-                    <li><a href="/ofertas">OFERTAS</a></li>
+                    <li><a href="/shop?category=accesorios">ACCESORIOS</a></li>
                 </ul>
             </nav>
 
-            <!-- Iconos -->
+            <!-- Iconos más pequeños -->
             <div class="header-icons">
                 <a href="/account" class="icon-link" title="Mi Cuenta">
                     <i class="fas fa-user"></i>
@@ -346,7 +542,7 @@
         </div>
     </header>
 
-    <!-- Hero -->
+    <!-- Hero Section MÁS COMPACTA -->
     <section class="contact-section">
         <div class="container">
             <h1>Contacto</h1>
@@ -359,7 +555,7 @@
         </div>
     </section>
 
-    <!-- Contact Section -->
+    <!-- Contact Section MÁS COMPACTA -->
     <section class="contact-section">
         <div class="contact-container">
             <div class="contact-grid">
@@ -372,24 +568,10 @@
                             <i class="fas fa-map-marker-alt"></i>
                         </div>
                         <div class="contact-details">
-                            <h4>Dirección</h4>
+                            <h4>WhatsApp</h4>
                             <p>
-                                Calle Principal 1234<br>
-                                Ciudad, CP 12345<br>
-                                País
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="contact-info-item">
-                        <div class="contact-icon">
-                            <i class="fas fa-phone"></i>
-                        </div>
-                        <div class="contact-details">
-                            <h4>Teléfono</h4>
-                            <p>
-                                +1 (555) 123-4567<br>
-                                <small>Lunes a Viernes: 9:00 - 18:00</small>
+                                +1 (829) 220-2292<br>
+                                <small>Consulta rápida y atención personalizada</small>
                             </p>
                         </div>
                     </div>
@@ -401,8 +583,8 @@
                         <div class="contact-details">
                             <h4>Email</h4>
                             <p>
-                                <a href="mailto:info@mabelactivewear.com">Albasotofranco05@gmail.com</a><br>
-                                <a href="mailto:soporte@mabelactivewear.com">soporte@mabelactivewear.com</a>
+                                <a href="mailto:Albasotofranco05@gmail.com">Albasotofranco05@gmail.com</a><br>
+                                <small>Para consultas generales y negocios</small>
                             </p>
                         </div>
                     </div>
@@ -412,16 +594,12 @@
                         <h4>Horario de Atención</h4>
                         <table class="hours-table">
                             <tr>
-                                <td>Lunes - Viernes</td>
-                                <td>9:00 AM - 6:00 PM</td>
-                            </tr>
-                            <tr>
-                                <td>Sábados</td>
-                                <td>10:00 AM - 2:00 PM</td>
+                                <td>Lunes - Sábado</td>
+                                <td>9:00 AM - 8:00 PM</td>
                             </tr>
                             <tr>
                                 <td>Domingos</td>
-                                <td>Cerrado</td>
+                                <td>10:00 AM - 2:00 PM</td>
                             </tr>
                         </table>
                     </div>
@@ -438,9 +616,6 @@
                             </a>
                             <a href="#" class="social-link-contact" aria-label="TikTok">
                                 <i class="fab fa-tiktok"></i>
-                            </a>
-                            <a href="#" class="social-link-contact" aria-label="Pinterest">
-                                <i class="fab fa-pinterest-p"></i>
                             </a>
                         </div>
                     </div>
@@ -462,7 +637,7 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="phone">Teléfono</label>
+                            <label for="phone">Teléfono / WhatsApp</label>
                             <input type="tel" id="phone" class="form-control">
                         </div>
                         
@@ -491,7 +666,7 @@
         </div>
     </section>
 
-    <!-- Preguntas Frecuentes -->
+    <!-- Preguntas Frecuentes MÁS COMPACTA -->
     <section class="faq-section">
         <div class="container">
             <h2 class="faq-title">PREGUNTAS FRECUENTES</h2>
@@ -499,60 +674,50 @@
             <div class="faq-container">
                 <div class="faq-item">
                     <div class="faq-question">
-                        ¿Cuáles son los tiempos de envío?
+                        ¿Cómo puedo realizar un pedido?
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        Los tiempos de envío varían según la ubicación. Envíos nacionales: 3-5 días hábiles. 
-                        Envíos internacionales: 7-14 días hábiles. Recibirás un email con información de seguimiento 
-                        una vez que tu pedido sea despachado.
+                        Puedes realizar tu pedido directamente en nuestra tienda online. 
+                        Selecciona los productos, elige talla y color, y procede al checkout. 
+                        También puedes contactarnos por WhatsApp para asesoría personalizada.
                     </div>
                 </div>
                 
                 <div class="faq-item">
                     <div class="faq-question">
-                        ¿Ofrecen envío gratuito?
+                        ¿Cuáles son los métodos de pago disponibles?
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        Sí, ofrecemos envío gratuito en todos los pedidos superiores a $50. 
-                        Para pedidos inferiores a este monto, el costo de envío se calcula al momento del checkout.
+                        Aceptamos transferencias bancarias al Banco Popular Dominicano. 
+                        Una vez realizada la transferencia, envíanos el comprobante por WhatsApp 
+                        para confirmar y procesar tu pedido.
                     </div>
                 </div>
                 
                 <div class="faq-item">
                     <div class="faq-question">
-                        ¿Cómo puedo hacer un seguimiento de mi pedido?
+                        ¿Cuánto tardan los envíos en República Dominicana?
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        Una vez que tu pedido sea despachado, recibirás un email con el número de seguimiento 
-                        y el enlace para rastrear tu paquete. También puedes iniciar sesión en tu cuenta 
-                        para ver el estado de tu pedido.
+                        Los envíos a paqueterías en República Dominicana tardan de 3 a 5 días hábiles 
+                        una vez confirmado el pago. Te enviaremos el código de seguimiento por email o WhatsApp.
                     </div>
                 </div>
                 
                 <div class="faq-item">
                     <div class="faq-question">
-                        ¿Qué métodos de pago aceptan?
+                        ¿Ofrecen cambios o devoluciones?
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        Aceptamos todas las tarjetas de crédito principales (Visa, MasterCard, American Express), 
-                        PayPal y transferencias bancarias en algunos países.
+                        Sí, aceptamos cambios dentro de los primeros 7 días luego de recibido el producto. 
+                        Los artículos deben estar en perfecto estado, con etiquetas y sin uso. 
+                        Las devoluciones están sujetas a revisión y condiciones específicas.
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Mapa (Placeholder) -->
-    <section class="map-section">
-        <div class="map-placeholder">
-            <div style="text-align: center;">
-                <i class="fas fa-map-marker-alt fa-3x" style="color: #ccc; margin-bottom: 20px;"></i>
-                <h3 style="margin-bottom: 10px; color: #666;">Ubicación de Nuestra Oficina</h3>
-                <p style="color: #999;">Calle Principal 1234, Ciudad, País</p>
             </div>
         </div>
     </section>
@@ -605,15 +770,15 @@
                     <ul class="footer-links">
                         <li>
                             <i class="fas fa-envelope"></i>
-                            <a href="mailto:info@mabelactivewear.com">info@mabelactivewear.com</a>
+                            <a href="mailto:Albasotofranco05@gmail.com">Albasotofranco05@gmail.com</a>
                         </li>
                         <li>
-                            <i class="fas fa-phone"></i>
-                            <a href="tel:+15551234567">+1 (555) 123-4567</a>
+                            <i class="fab fa-whatsapp"></i>
+                            <a href="https://wa.me/18292202292">+1 (829) 220-2292</a>
                         </li>
                         <li>
                             <i class="fas fa-clock"></i>
-                            <span>Lun-Vie: 9:00-18:00</span>
+                            <span>Lun-Sáb: 9:00-20:00</span>
                         </li>
                     </ul>
                 </div>
@@ -621,7 +786,7 @@
 
             <div class="footer-bottom">
                 <p class="copyright">
-                    &copy; 2024 MABEL ACTIVEWEAR. TODOS LOS DERECHOS RESERVADOS.
+                    &copy; 2026 MABEL ACTIVEWEAR. TODOS LOS DERECHOS RESERVADOS.
                 </p>
             </div>
         </div>
@@ -630,16 +795,6 @@
     <!-- Scripts -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Header scroll effect
-            const header = document.getElementById('mainHeader');
-            window.addEventListener('scroll', function() {
-                if (window.scrollY > 100) {
-                    header.classList.add('scrolled');
-                } else {
-                    header.classList.remove('scrolled');
-                }
-            });
-            
             // FAQ Accordion
             const faqItems = document.querySelectorAll('.faq-item');
             faqItems.forEach(item => {
@@ -687,11 +842,11 @@
                         // En un entorno real, aquí harías fetch al backend
                         await new Promise(resolve => setTimeout(resolve, 1500));
                         
-                        alert('¡Gracias por contactarnos! Te responderemos en un plazo de 24-48 horas.');
+                        alert('¡Gracias por contactarnos! Te responderemos por email o WhatsApp en un plazo de 24 horas.');
                         contactForm.reset();
                         
                     } catch (error) {
-                        alert('Hubo un error al enviar el mensaje. Por favor, inténtalo de nuevo.');
+                        alert('Hubo un error al enviar el mensaje. Por favor, inténtalo de nuevo o contáctanos por WhatsApp.');
                     } finally {
                         submitBtn.innerHTML = originalText;
                         submitBtn.disabled = false;
@@ -701,18 +856,30 @@
             
             // Actualizar contador del carrito
             updateCartCount();
+            
+            // Netlify Form
+            const netlifyForm = document.querySelector('form[name="contact"]');
+            if (netlifyForm) {
+                netlifyForm.addEventListener('submit', function() {
+                    alert('¡Mensaje enviado! Nos pondremos en contacto contigo pronto.');
+                });
+            }
         });
         
         function updateCartCount() {
-            const cart = JSON.parse(localStorage.getItem('mabel_cart')) || [];
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            
-            document.querySelectorAll('.cart-count').forEach(element => {
-                if (element) {
-                    element.textContent = totalItems;
-                    element.style.display = totalItems > 0 ? 'inline-block' : 'none';
-                }
-            });
+            try {
+                const cart = JSON.parse(localStorage.getItem('mabel_cart')) || [];
+                const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+                
+                document.querySelectorAll('.cart-count').forEach(element => {
+                    if (element) {
+                        element.textContent = totalItems;
+                        element.style.display = totalItems > 0 ? 'inline-block' : 'none';
+                    }
+                });
+            } catch (error) {
+                console.error('Error actualizando contador:', error);
+            }
         }
     </script>
 </body>

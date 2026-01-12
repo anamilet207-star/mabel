@@ -13,51 +13,114 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <style>
-        body {
-            background-color: #f8f8f8;
-            font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+        /* ========== HEADER SIMPLE MÁS PEQUEÑO ========== */
+        .main-header {
+            background: white;
+            border-bottom: 1px solid #eee;
+            padding: 6px 0; /* Reducido */
+        }
+        
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px; /* Reducido padding horizontal */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            text-decoration: none;
+            color: #000;
+            font-size: 18px; /* Reducido de 24px */
+            font-weight: 300;
+            letter-spacing: 1.5px; /* Reducido de 2px */
+        }
+        
+        .btn-outline {
+            padding: 8px 15px; /* Reducido de 10px 20px */
+            border: 1px solid #000;
+            color: #000;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 10px; /* Reducido de 12px */
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline:hover {
+            background: #000;
+            color: white;
+        }
+        
+        /* ========== HERO MÁS PEQUEÑO ========== */
+        .auth-hero {
+            text-align: center;
+            padding: 40px 20px; /* Reducido de 60px 20px */
+            background: linear-gradient(135deg, #f8f8f8 0%, #fff 100%);
+        }
+        
+        .auth-title {
+            font-size: 28px; /* Reducido de 36px */
+            font-weight: 300;
+            letter-spacing: 3px; /* Reducido de 4px */
+            margin-bottom: 10px; /* Reducido de 15px */
+        }
+        
+        .auth-subtitle {
+            color: #666;
+            max-width: 500px;
+            margin: 0 auto;
+            font-size: 14px; /* Reducido */
+        }
+        
+        /* ========== FORMULARIO MÁS COMPACTO ========== */
+        .auth-section {
+            padding: 20px 0 60px; /* Reducido de 40px 0 100px */
         }
         
         .auth-container {
             max-width: 500px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 20px; /* Reducido de 40px 20px */
         }
         
         .auth-form-container {
             background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 30px; /* Reducido de 40px */
+            border-radius: 6px; /* Reducido de 8px */
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05); /* Reducido de 0 4px 20px */
         }
         
         .auth-form-title {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px; /* Reducido de 30px */
             font-weight: 300;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px; /* Reducido de 2px */
             text-transform: uppercase;
+            font-size: 18px;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* Reducido de 20px */
         }
         
         .form-label {
             display: block;
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 6px; /* Reducido de 8px */
+            font-size: 12px; /* Reducido de 13px */
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px; /* Reducido de 1px */
             color: #666;
         }
         
         .form-input {
             width: 100%;
-            padding: 12px 15px;
+            padding: 10px 12px; /* Reducido de 12px 15px */
             border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+            border-radius: 3px; /* Reducido de 4px */
+            font-size: 13px; /* Reducido de 14px */
             transition: border-color 0.3s;
         }
         
@@ -66,18 +129,24 @@
             border-color: #000;
         }
         
+        small {
+            color: #666;
+            font-size: 11px; /* Reducido de 12px */
+        }
+        
         .auth-submit-btn {
             width: 100%;
-            padding: 15px;
+            padding: 12px; /* Reducido de 15px */
             background: #000;
             color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 14px;
+            border-radius: 3px; /* Reducido de 4px */
+            font-size: 12px; /* Reducido de 14px */
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px; /* Reducido de 2px */
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-top: 10px;
         }
         
         .auth-submit-btn:hover {
@@ -86,8 +155,9 @@
         
         .auth-switch {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 15px; /* Reducido de 20px */
             color: #666;
+            font-size: 13px;
         }
         
         .auth-switch a {
@@ -101,10 +171,11 @@
         }
         
         .auth-message {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
+            padding: 12px; /* Reducido de 15px */
+            margin-bottom: 15px; /* Reducido de 20px */
+            border-radius: 3px; /* Reducido de 4px */
             text-align: center;
+            font-size: 13px;
         }
         
         .auth-message.error {
@@ -118,34 +189,126 @@
             color: #2e7d32;
             border: 1px solid #c8e6c9;
         }
+        
+        /* ========== MEDIA QUERIES ========== */
+        @media (min-width: 768px) {
+            .main-header {
+                padding: 8px 0;
+            }
+            
+            .logo {
+                font-size: 20px; /* Un poco más en tablet */
+            }
+            
+            .btn-outline {
+                padding: 9px 18px;
+                font-size: 11px;
+            }
+            
+            .auth-hero {
+                padding: 50px 20px; /* Un poco más en tablet */
+            }
+            
+            .auth-title {
+                font-size: 32px; /* Un poco más en tablet */
+            }
+            
+            .auth-form-container {
+                padding: 35px; /* Un poco más en tablet */
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .logo {
+                font-size: 22px; /* Un poco más en desktop */
+                letter-spacing: 2px;
+            }
+            
+            .auth-title {
+                font-size: 34px; /* Un poco más en desktop */
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .main-header {
+                padding: 5px 0;
+            }
+            
+            .logo {
+                font-size: 16px;
+                letter-spacing: 1px;
+            }
+            
+            .btn-outline {
+                padding: 6px 12px;
+                font-size: 9px;
+            }
+            
+            .auth-hero {
+                padding: 30px 15px;
+            }
+            
+            .auth-title {
+                font-size: 24px;
+                letter-spacing: 2px;
+            }
+            
+            .auth-subtitle {
+                font-size: 13px;
+                padding: 0 10px;
+            }
+            
+            .auth-container {
+                padding: 15px;
+            }
+            
+            .auth-form-container {
+                padding: 20px;
+            }
+            
+            .auth-form-title {
+                font-size: 16px;
+            }
+            
+            .form-input {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+        }
+        
+        /* Estilos base del body */
+        body {
+            background-color: #f8f8f8;
+            font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
 
-<!-- HEADER SIMPLE -->
-<header class="main-header" style="background: white; border-bottom: 1px solid #eee;">
-    <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-        <a href="/" class="logo" style="text-decoration: none; color: #000; font-size: 24px; font-weight: 300; letter-spacing: 2px;">
+<!-- HEADER SIMPLE MÁS COMPACTO -->
+<header class="main-header">
+    <div class="header-container">
+        <a href="/" class="logo">
             MABEL ACTIVEWEAR
         </a>
-        <a href="/login" class="btn-outline" style="padding: 10px 20px; border: 1px solid #000; color: #000; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; font-size: 12px;">
+        <a href="/login" class="btn-outline">
             Iniciar sesión
         </a>
     </div>
 </header>
 
-<!-- HERO -->
-<section class="auth-hero" style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #f8f8f8 0%, #fff 100%);">
-    <h1 class="auth-title" style="font-size: 36px; font-weight: 300; letter-spacing: 4px; margin-bottom: 15px;">
+<!-- HERO MÁS COMPACTO -->
+<section class="auth-hero">
+    <h1 class="auth-title">
         Crear cuenta
     </h1>
-    <p class="auth-subtitle" style="color: #666; max-width: 600px; margin: 0 auto;">
+    <p class="auth-subtitle">
         Regístrate para disfrutar de una experiencia personalizada
     </p>
 </section>
 
-<!-- FORM -->
-<section class="auth-section" style="padding: 40px 0 100px;">
+<!-- FORM MÁS COMPACTO -->
+<section class="auth-section">
     <div class="auth-container">
         <div class="auth-form-container">
             <h2 class="auth-form-title">Registro</h2>
@@ -177,7 +340,7 @@
                 <div class="form-group">
                     <label class="form-label">Contraseña *</label>
                     <input type="password" name="password" class="form-input" required minlength="6">
-                    <small style="color: #666; font-size: 12px;">Mínimo 6 caracteres</small>
+                    <small style="color: #666; font-size: 11px;">Mínimo 6 caracteres</small>
                 </div>
 
                 <button type="submit" class="auth-submit-btn">
