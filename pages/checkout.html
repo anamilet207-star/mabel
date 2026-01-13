@@ -16,15 +16,22 @@
     <style>
         /* ========== HEADER MÁS PEQUEÑO ========== */
         .checkout-header {
-            padding: 5px 0; /* Más compacto */
+            padding: 5px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
         .checkout-header .nav-container {
-            padding: 8px 0; /* Más compacto */
+            padding: 8px 0;
         }
         
         .checkout-header .logo {
-            font-size: 16px; /* Más pequeño para móvil */
+            font-size: 16px;
         }
         
         .checkout-header .cart-icon {
@@ -63,35 +70,74 @@
             color: #333;
             line-height: 1.6;
             overflow-x: hidden;
+            padding-top: 50px; /* Espacio para header fijo */
         }
         
         .container {
             max-width: 100%;
             margin: 0 auto;
-            padding: 0 15px; /* Más padding lateral para móviles */
+            padding: 0 15px;
+        }
+        
+        /* ========== LAYOUT PRINCIPAL ========== */
+        .checkout-section {
+            padding: 20px 0;
+        }
+        
+        .checkout-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            align-items: flex-start;
+        }
+        
+        .checkout-form-container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .order-summary {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 20px;
+            position: sticky;
+            top: 70px;
         }
         
         /* ========== MEDIA QUERIES PRINCIPALES ========== */
-        @media (max-width: 768px) {
-            /* HEADER COMPACTO PARA MÓVIL */
-            .checkout-header {
-                position: fixed;
+        @media (max-width: 992px) {
+            .checkout-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .order-summary {
+                position: relative;
                 top: 0;
-                left: 0;
-                right: 0;
-                z-index: 1000;
-                background: white;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                order: -1;
+                margin-bottom: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding-top: 45px;
+            }
+            
+            .checkout-header {
+                padding: 3px 0;
             }
             
             .checkout-header .logo {
                 font-size: 14px;
             }
             
-            /* CHECKOUT SECTION AJUSTADO */
             .checkout-section {
-                padding: 70px 0 20px; /* Añadido padding-top para header fijo */
-                min-height: 100vh;
+                padding: 15px 0 20px;
+                min-height: auto;
             }
             
             .checkout-container {
@@ -99,6 +145,18 @@
                 flex-direction: column;
                 gap: 20px;
                 padding: 0 10px;
+            }
+            
+            .order-summary {
+                position: relative;
+                order: -1;
+                width: 100%;
+                margin-bottom: 20px;
+                border-radius: 12px;
+                box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+                padding: 20px;
+                bottom: auto;
+                top: auto;
             }
             
             /* TÍTULOS RESPONSIVOS */
@@ -119,12 +177,6 @@
                 margin: 15px 0;
                 position: relative;
                 padding: 0 5px;
-            }
-            
-            .checkout-steps::before {
-                top: 12px;
-                left: 25px;
-                right: 25px;
             }
             
             .step-number {
@@ -255,17 +307,12 @@
                 font-size: 14px;
             }
             
-            /* RESUMEN DEL PEDIDO STICKY EN MÓVIL */
-            .order-summary {
-                position: sticky;
-                bottom: 0;
-                background: white;
-                border-radius: 12px 12px 0 0;
-                box-shadow: 0 -2px 15px rgba(0,0,0,0.1);
-                margin-top: 20px;
-                padding: 20px;
+            /* ORDEN DE LOS ELEMENTOS EN MÓVIL */
+            .checkout-form-container {
+                order: 2;
             }
             
+            /* RESUMEN DEL PEDIDO */
             .order-summary h3 {
                 font-size: 16px;
                 margin-bottom: 15px;
@@ -324,7 +371,7 @@
                 width: 100%;
             }
             
-            /* BOTÓN PRINCIPAL FIXED EN MÓVIL */
+            /* BOTÓN PRINCIPAL */
             .checkout-form-container .form-section:last-child {
                 margin-top: 20px;
                 padding-top: 15px;
@@ -368,6 +415,10 @@
         
         @media (max-width: 480px) {
             /* AJUSTES PARA PANTALLAS MUY PEQUEÑAS */
+            body {
+                padding-top: 40px;
+            }
+            
             .container {
                 padding: 0 10px;
             }
@@ -393,12 +444,12 @@
             .form-group select,
             .form-group textarea {
                 padding: 12px 10px;
-                font-size: 16px; /* Tamaño más grande para iOS */
+                font-size: 16px;
             }
             
             /* SELECT MÁS FÁCIL DE TOCAR */
             select {
-                min-height: 44px; /* Altura mínima para touch */
+                min-height: 44px;
             }
             
             /* MEJOR VISIBILIDAD DE LABELS */
@@ -415,7 +466,7 @@
             
             /* BOTONES MÁS GRANDES */
             .btn {
-                min-height: 44px; /* Altura mínima para touch */
+                min-height: 44px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -438,7 +489,7 @@
             select,
             textarea,
             input {
-                font-size: 16px !important; /* Previene zoom en iOS */
+                font-size: 16px !important;
             }
         }
         
@@ -454,11 +505,6 @@
         .order-items::-webkit-scrollbar-thumb {
             background: #ccc;
             border-radius: 3px;
-        }
-        
-        /* Animación suave para elementos sticky */
-        .order-summary {
-            transition: transform 0.3s ease;
         }
         
         /* Input con prefijo para teléfono */
@@ -553,24 +599,6 @@
             font-weight: 300;
         }
         
-        .checkout-container {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 30px;
-        }
-        
-        @media (max-width: 992px) {
-            .checkout-container {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .checkout-form-container {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-        
         .checkout-steps {
             display: flex;
             justify-content: space-between;
@@ -638,6 +666,12 @@
             background-color: rgba(102, 126, 234, 0.05);
         }
         
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
         .checkbox-container {
             display: flex;
             align-items: flex-start;
@@ -669,6 +703,7 @@
         .order-item {
             display: flex;
             gap: 12px;
+            padding-bottom: 12px;
             border-bottom: 1px solid var(--border-color);
         }
         
@@ -678,6 +713,12 @@
             margin-bottom: 8px;
             padding-bottom: 8px;
             border-bottom: 1px solid var(--border-color);
+        }
+        
+        .order-total-row.total {
+            border-bottom: none;
+            font-weight: 700;
+            font-size: 16px;
         }
         
         .security-notice {
@@ -704,6 +745,14 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
             margin-bottom: 15px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed #eee;
         }
         
         .whatsapp-instructions .steps-list {
@@ -733,12 +782,116 @@
             transition: all 0.3s ease;
         }
         
+        .whatsapp-btn:hover {
+            background: #128C7E;
+        }
+        
         .hint {
             display: block;
             font-size: 11px;
             color: #666;
             margin-top: 4px;
             margin-bottom: 8px;
+        }
+        
+        /* Estilos para el footer */
+        .checkout-footer {
+            background-color: #f8f9fa;
+            padding: 40px 0 20px;
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 8px;
+        }
+        
+        .footer-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary-color);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: #666;
+            font-size: 12px;
+        }
+        
+        /* Estilos para los pasos del checkout */
+        .checkout-steps::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background-color: var(--border-color);
+            z-index: 1;
+        }
+        
+        .step-number {
+            width: 30px;
+            height: 30px;
+            font-size: 14px;
+        }
+        
+        .step-text {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+        }
+        
+        /* Estilos para el loading state */
+        .loading-state {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading-state i {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .need-help {
+            background-color: var(--background-light);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        
+        .need-help h4 {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .need-help p {
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .need-help i {
+            width: 20px;
+            color: var(--accent-color);
         }
     </style>
 </head>
@@ -873,26 +1026,6 @@
                                         <option value="Puerto Plata">Puerto Plata</option>
                                         <option value="Duarte">Duarte</option>
                                         <option value="Espaillat">Espaillat</option>
-                                        <option value="San Juan">San Juan</option>
-                                        <option value="Azua">Azua</option>
-                                        <option value="Barahona">Barahona</option>
-                                        <option value="Dajabón">Dajabón</option>
-                                        <option value="El Seibo">El Seibo</option>
-                                        <option value="Elías Piña">Elías Piña</option>
-                                        <option value="Hato Mayor">Hato Mayor</option>
-                                        <option value="Hermanas Mirabal">Hermanas Mirabal</option>
-                                        <option value="Independencia">Independencia</option>
-                                        <option value="María Trinidad Sánchez">María Trinidad Sánchez</option>
-                                        <option value="Monseñor Nouel">Monseñor Nouel</option>
-                                        <option value="Monte Cristi">Monte Cristi</option>
-                                        <option value="Monte Plata">Monte Plata</option>
-                                        <option value="Pedernales">Pedernales</option>
-                                        <option value="Peravia">Peravia</option>
-                                        <option value="Samaná">Samaná</option>
-                                        <option value="San José de Ocoa">San José de Ocoa</option>
-                                        <option value="Sánchez Ramírez">Sánchez Ramírez</option>
-                                        <option value="Valverde">Valverde</option>
-                                        <option value="La Romana">La Romana</option>
                                     </select>
                                     <div class="error-message">Este campo es obligatorio</div>
                                 </div>
@@ -1156,10 +1289,6 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="/js/payment-config.js"></script>
-    <script src="/js/checkout.js"></script>
-    <script src="/js/common.js"></script>
-    
     <script>
         // Script optimizado para móviles
         document.addEventListener('DOMContentLoaded', function() {
@@ -1177,7 +1306,7 @@
             // Prevenir zoom en inputs en móvil
             document.querySelectorAll('input, select, textarea').forEach(el => {
                 el.addEventListener('focus', function() {
-                    this.style.fontSize = '16px'; // Previene zoom en iOS
+                    this.style.fontSize = '16px';
                 });
             });
             
@@ -1188,6 +1317,13 @@
                     this.style.height = 'auto';
                     this.style.height = (this.scrollHeight) + 'px';
                 });
+            }
+            
+            // Asegurar que el formulario sea visible
+            const formContainer = document.querySelector('.checkout-form-container');
+            if (formContainer && window.innerWidth <= 768) {
+                formContainer.style.zIndex = '1';
+                formContainer.style.position = 'relative';
             }
         }
         

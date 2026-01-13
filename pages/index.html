@@ -1600,34 +1600,46 @@
                 const isMobile = window.innerWidth < 768;
                 const gridColumns = isMobile ? 1 : (window.innerWidth < 1024 ? 2 : 4);
                 
-                container.innerHTML = featured.map(product => `
-                    <div class="product-card fade-in">
-                        <div class="product-image">
-                            <a href="./pages/product-detail.html?id=${product.id}">
-                                <img src="${product.imagen || './public/images/default-product.jpg'}" 
-                                     alt="${product.nombre}"
-                                     onerror="this.src='./public/images/default-product.jpg'">
-                            </a>
-                            ${product.stock <= 5 ? 
-                                '<span class="product-badge">ÚLTIMAS UNIDADES</span>' : ''}
-                        </div>
-                        <div class="product-info">
-                            <div class="product-category">${formatCategory(product.categoria)}</div>
-                            <h3 class="product-name">
-                                <a href="./pages/product-detail.html?id=${product.id}">${product.nombre}</a>
-                            </h3>
-                            <div class="product-price">$${parseFloat(product.precio).toFixed(2)}</div>
-                            <div class="product-actions">
-                                <button class="btn btn-small" onclick="addToCart(${product.id})">
-                                    AGREGAR AL CARRITO
-                                </button>
-                                <a href="./pages/product-detail.html?id=${product.id}" class="btn btn-small btn-outline">
-                                    VER DETALLES
+                container.innerHTML = featured.map(product => {
+                    // Obtener precio (usar precio_final si hay descuento)
+                    const priceUSD = parseFloat(product.precio_final || product.precio || 0);
+                    const priceDOP = convertToDOP(priceUSD);
+                    
+                    return `
+                        <div class="product-card fade-in">
+                            <div class="product-image">
+                                <a href="./pages/product-detail.html?id=${product.id}">
+                                    <img src="${product.imagen || './public/images/default-product.jpg'}" 
+                                         alt="${product.nombre}"
+                                         onerror="this.src='./public/images/default-product.jpg'">
                                 </a>
+                                ${product.stock <= 5 ? 
+                                    '<span class="product-badge">ÚLTIMAS UNIDADES</span>' : ''}
+                                ${product.tiene_descuento ? 
+                                    '<span class="product-badge" style="background: #e44c2e;">OFERTA</span>' : ''}
+                            </div>
+                            <div class="product-info">
+                                <div class="product-category">${formatCategory(product.categoria)}</div>
+                                <h3 class="product-name">
+                                    <a href="./pages/product-detail.html?id=${product.id}">${product.nombre}</a>
+                                </h3>
+                                <div class="product-price">
+                                    ${formatDOP(priceDOP)}
+                                    ${product.tiene_descuento && product.precio_original_dop ? 
+                                        `<div class="old-price">${formatDOP(product.precio_original_dop)}</div>` : ''}
+                                </div>
+                                <div class="product-actions">
+                                    <button class="btn btn-small" onclick="addToCart(${product.id})">
+                                        AGREGAR AL CARRITO
+                                    </button>
+                                    <a href="./pages/product-detail.html?id=${product.id}" class="btn btn-small btn-outline">
+                                        VER DETALLES
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
                 
             } catch (error) {
                 console.error('Error cargando productos:', error);
@@ -1767,6 +1779,49 @@
                 document.head.appendChild(style);
             }
         }
+
+        // ================= FUNCIONES DE CONVERSIÓN DE MONEDA =================
+const EXCHANGE_RATE = 58.5; // Tasa de cambio USD a DOP
+
+// Convertir de USD a DOP
+function convertToDOP(usdAmount) {
+    if (typeof usdAmount !== 'number') {
+        usdAmount = parseFloat(usdAmount) || 0;
+    }
+    const dopAmount = usdAmount * EXCHANGE_RATE;
+    return usdAmount < 10 ? Math.round(dopAmount * 100) / 100 : Math.round(dopAmount);
+}
+
+// Formatear precio en DOP
+function formatDOP(amount) {
+    if (typeof amount !== 'number') {
+        amount = parseFloat(amount) || 0;
+    }
+    return `RD$ ${amount.toLocaleString('es-DO', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+}
+
+// Formatear precio en USD
+function formatUSD(amount) {
+    if (typeof amount !== 'number') {
+        amount = parseFloat(amount) || 0;
+    }
+    return `US$ ${amount.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+}
+
+// Formatear precio con ambas monedas
+function formatPriceWithBothCurrencies(dopAmount) {
+    const usdAmount = (dopAmount / EXCHANGE_RATE).toFixed(2);
+    return `
+        <span class="price-dop">RD$ ${dopAmount.toLocaleString('es-DO', {minimumFractionDigits: 2})}</span>
+        <span class="price-usd">(US$ ${usdAmount})</span>
+    `;
+}
     </script>
 </body>
 </html>
