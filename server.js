@@ -1294,6 +1294,376 @@ app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
+// ================= API - DIRECCIONES DEL USUARIO =================
+app.get('/api/users/:userId/addresses', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Verificar que el usuario solo acceda a sus propias direcciones
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        const result = await query(
+            'SELECT * FROM direcciones WHERE usuario_id = $1 ORDER BY predeterminada DESC, id DESC',
+            [userId]
+        );
+        
+        res.json(result.rows);
+        
+    } catch (error) {
+        console.error('Error obteniendo direcciones:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+app.post('/api/users/:userId/addresses', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const addressData = req.body;
+        
+        // Verificar autorización
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Si es predeterminada, quitar predeterminada de otras direcciones
+        if (addressData.predeterminada) {
+            await query(
+                'UPDATE direcciones SET predeterminada = false WHERE usuario_id = $1',
+                [userId]
+            );
+        }
+        
+        const result = await query(
+            `INSERT INTO direcciones (
+                usuario_id, nombre, nombre_completo, telefono, municipio, sector,
+                provincia, referencia, predeterminada, paqueteria_preferida
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            RETURNING *`,
+            [
+                userId,
+                addressData.nombre || 'Dirección',
+                addressData.nombre_completo,
+                addressData.telefono,
+                addressData.municipio,
+                addressData.sector,
+                addressData.provincia,
+                addressData.referencia,
+                addressData.predeterminada || false,
+                addressData.paqueteria_preferida || ''
+            ]
+        );
+        
+        res.status(201).json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('Error creando dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+app.put('/api/users/:userId/addresses/:addressId', requireAuth, async (req, res) => {
+    try {
+        const { userId, addressId } = req.params;
+        const addressData = req.body;
+        
+        // Verificar autorización
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Verificar que la dirección pertenece al usuario
+        const checkResult = await query(
+            'SELECT id FROM direcciones WHERE id = $1 AND usuario_id = $2',
+            [addressId, userId]
+        );
+        
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dirección no encontrada' });
+        }
+        
+        // Si es predeterminada, quitar predeterminada de otras direcciones
+        if (addressData.predeterminada) {
+            await query(
+                'UPDATE direcciones SET predeterminada = false WHERE usuario_id = $1 AND id != $2',
+                [userId, addressId]
+            );
+        }
+        
+        const result = await query(
+            `UPDATE direcciones SET
+                nombre = COALESCE($3, nombre),
+                nombre_completo = COALESCE($4, nombre_completo),
+                telefono = COALESCE($5, telefono),
+                municipio = COALESCE($6, municipio),
+                sector = COALESCE($7, sector),
+                provincia = COALESCE($8, provincia),
+                referencia = COALESCE($9, referencia),
+                predeterminada = COALESCE($10, predeterminada),
+                paqueteria_preferida = COALESCE($11, paqueteria_preferida),
+                fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = $1 AND usuario_id = $2
+            RETURNING *`,
+            [
+                addressId,
+                userId,
+                addressData.nombre,
+                addressData.nombre_completo,
+                addressData.telefono,
+                addressData.municipio,
+                addressData.sector,
+                addressData.provincia,
+                addressData.referencia,
+                addressData.predeterminada,
+                addressData.paqueteria_preferida
+            ]
+        );
+        
+        res.json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('Error actualizando dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+app.delete('/api/users/:userId/addresses/:addressId', requireAuth, async (req, res) => {
+    try {
+        const { userId, addressId } = req.params;
+        
+        // Verificar autorización
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Verificar que la dirección pertenece al usuario
+        const checkResult = await query(
+            'SELECT id, predeterminada FROM direcciones WHERE id = $1 AND usuario_id = $2',
+            [addressId, userId]
+        );
+        
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dirección no encontrada' });
+        }
+        
+        // No permitir eliminar si es la única dirección
+        const countResult = await query(
+            'SELECT COUNT(*) FROM direcciones WHERE usuario_id = $1',
+            [userId]
+        );
+        
+        if (parseInt(countResult.rows[0].count) <= 1) {
+            return res.status(400).json({ error: 'No puedes eliminar tu única dirección' });
+        }
+        
+        // Si es predeterminada, establecer otra como predeterminada
+        if (checkResult.rows[0].predeterminada) {
+            await query(
+                `UPDATE direcciones 
+                 SET predeterminada = true 
+                 WHERE usuario_id = $1 AND id != $2
+                 LIMIT 1`,
+                [userId, addressId]
+            );
+        }
+        
+        await query(
+            'DELETE FROM direcciones WHERE id = $1 AND usuario_id = $2',
+            [addressId, userId]
+        );
+        
+        res.json({ success: true, message: 'Dirección eliminada' });
+        
+    } catch (error) {
+        console.error('Error eliminando dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+app.put('/api/users/:userId/addresses/:addressId/default', requireAuth, async (req, res) => {
+    try {
+        const { userId, addressId } = req.params;
+        
+        // Verificar autorización
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Quitar predeterminada de todas las direcciones
+        await query(
+            'UPDATE direcciones SET predeterminada = false WHERE usuario_id = $1',
+            [userId]
+        );
+        
+        // Establecer la nueva predeterminada
+        await query(
+            'UPDATE direcciones SET predeterminada = true WHERE id = $1 AND usuario_id = $2',
+            [addressId, userId]
+        );
+        
+        res.json({ success: true, message: 'Dirección predeterminada actualizada' });
+        
+    } catch (error) {
+        console.error('Error estableciendo dirección predeterminada:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - WISHLIST =================
+app.get('/api/users/:userId/wishlist', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Verificar autorización
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        const result = await query(`
+            SELECT p.*, w.fecha_agregado
+            FROM wishlist w
+            JOIN productos p ON w.producto_id = p.id
+            WHERE w.usuario_id = $1 AND p.activo = true
+            ORDER BY w.fecha_agregado DESC
+        `, [userId]);
+        
+        res.json(result.rows);
+        
+    } catch (error) {
+        console.error('Error obteniendo wishlist:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+app.post('/api/users/:userId/wishlist', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { producto_id } = req.body;
+        
+        // Verificar autorización
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Verificar si ya está en la wishlist
+        const existing = await query(
+            'SELECT id FROM wishlist WHERE usuario_id = $1 AND producto_id = $2',
+            [userId, producto_id]
+        );
+        
+        if (existing.rows.length > 0) {
+            return res.status(400).json({ error: 'El producto ya está en tu wishlist' });
+        }
+        
+        // Agregar a la wishlist
+        await query(
+            'INSERT INTO wishlist (usuario_id, producto_id) VALUES ($1, $2)',
+            [userId, producto_id]
+        );
+        
+        res.status(201).json({ success: true, message: 'Producto agregado a wishlist' });
+        
+    } catch (error) {
+        console.error('Error agregando a wishlist:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+app.delete('/api/users/:userId/wishlist/:productId', requireAuth, async (req, res) => {
+    try {
+        const { userId, productId } = req.params;
+        
+        // Verificar autorización
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        await query(
+            'DELETE FROM wishlist WHERE usuario_id = $1 AND producto_id = $2',
+            [userId, productId]
+        );
+        
+        res.json({ success: true, message: 'Producto eliminado de wishlist' });
+        
+    } catch (error) {
+        console.error('Error eliminando de wishlist:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - ESTADÍSTICAS DEL USUARIO =================
+app.get('/api/users/:userId/stats', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Verificar autorización
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Obtener estadísticas reales
+        const ordersResult = await query(
+            'SELECT COUNT(*) as total_orders, COALESCE(SUM(total), 0) as total_spent FROM pedidos WHERE usuario_id = $1',
+            [userId]
+        );
+        
+        const wishlistResult = await query(
+            'SELECT COUNT(*) as wishlist_items FROM wishlist WHERE usuario_id = $1',
+            [userId]
+        );
+        
+        const pendingOrders = await query(
+            'SELECT COUNT(*) as pending_orders FROM pedidos WHERE usuario_id = $1 AND estado IN ($2, $3)',
+            [userId, 'pendiente', 'procesando']
+        );
+        
+        const reviewsResult = await query(
+            'SELECT COUNT(*) as reviews FROM reseñas WHERE usuario_id = $1',
+            [userId]
+        );
+        
+        res.json({
+            totalOrders: parseInt(ordersResult.rows[0]?.total_orders) || 0,
+            totalSpent: parseFloat(ordersResult.rows[0]?.total_spent) || 0,
+            wishlistItems: parseInt(wishlistResult.rows[0]?.wishlist_items) || 0,
+            pendingOrders: parseInt(pendingOrders.rows[0]?.pending_orders) || 0,
+            reviews: parseInt(reviewsResult.rows[0]?.reviews) || 0
+        });
+        
+    } catch (error) {
+        console.error('Error obteniendo estadísticas:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+app.get('/api/users/:userId/orders', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const limit = req.query.limit;
+        
+        // Verificar autorización
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        let queryStr = 'SELECT * FROM pedidos WHERE usuario_id = $1 ORDER BY fecha_creacion DESC';
+        let params = [userId];
+        
+        if (limit) {
+            queryStr += ' LIMIT $2';
+            params.push(limit);
+        }
+        
+        const result = await query(queryStr, params);
+        res.json(result.rows);
+        
+    } catch (error) {
+        console.error('Error obteniendo órdenes:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
 // ================= API - ÓRDENES =================
 app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
     try {
