@@ -2,8 +2,10 @@
 const STRIPE_ENABLED = false;
 
 // ================= CONFIGURACIÓN DE MONEDA =================
-const DEFAULT_CURRENCY = 'DOP'; // Solo pesos dominicanos
+const DEFAULT_CURRENCY = 'DOP'; // Cambiado de USD a DOP
 const CURRENCY_SYMBOL = 'RD$'; // Símbolo de pesos dominicanos
+const EXCHANGE_RATE = 58.5; // Tasa de cambio USD a DOP (actualizable)
+const ENABLE_DUAL_CURRENCY = true; // Mostrar tanto DOP como USD
 
 // server.js - VERSIÓN COMPLETA CON MONEDA DOP
 require('dotenv').config();
@@ -31,7 +33,32 @@ if (STRIPE_ENABLED) {
     stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 }
 
-// ================= FUNCIONES DE FORMATO DOP =================
+// ================= FUNCIONES DE CONVERSIÓN DE MONEDA =================
+
+/**
+ * Convertir de USD a DOP
+ */
+const convertToDOP = (usdAmount) => {
+    if (typeof usdAmount !== 'number') {
+        usdAmount = parseFloat(usdAmount) || 0;
+    }
+    const rate = EXCHANGE_RATE || 58.5;
+    const dopAmount = usdAmount * rate;
+    // Redondear a 2 decimales para montos pequeños, enteros para montos grandes
+    return usdAmount < 10 ? Math.round(dopAmount * 100) / 100 : Math.round(dopAmount);
+};
+
+/**
+ * Convertir de DOP a USD
+ */
+const convertToUSD = (dopAmount) => {
+    if (typeof dopAmount !== 'number') {
+        dopAmount = parseFloat(dopAmount) || 0;
+    }
+    const rate = EXCHANGE_RATE || 58.5;
+    const usdAmount = dopAmount / rate;
+    return parseFloat(usdAmount.toFixed(2));
+};
 
 /**
  * Formatear precio en DOP
@@ -47,13 +74,39 @@ const formatDOP = (amount) => {
 };
 
 /**
- * Procesar productos para mostrar precios en DOP
- * NOTA: Asume que los precios en la BD están en DOP
+ * Formatear precio en USD
+ */
+const formatUSD = (amount) => {
+    if (typeof amount !== 'number') {
+        amount = parseFloat(amount) || 0;
+    }
+    return `US$ ${amount.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+};
+
+/**
+ * Formatear precio con ambas monedas
+ */
+const formatDualCurrency = (dopAmount) => {
+    const usdAmount = convertToUSD(dopAmount);
+    return {
+        dop: formatDOP(dopAmount),
+        usd: formatUSD(usdAmount),
+        dop_value: dopAmount,
+        usd_value: usdAmount
+    };
+};
+
+/**
+ * Procesar productos para incluir precios en DOP
  */
 const processProductPrices = (product) => {
-    const precioDOP = parseFloat(product.precio) || 0;
+    const precioUSD = parseFloat(product.precio) || 0;
+    const precioDOP = convertToDOP(precioUSD);
     
-    // Calcular precio final con descuento
+    // Calcular precio final con descuento en DOP
     let precioFinalDOP = precioDOP;
     let descuentoAplicado = false;
     let descuentoPorcentaje = 0;
@@ -63,20 +116,29 @@ const processProductPrices = (product) => {
         precioFinalDOP = Math.round(precioDOP * (1 - descuentoPorcentaje / 100));
         descuentoAplicado = true;
     } else if (product.descuento_precio > 0) {
-        precioFinalDOP = parseFloat(product.descuento_precio) || 0;
+        const descuentoPrecioUSD = parseFloat(product.descuento_precio) || 0;
+        precioFinalDOP = convertToDOP(descuentoPrecioUSD);
         descuentoAplicado = true;
-        // Calcular porcentaje de descuento
+        // Calcular porcentaje de descuento aproximado
         if (precioDOP > 0) {
             descuentoPorcentaje = Math.round((1 - (precioFinalDOP / precioDOP)) * 100);
         }
     }
     
+    // Formatear para display
+    const precios = formatDualCurrency(precioFinalDOP);
+    
     return {
         ...product,
-        // Precios en DOP
+        // Precios en DOP (principales)
         precio_dop: precioDOP,
         precio_final_dop: precioFinalDOP,
-        precio_formateado: formatDOP(precioFinalDOP),
+        precio_formateado: precios.dop,
+        precio_usd_formateado: precios.usd,
+        
+        // Precios en USD (para referencia y pagos)
+        precio_usd: precioUSD,
+        precio_final_usd: precios.usd_value,
         
         // Información de descuento
         tiene_descuento: descuentoAplicado,
@@ -84,8 +146,8 @@ const processProductPrices = (product) => {
         precio_original_dop: precioDOP,
         precio_original_formateado: formatDOP(precioDOP),
         
-        // Para compatibilidad
-        precio: precioFinalDOP,
+        // Para compatibilidad (temporal)
+        precio: precioFinalDOP, // Usar precio final como principal
         precio_final: precioFinalDOP,
         
         // Arrays procesados
@@ -244,7 +306,9 @@ app.use((req, res, next) => {
     // Establecer configuración de moneda en todas las respuestas
     res.locals.currency = {
         code: DEFAULT_CURRENCY,
-        symbol: CURRENCY_SYMBOL
+        symbol: CURRENCY_SYMBOL,
+        exchange_rate: EXCHANGE_RATE,
+        dual_currency: ENABLE_DUAL_CURRENCY
     };
     next();
 });
@@ -316,7 +380,14 @@ app.get('/api/currency/config', (req, res) => {
     res.json({
         currency: DEFAULT_CURRENCY,
         symbol: CURRENCY_SYMBOL,
-        format_example: formatDOP(1000)
+        exchange_rate: EXCHANGE_RATE,
+        dual_currency: ENABLE_DUAL_CURRENCY,
+        format_example: formatDOP(1000),
+        convert_example: {
+            usd: 10,
+            dop: convertToDOP(10),
+            formatted: formatDOP(convertToDOP(10))
+        }
     });
 });
 
@@ -454,8 +525,10 @@ app.get('/api/payments/config', (req, res) => {
     res.json({
         stripePublicKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx',
         paypalClientId: process.env.PAYPAL_CLIENT_ID || 'test',
-        currency: DEFAULT_CURRENCY,
+        currency: DEFAULT_CURRENCY, // Ahora es DOP
         currency_symbol: CURRENCY_SYMBOL,
+        exchange_rate: EXCHANGE_RATE,
+        enable_dual_currency: ENABLE_DUAL_CURRENCY,
         environment: process.env.NODE_ENV || 'development',
         country: 'DO',
         paymentMethods: ['card', 'paypal', 'transfer'],
@@ -496,7 +569,7 @@ try {
     paypalClient = null;
 }
 
-// Crear orden de PayPal (DOP → USD para PayPal)
+// Crear orden de PayPal (CONVERSIÓN DOP → USD)
 app.post('/api/payments/create-paypal-order', async (req, res) => {
     try {
         const { amount, orderData } = req.body;
@@ -504,9 +577,8 @@ app.post('/api/payments/create-paypal-order', async (req, res) => {
         console.log('💰 Creando orden PayPal...');
         console.log('📦 Monto recibido en DOP:', amount);
         
-        // Convertir de DOP a USD para PayPal (PayPal solo acepta USD)
-        const tasaCambio = 58.5; // 1 USD = 58.5 DOP
-        const amountUSD = (amount / tasaCambio).toFixed(2);
+        // Convertir de DOP a USD para PayPal
+        const amountUSD = convertToUSD(amount);
         console.log('📦 Monto convertido a USD:', amountUSD);
         
         // MODO SIMULACIÓN para desarrollo
@@ -525,29 +597,29 @@ app.post('/api/payments/create-paypal-order', async (req, res) => {
                     original_amount: amount,
                     converted_currency: 'USD',
                     converted_amount: amountUSD,
-                    exchange_rate: tasaCambio
+                    exchange_rate: EXCHANGE_RATE
                 }
             });
         }
         
         // Validar monto mínimo para PayPal (en USD)
         const minAmountUSD = 1.00;
-        if (parseFloat(amountUSD) < minAmountUSD) {
+        if (amountUSD < minAmountUSD) {
             return res.status(400).json({ 
-                error: `El monto mínimo para PayPal es $${minAmountUSD.toFixed(2)} USD` 
+                error: `El monto mínimo para PayPal es $${minAmountUSD.toFixed(2)} USD (aprox. ${formatDOP(convertToDOP(minAmountUSD))})` 
             });
         }
         
         // Crear items para PayPal (convertidos a USD)
         const items = orderData.items.map(item => {
-            const itemPriceUSD = (parseFloat(item.precio) / tasaCambio).toFixed(2);
+            const itemPriceUSD = convertToUSD(item.precio);
             return {
                 name: item.nombre.substring(0, 127),
                 description: `${item.talla ? `Talla: ${item.talla}` : ''} ${item.color ? `Color: ${item.color}` : ''}`.trim().substring(0, 127),
                 quantity: item.cantidad.toString(),
                 unit_amount: {
                     currency_code: 'USD',
-                    value: itemPriceUSD
+                    value: itemPriceUSD.toFixed(2)
                 },
                 sku: item.id ? `SKU-${item.id}` : undefined
             };
@@ -581,19 +653,19 @@ app.post('/api/payments/create-paypal-order', async (req, res) => {
             purchase_units: [{
                 amount: {
                     currency_code: 'USD',
-                    value: amountUSD,
+                    value: amountUSD.toFixed(2),
                     breakdown: {
                         item_total: {
                             currency_code: 'USD',
-                            value: ((orderData.subtotal || amount) / tasaCambio).toFixed(2)
+                            value: convertToUSD(orderData.subtotal || amount).toFixed(2)
                         },
                         shipping: {
                             currency_code: 'USD',
-                            value: ((orderData.shipping_cost || 0) / tasaCambio).toFixed(2)
+                            value: convertToUSD(orderData.shipping_cost || 0).toFixed(2)
                         },
                         discount: {
                             currency_code: 'USD',
-                            value: ((orderData.discount || 0) / tasaCambio).toFixed(2)
+                            value: convertToUSD(orderData.discount || 0).toFixed(2)
                         },
                         tax_total: {
                             currency_code: 'USD',
@@ -630,13 +702,13 @@ app.post('/api/payments/create-paypal-order', async (req, res) => {
             id: order.result.id,
             status: order.result.status,
             amount: order.result.purchase_units[0].amount.value,
-            amount_dop: amount,
+            amount_dop: amount, // Mantener referencia al monto original en DOP
             links: order.result.links,
             created_time: order.result.create_time,
             currency_info: {
                 displayed_currency: 'DOP',
                 paid_currency: 'USD',
-                exchange_rate: tasaCambio
+                exchange_rate: EXCHANGE_RATE
             }
         });
         
@@ -815,7 +887,7 @@ app.delete('/api/admin/images/:imageName', requireAuth, requireAdmin, async (req
     }
 });
 
-// ================= API - PRODUCTOS (SOLO DOP) =================
+// ================= API - PRODUCTOS (CON MONEDA DOP) =================
 app.get('/api/products', async (req, res) => {
     console.log('📦 Obteniendo todos los productos en DOP');
     
@@ -852,7 +924,11 @@ app.get('/api/products/:id', async (req, res) => {
         const product = processProductPrices(result.rows[0]);
         
         console.log('✅ Producto encontrado:', product.nombre);
-        console.log('💰 Precio:', product.precio_formateado);
+        console.log('💰 Precios:', {
+            original: product.precio_original_formateado,
+            final: product.precio_formateado,
+            usd: product.precio_usd_formateado
+        });
         
         res.json(product);
         
@@ -908,16 +984,18 @@ app.get('/api/products/search', async (req, res) => {
             paramCount++;
         }
         
-        // Precios ya están en DOP en la BD
+        // Los precios en la BD están en USD, pero filtramos basado en DOP
         if (minPrice) {
+            const minPriceUSD = convertToUSD(minPrice);
             queryStr += ` AND precio >= $${paramCount}`;
-            params.push(minPrice);
+            params.push(minPriceUSD);
             paramCount++;
         }
         
         if (maxPrice) {
+            const maxPriceUSD = convertToUSD(maxPrice);
             queryStr += ` AND precio <= $${paramCount}`;
-            params.push(maxPrice);
+            params.push(maxPriceUSD);
             paramCount++;
         }
         
@@ -977,15 +1055,21 @@ app.post('/api/products/:id/view', async (req, res) => {
 });
 
 // ================= API - ADMINISTRACIÓN =================
-// Obtener todos los productos (admin) - solo DOP
+// Obtener todos los productos (admin) - con precios en ambas monedas
 app.get('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
     try {
         const result = await query('SELECT * FROM productos ORDER BY id DESC');
         
         const products = result.rows.map(product => {
             const processed = processProductPrices(product);
+            // Para admin, agregar información adicional
             return {
                 ...processed,
+                // Mantener precios originales en USD para referencia del admin
+                precio_usd_original: parseFloat(product.precio) || 0,
+                descuento_precio_usd_original: parseFloat(product.descuento_precio) || 0,
+                // Información de conversión
+                conversion_rate: EXCHANGE_RATE,
                 // Datos administrativos
                 fecha_creacion: product.fecha_creacion,
                 fecha_actualizacion: product.fecha_actualizacion
@@ -999,7 +1083,7 @@ app.get('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-// Crear producto (admin) - Precio se ingresa en DOP
+// Crear producto (admin) - Precio se ingresa en DOP pero se guarda en USD
 app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
     const { 
         nombre, 
@@ -1015,20 +1099,28 @@ app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
         coleccion,
         imagenes_adicionales,
         descuento_porcentaje,
-        descuento_precio // En DOP
+        descuento_precio // En DOP si se envía
     } = req.body;
     
     console.log('➕ Creando producto:', nombre);
     console.log('💰 Precio recibido en DOP:', precio);
     
     try {
-        // El precio ya viene en DOP, lo guardamos directamente
-        const precioDOP = parseFloat(precio);
+        // Convertir precio de DOP a USD para almacenar en BD
+        const precioUSD = convertToUSD(precio);
+        console.log('💰 Precio convertido a USD para BD:', precioUSD);
+        
+        // Convertir descuento si existe
+        let descuentoPrecioUSD = null;
+        if (descuento_precio && descuento_precio > 0) {
+            descuentoPrecioUSD = convertToUSD(descuento_precio);
+            console.log('💸 Descuento convertido a USD:', descuentoPrecioUSD);
+        }
         
         const productData = {
             nombre: nombre || 'Producto sin nombre',
             descripcion: descripcion || '',
-            precio: precioDOP, // Guardamos en DOP
+            precio: precioUSD, // Guardamos en USD
             categoria: categoria || 'sin-categoria',
             imagen: imagen || '/public/images/default-product.jpg',
             stock: parseInt(stock) || 0,
@@ -1039,7 +1131,7 @@ app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
             coleccion: coleccion || '',
             imagenes_adicionales: formatArrayForPostgres(imagenes_adicionales),
             descuento_porcentaje: parseInt(descuento_porcentaje) || 0,
-            descuento_precio: descuento_precio ? parseFloat(descuento_precio) : null,
+            descuento_precio: descuentoPrecioUSD,
             activo: true
         };
         
@@ -1074,7 +1166,11 @@ app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
         const processedProduct = processProductPrices(newProduct);
         
         console.log('✅ Producto creado:', processedProduct.nombre);
-        console.log('💰 Precio:', processedProduct.precio_formateado);
+        console.log('💰 Precios finales:', {
+            DOP: processedProduct.precio_formateado,
+            USD: processedProduct.precio_usd_formateado,
+            'Precio en BD (USD)': newProduct.precio
+        });
         
         res.status(201).json(processedProduct);
         
@@ -1107,18 +1203,28 @@ app.put('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res) =
         const values = [];
         let paramIndex = 1;
         
-        // El precio viene en DOP
+        // Si se envía precio, viene en DOP, convertirlo a USD
         if (productData.precio !== undefined) {
+            const precioUSD = convertToUSD(productData.precio);
             updates.push(`precio = $${paramIndex}`);
-            values.push(parseFloat(productData.precio));
+            values.push(precioUSD);
             paramIndex++;
-            console.log(`💰 Precio actualizado: ${productData.precio} DOP`);
+            console.log(`💰 Precio actualizado: ${productData.precio} DOP → ${precioUSD} USD`);
+        }
+        
+        // Si se envía descuento_precio, viene en DOP
+        if (productData.descuento_precio !== undefined) {
+            const descuentoPrecioUSD = productData.descuento_precio > 0 ? 
+                convertToUSD(productData.descuento_precio) : null;
+            updates.push(`descuento_precio = $${paramIndex}`);
+            values.push(descuentoPrecioUSD);
+            paramIndex++;
         }
         
         // Otros campos
         const fields = ['nombre', 'descripcion', 'categoria', 'imagen', 'stock', 
                        'tallas', 'colores', 'sku', 'material', 'coleccion', 
-                       'imagenes_adicionales', 'descuento_porcentaje', 'descuento_precio', 'activo'];
+                       'imagenes_adicionales', 'descuento_porcentaje', 'activo'];
         
         fields.forEach(field => {
             if (productData[field] !== undefined) {
@@ -1136,9 +1242,6 @@ app.put('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res) =
                 }
                 if (field === 'descuento_porcentaje') {
                     value = parseInt(value) || 0;
-                }
-                if (field === 'descuento_precio') {
-                    value = value ? parseFloat(value) : null;
                 }
                 
                 updates.push(`${field} = $${paramIndex}`);
@@ -1242,7 +1345,8 @@ app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
             activo: user.activo,
             total_orders: parseInt(user.total_ordenes) || 0,
             total_spent: parseFloat(user.total_gastado) || 0,
-            total_spent_formatted: formatDOP(parseFloat(user.total_gastado) || 0)
+            // Convertir gasto a DOP si es necesario
+            total_spent_dop: convertToDOP(parseFloat(user.total_gastado) || 0)
         }));
         
         console.log(`✅ Enviando ${users.length} usuarios`);
@@ -1279,7 +1383,7 @@ app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
                     direccion: user.direccion || '-',
                     total_orders: parseInt(ordersResult.rows[0]?.count) || 0,
                     total_spent: parseFloat(ordersResult.rows[0]?.total) || 0,
-                    total_spent_formatted: formatDOP(parseFloat(ordersResult.rows[0]?.total) || 0),
+                    total_spent_dop: convertToDOP(parseFloat(ordersResult.rows[0]?.total) || 0),
                     wishlist_items: 0
                 };
             }));
@@ -1308,13 +1412,14 @@ app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
         `);
         
         const orders = result.rows.map(order => {
-            const totalDOP = parseFloat(order.total) || 0;
+            const totalDOP = convertToDOP(parseFloat(order.total) || 0);
             
             return {
                 id: order.id,
                 fecha_orden: order.fecha_creacion,
                 total: totalDOP,
                 total_formateado: formatDOP(totalDOP),
+                total_usd: parseFloat(order.total) || 0,
                 estado: order.estado || 'pendiente',
                 metodo_pago: order.metodo_pago,
                 metodo_envio: order.metodo_envio,
@@ -1356,16 +1461,16 @@ app.post('/api/discounts/validate', async (req, res) => {
                 codigo: 'VERANO20',
                 tipo: 'porcentaje',
                 valor: 20,
-                minimo_compra: 2000, // 2000 DOP
-                valido: total >= 2000
+                minimo_compra: convertToDOP(50), // $50 USD → DOP
+                valido: total >= convertToDOP(50)
             },
             'ENVIOGRATIS': {
                 id: 3,
                 codigo: 'ENVIOGRATIS',
                 tipo: 'envio',
                 valor: 100,
-                minimo_compra: 1500, // 1500 DOP
-                valido: total >= 1500
+                minimo_compra: convertToDOP(30),
+                valido: total >= convertToDOP(30)
             },
             'BIENVENIDA10': {
                 id: 4,
@@ -1432,7 +1537,12 @@ app.get('/api/test', async (req, res) => {
             currency: {
                 default: DEFAULT_CURRENCY,
                 symbol: CURRENCY_SYMBOL,
-                example: formatDOP(1000)
+                exchange_rate: EXCHANGE_RATE,
+                example: {
+                    usd: 10,
+                    dop: convertToDOP(10),
+                    formatted: formatDOP(convertToDOP(10))
+                }
             },
             time: result.rows[0].time,
             version: result.rows[0].version
@@ -1445,21 +1555,31 @@ app.get('/api/test', async (req, res) => {
     }
 });
 
-// Test de formato de moneda
+// Test de conversión de moneda
 app.get('/api/currency/test', (req, res) => {
-    const testAmounts = [100, 500, 1000, 2500, 5000, 10000];
+    const testAmounts = [10, 25, 50, 100, 250, 500];
     
-    const formattedAmounts = testAmounts.map(amount => {
+    const conversions = testAmounts.map(usd => {
+        const dop = convertToDOP(usd);
         return {
-            amount: amount,
-            formatted: formatDOP(amount)
+            usd: usd,
+            usd_formatted: formatUSD(usd),
+            dop: dop,
+            dop_formatted: formatDOP(dop),
+            rate: EXCHANGE_RATE
         };
     });
     
     res.json({
-        currency: DEFAULT_CURRENCY,
+        exchange_rate: EXCHANGE_RATE,
+        default_currency: DEFAULT_CURRENCY,
         currency_symbol: CURRENCY_SYMBOL,
-        examples: formattedAmounts
+        conversions: conversions,
+        example_product: {
+            price_usd: 59.99,
+            price_dop: convertToDOP(59.99),
+            formatted: formatDOP(convertToDOP(59.99))
+        }
     });
 });
 
@@ -1474,7 +1594,7 @@ app.get('/api/create-test-data', async (req, res) => {
                 {
                     nombre: 'Legging High-Waist Black',
                     descripcion: 'Legging de alta compresión con tecnología dry-fit',
-                    precio: 2500, // DOP
+                    precio: 59.99, // USD
                     categoria: 'leggings',
                     stock: 25,
                     tallas: '{"XS","S","M","L"}',
@@ -1487,7 +1607,7 @@ app.get('/api/create-test-data', async (req, res) => {
                 {
                     nombre: 'Sports Bra Essential',
                     descripcion: 'Sujetador deportivo esencial con soporte medio',
-                    precio: 1500, // DOP
+                    precio: 34.99, // USD
                     categoria: 'tops',
                     stock: 30,
                     tallas: '{"S","M","L"}',
@@ -1525,7 +1645,7 @@ app.get('/api/create-test-data', async (req, res) => {
                 );
             }
             
-            // Procesar productos creados
+            // Procesar productos creados para mostrar precios en DOP
             const result = await query('SELECT * FROM productos');
             const processedProducts = result.rows.map(product => processProductPrices(product));
             
@@ -1536,6 +1656,7 @@ app.get('/api/create-test-data', async (req, res) => {
                     nombre: p.nombre,
                     precio_original: p.precio_original_formateado,
                     precio_final: p.precio_formateado,
+                    precio_usd: p.precio_usd_formateado,
                     tiene_descuento: p.tiene_descuento
                 }))
             });
@@ -1550,6 +1671,7 @@ app.get('/api/create-test-data', async (req, res) => {
                     nombre: p.nombre,
                     precio_original: p.precio_original_formateado,
                     precio_final: p.precio_formateado,
+                    precio_usd: p.precio_usd_formateado,
                     tiene_descuento: p.tiene_descuento
                 }))
             });
@@ -1586,7 +1708,8 @@ app.listen(PORT, () => {
     console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}`);
     console.log(`\n💰 CONFIGURACIÓN DE MONEDA:`);
     console.log(`   • Moneda principal: ${DEFAULT_CURRENCY} (${CURRENCY_SYMBOL})`);
-    console.log(`   • NOTA: Todos los precios están en pesos dominicanos`);
+    console.log(`   • Tasa de cambio: 1 USD = ${EXCHANGE_RATE} DOP`);
+    console.log(`   • Moneda dual: ${ENABLE_DUAL_CURRENCY ? 'ACTIVADA' : 'DESACTIVADA'}`);
     console.log(`\n📋 RUTAS PRINCIPALES:`);
     console.log(`   • Página principal: http://localhost:${PORT}/`);
     console.log(`   • Tienda: http://localhost:${PORT}/shop`);
@@ -1596,6 +1719,7 @@ app.listen(PORT, () => {
     console.log(`\n🔧 RUTAS DE API:`);
     console.log(`   • Test: http://localhost:${PORT}/api/test`);
     console.log(`   • Config moneda: http://localhost:${PORT}/api/currency/config`);
+    console.log(`   • Test conversión: http://localhost:${PORT}/api/currency/test`);
     console.log(`   • Productos (DOP): http://localhost:${PORT}/api/products`);
     console.log(`   • Config pagos: http://localhost:${PORT}/api/payments/config`);
     console.log(`\n👤 CREDENCIALES:`);

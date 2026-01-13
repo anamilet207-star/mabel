@@ -11,7 +11,6 @@
     
     <!-- CSS -->
     <link rel="stylesheet" href="./css/style.css">
-    <link rel="stylesheet" href="/css/wishlist.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     
@@ -1475,8 +1474,6 @@
     <!-- Scripts -->
     <script src="./js/script.js"></script>
     <script src="/js/common.js"></script>
-    <!-- En shop.html, product-detail.html, etc. -->
-<script src="/js/wishlist.js" defer></script>
     
     <script>
         // Script de inicialización mejorado
@@ -1573,81 +1570,81 @@
         });
         
         async function loadFeaturedProducts() {
-            const container = document.getElementById('featuredProducts');
-            if (!container) return;
-            
-            try {
-                const response = await fetch('/api/products');
-                if (!response.ok) throw new Error('Error al cargar productos');
-                
-                const products = await response.json();
-                
-                // Filtrar productos activos y con stock
-                const featured = products
-                    .filter(p => p.activo !== false && p.stock > 0)
-                    .slice(0, 4);
-                
-                if (featured.length === 0) {
-                    container.innerHTML = `
-                        <div class="no-products">
-                            <i class="fas fa-box-open fa-2x"></i>
-                            <h3>Próximamente nuevos productos</h3>
-                            <p>Estamos preparando nuestra colección</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = featured.map(product => `
-                    <div class="product-card fade-in">
-                        <div class="product-image">
-                            <a href="./pages/product-detail.html?id=${product.id}">
-                                <img src="${product.imagen || './public/images/default-product.jpg'}" 
-                                     alt="${product.nombre}"
-                                     onerror="this.src='./public/images/default-product.jpg'">
-                            </a>
-                            ${product.tiene_descuento ? 
-                                '<span class="product-badge">-' + product.descuento_porcentaje + '%</span>' : ''}
-                            ${product.stock <= 5 ? 
-                                '<span class="product-badge" style="background:#dc3545;">ÚLTIMAS UNIDADES</span>' : ''}
-                        </div>
-                        <div class="product-info">
-                            <div class="product-category">${formatCategory(product.categoria)}</div>
-                            <h3 class="product-name">
-                                <a href="./pages/product-detail.html?id=${product.id}">${product.nombre}</a>
-                            </h3>
-                            <div class="product-price">
-                                ${product.tiene_descuento ? 
-                                    `<span style="text-decoration: line-through; color: #999; font-size: 14px; margin-right: 8px;">
-                                        ${product.precio_original_formateado}
-                                    </span>` : ''}
-                                ${product.precio_formateado}
-                            </div>
-                            <div class="product-actions">
-                                <button class="btn btn-small" onclick="addToCart(${product.id})">
-                                    AGREGAR AL CARRITO
-                                </button>
-                                <a href="./pages/product-detail.html?id=${product.id}" class="btn btn-small btn-outline">
-                                    VER DETALLES
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-                
-            } catch (error) {
-                console.error('Error cargando productos:', error);
-                container.innerHTML = `
-                    <div class="error-state">
-                        <i class="fas fa-exclamation-triangle fa-2x"></i>
-                        <p>No se pudieron cargar los productos. Intenta recargar la página.</p>
-                        <button onclick="location.reload()" class="btn btn-small">
-                            <i class="fas fa-redo"></i> Reintentar
-                        </button>
-                    </div>
-                `;
-            }
+    const container = document.getElementById('featuredProducts');
+    if (!container) return;
+    
+    try {
+        const response = await fetch('/api/products');
+        if (!response.ok) throw new Error('Error al cargar productos');
+        
+        const products = await response.json();
+        
+        // Filtrar productos activos y con stock
+        const featured = products
+            .filter(p => p.activo !== false && p.stock > 0)
+            .slice(0, 4);
+        
+        if (featured.length === 0) {
+            container.innerHTML = `
+                <div class="no-products">
+                    <i class="fas fa-box-open fa-2x"></i>
+                    <h3>Próximamente nuevos productos</h3>
+                    <p>Estamos preparando nuestra colección</p>
+                </div>
+            `;
+            return;
         }
+        
+        container.innerHTML = featured.map(product => `
+            <div class="product-card fade-in">
+                <div class="product-image">
+                    <a href="./pages/product-detail.html?id=${product.id}">
+                        <img src="${product.imagen || './public/images/default-product.jpg'}" 
+                             alt="${product.nombre}"
+                             onerror="this.src='./public/images/default-product.jpg'">
+                    </a>
+                    ${product.tiene_descuento ? 
+                        '<span class="product-badge">-' + product.descuento_porcentaje + '%</span>' : ''}
+                    ${product.stock <= 5 ? 
+                        '<span class="product-badge" style="background:#dc3545;">ÚLTIMAS UNIDADES</span>' : ''}
+                </div>
+                <div class="product-info">
+                    <div class="product-category">${formatCategory(product.categoria)}</div>
+                    <h3 class="product-name">
+                        <a href="./pages/product-detail.html?id=${product.id}">${product.nombre}</a>
+                    </h3>
+                    <div class="product-price">
+                        ${product.tiene_descuento ? 
+                            `<span style="text-decoration: line-through; color: #999; font-size: 14px; margin-right: 8px;">
+                                ${product.precio_original_formateado}
+                            </span>` : ''}
+                        ${product.precio_formateado}
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn btn-small" onclick="addToCart(${product.id})">
+                            AGREGAR AL CARRITO
+                        </button>
+                        <a href="./pages/product-detail.html?id=${product.id}" class="btn btn-small btn-outline">
+                            VER DETALLES
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+        container.innerHTML = `
+            <div class="error-state">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                <p>No se pudieron cargar los productos. Intenta recargar la página.</p>
+                <button onclick="location.reload()" class="btn btn-small">
+                    <i class="fas fa-redo"></i> Reintentar
+                </button>
+            </div>
+        `;
+    }
+}
         
         async function loadCategoryCounts() {
             try {
