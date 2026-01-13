@@ -207,7 +207,12 @@ const parseArrayFromPostgres = (pgArray) => {
 };
 
 // ================= CONFIGURACIÓN MIDDLEWARE =================
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://localhost:5500'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -220,7 +225,8 @@ app.use(session({
     saveUninitialized: false,
     cookie: { 
         secure: false,
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true
     }
 }));
 
@@ -447,7 +453,745 @@ app.get('/api/session', (req, res) => {
     }
 });
 
-// ================= RUTAS DE PAGOS =================
+// ================= API - USUARIOS (ACCOUNT SECTION) =================
+// Obtener datos del usuario
+app.get('/api/users/:id', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        console.log('👤 Obteniendo datos del usuario ID:', userId);
+        
+        // Verificar que el usuario solo acceda a sus propios datos
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        const result = await query(
+            `SELECT id, nombre, apellido, email, telefono, direccion, 
+                    fecha_registro, activo, rol
+             FROM usuarios WHERE id = $1`,
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        console.log('✅ Datos de usuario obtenidos:', result.rows[0].email);
+        res.json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Actualizar datos del usuario
+app.put('/api/users/:id', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const userData = req.body;
+        
+        console.log('✏️ Actualizando usuario ID:', userId, 'Datos:', userData);
+        
+        // Verificar permisos
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        const updates = [];
+        const values = [];
+        let paramIndex = 1;
+        
+        const fields = ['nombre', 'apellido', 'email', 'telefono', 'direccion'];
+        
+        fields.forEach(field => {
+            if (userData[field] !== undefined) {
+                updates.push(`${field} = $${paramIndex}`);
+                values.push(userData[field]);
+                paramIndex++;
+            }
+        });
+        
+        if (updates.length === 0) {
+            return res.status(400).json({ error: 'No hay datos para actualizar' });
+        }
+        
+        values.push(userId);
+        
+        const queryStr = `
+            UPDATE usuarios 
+            SET ${updates.join(', ')}, fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = $${paramIndex}
+            RETURNING id, nombre, apellido, email, telefono, direccion, rol
+        `;
+        
+        const result = await query(queryStr, values);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        console.log('✅ Usuario actualizado:', result.rows[0].email);
+        res.json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('❌ Error actualizando usuario:', error);
+        
+        if (error.code === '23505') { // Violación de unicidad
+            return res.status(400).json({ error: 'El email ya está registrado' });
+        }
+        
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Cambiar contraseña
+app.put('/api/users/:id/password', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { current_password, new_password } = req.body;
+        
+        console.log('🔑 Cambiando contraseña para usuario ID:', userId);
+        
+        // Verificar permisos
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        // Obtener contraseña actual
+        const result = await query(
+            'SELECT password_hash FROM usuarios WHERE id = $1',
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        const user = result.rows[0];
+        let isValidPassword = false;
+        
+        // Verificar contraseña actual
+        try {
+            isValidPassword = await bcrypt.compare(current_password, user.password_hash);
+        } catch (bcryptError) {
+            console.error('Error bcrypt:', bcryptError);
+            isValidPassword = current_password === user.password_hash;
+        }
+        
+        if (!isValidPassword) {
+            return res.status(401).json({ error: 'Contraseña actual incorrecta' });
+        }
+        
+        // Encriptar nueva contraseña
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(new_password, saltRounds);
+        
+        // Actualizar contraseña
+        await query(
+            'UPDATE usuarios SET password_hash = $1 WHERE id = $2',
+            [hashedPassword, userId]
+        );
+        
+        console.log('✅ Contraseña cambiada para usuario ID:', userId);
+        res.json({ success: true, message: 'Contraseña cambiada exitosamente' });
+        
+    } catch (error) {
+        console.error('❌ Error cambiando contraseña:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Obtener estadísticas del usuario
+app.get('/api/users/:id/stats', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        // Verificar permisos
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        // Obtener total de órdenes
+        const ordersResult = await query(
+            'SELECT COUNT(*) as total_orders, COALESCE(SUM(total), 0) as total_spent FROM pedidos WHERE usuario_id = $1',
+            [userId]
+        );
+        
+        // Obtener órdenes pendientes
+        const pendingResult = await query(
+            `SELECT COUNT(*) as pending_orders 
+             FROM pedidos 
+             WHERE usuario_id = $1 AND estado IN ('pendiente', 'procesando')`,
+            [userId]
+        );
+        
+        // Obtener items en wishlist
+        const wishlistResult = await query(
+            'SELECT COUNT(*) as wishlist_items FROM wishlist WHERE usuario_id = $1',
+            [userId]
+        );
+        
+        // Obtener reseñas
+        const reviewsResult = await query(
+            'SELECT COUNT(*) as total_reviews FROM reseñas WHERE usuario_id = $1',
+            [userId]
+        );
+        
+        const stats = {
+            totalOrders: parseInt(ordersResult.rows[0]?.total_orders) || 0,
+            totalSpent: parseFloat(ordersResult.rows[0]?.total_spent) || 0,
+            pendingOrders: parseInt(pendingResult.rows[0]?.pending_orders) || 0,
+            wishlistItems: parseInt(wishlistResult.rows[0]?.wishlist_items) || 0,
+            reviews: parseInt(reviewsResult.rows[0]?.total_reviews) || 0
+        };
+        
+        console.log('📊 Estadísticas del usuario ID:', userId, stats);
+        res.json(stats);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo estadísticas:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - DIRECCIONES =================
+// Obtener direcciones del usuario
+app.get('/api/users/:id/addresses', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        console.log('🏠 Obteniendo direcciones para usuario ID:', userId);
+        
+        // Verificar permisos
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        const result = await query(
+            `SELECT * FROM direcciones 
+             WHERE usuario_id = $1 
+             ORDER BY predeterminada DESC, id DESC`,
+            [userId]
+        );
+        
+        console.log(`✅ ${result.rows.length} direcciones encontradas`);
+        res.json(result.rows);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo direcciones:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Crear nueva dirección
+app.post('/api/users/:id/addresses', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const addressData = req.body;
+        
+        console.log('➕ Creando dirección para usuario ID:', userId);
+        console.log('📦 Datos de dirección:', addressData);
+        
+        // Verificar permisos
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        // Validar campos obligatorios
+        const requiredFields = [
+            'nombre_completo', 'telefono', 'sector', 
+            'municipio', 'provincia', 'referencia', 'paqueteria_preferida'
+        ];
+        
+        for (const field of requiredFields) {
+            if (!addressData[field] || addressData[field].trim() === '') {
+                return res.status(400).json({ error: `El campo ${field} es obligatorio` });
+            }
+        }
+        
+        // Si esta dirección será predeterminada, quitar predeterminada de otras
+        if (addressData.predeterminada) {
+            await query(
+                'UPDATE direcciones SET predeterminada = false WHERE usuario_id = $1',
+                [userId]
+            );
+        }
+        
+        const result = await query(
+            `INSERT INTO direcciones (
+                usuario_id, nombre, nombre_completo, telefono, 
+                calle, numero, apartamento, sector, municipio, provincia, 
+                codigo_postal, ciudad, referencia, paqueteria_preferida,
+                predeterminada
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+             RETURNING *`,
+            [
+                userId,
+                addressData.nombre || 'Dirección',
+                addressData.nombre_completo,
+                addressData.telefono,
+                addressData.calle || '',
+                addressData.numero || '',
+                addressData.apartamento || '',
+                addressData.sector,
+                addressData.municipio,
+                addressData.provincia,
+                addressData.codigo_postal || '',
+                addressData.ciudad || addressData.municipio,
+                addressData.referencia,
+                addressData.paqueteria_preferida,
+                addressData.predeterminada || false
+            ]
+        );
+        
+        console.log('✅ Dirección creada ID:', result.rows[0].id);
+        res.status(201).json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('❌ Error creando dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Actualizar dirección
+app.put('/api/users/:id/addresses/:addressId', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const addressId = req.params.addressId;
+        const addressData = req.body;
+        
+        console.log('✏️ Actualizando dirección ID:', addressId, 'Usuario ID:', userId);
+        
+        // Verificar permisos y que la dirección pertenezca al usuario
+        const verifyResult = await query(
+            'SELECT * FROM direcciones WHERE id = $1 AND usuario_id = $2',
+            [addressId, userId]
+        );
+        
+        if (verifyResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dirección no encontrada' });
+        }
+        
+        // Si esta dirección será predeterminada, quitar predeterminada de otras
+        if (addressData.predeterminada) {
+            await query(
+                'UPDATE direcciones SET predeterminada = false WHERE usuario_id = $1 AND id != $2',
+                [userId, addressId]
+            );
+        }
+        
+        const updates = [];
+        const values = [];
+        let paramIndex = 1;
+        
+        const fields = ['nombre', 'nombre_completo', 'telefono', 'calle', 'numero', 
+                       'apartamento', 'sector', 'municipio', 'provincia', 'codigo_postal',
+                       'ciudad', 'referencia', 'paqueteria_preferida', 'predeterminada'];
+        
+        fields.forEach(field => {
+            if (addressData[field] !== undefined) {
+                updates.push(`${field} = $${paramIndex}`);
+                values.push(addressData[field]);
+                paramIndex++;
+            }
+        });
+        
+        if (updates.length === 0) {
+            return res.status(400).json({ error: 'No hay datos para actualizar' });
+        }
+        
+        updates.push('fecha_actualizacion = CURRENT_TIMESTAMP');
+        values.push(addressId);
+        values.push(userId);
+        
+        const queryStr = `
+            UPDATE direcciones 
+            SET ${updates.join(', ')}
+            WHERE id = $${paramIndex} AND usuario_id = $${paramIndex + 1}
+            RETURNING *
+        `;
+        
+        const result = await query(queryStr, values);
+        
+        console.log('✅ Dirección actualizada');
+        res.json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('❌ Error actualizando dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Establecer dirección como predeterminada
+app.put('/api/users/:id/addresses/:addressId/default', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const addressId = req.params.addressId;
+        
+        console.log('⭐ Estableciendo dirección predeterminada ID:', addressId);
+        
+        // Verificar permisos
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        // Verificar que la dirección existe y pertenece al usuario
+        const verifyResult = await query(
+            'SELECT * FROM direcciones WHERE id = $1 AND usuario_id = $2',
+            [addressId, userId]
+        );
+        
+        if (verifyResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dirección no encontrada' });
+        }
+        
+        // Quitar predeterminada de todas las direcciones del usuario
+        await query(
+            'UPDATE direcciones SET predeterminada = false WHERE usuario_id = $1',
+            [userId]
+        );
+        
+        // Establecer esta dirección como predeterminada
+        await query(
+            'UPDATE direcciones SET predeterminada = true WHERE id = $1 AND usuario_id = $2',
+            [addressId, userId]
+        );
+        
+        console.log('✅ Dirección predeterminada establecida');
+        res.json({ success: true, message: 'Dirección predeterminada actualizada' });
+        
+    } catch (error) {
+        console.error('❌ Error estableciendo dirección predeterminada:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Eliminar dirección
+app.delete('/api/users/:id/addresses/:addressId', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const addressId = req.params.addressId;
+        
+        console.log('🗑️ Eliminando dirección ID:', addressId);
+        
+        // Verificar permisos
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        // Verificar que la dirección existe y pertenece al usuario
+        const verifyResult = await query(
+            'SELECT * FROM direcciones WHERE id = $1 AND usuario_id = $2',
+            [addressId, userId]
+        );
+        
+        if (verifyResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dirección no encontrada' });
+        }
+        
+        // Verificar si es la única dirección
+        const countResult = await query(
+            'SELECT COUNT(*) as total FROM direcciones WHERE usuario_id = $1',
+            [userId]
+        );
+        
+        if (parseInt(countResult.rows[0].total) <= 1) {
+            return res.status(400).json({ error: 'No puedes eliminar tu única dirección' });
+        }
+        
+        // Eliminar dirección
+        await query(
+            'DELETE FROM direcciones WHERE id = $1 AND usuario_id = $2',
+            [addressId, userId]
+        );
+        
+        console.log('✅ Dirección eliminada');
+        res.json({ success: true, message: 'Dirección eliminada' });
+        
+    } catch (error) {
+        console.error('❌ Error eliminando dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - ÓRDENES DEL USUARIO =================
+// Obtener órdenes del usuario
+app.get('/api/users/:id/orders', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const limit = req.query.limit ? parseInt(req.query.limit) : null;
+        
+        console.log('📦 Obteniendo órdenes para usuario ID:', userId, 'Límite:', limit);
+        
+        // Verificar permisos
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        let queryStr = `
+            SELECT p.* 
+            FROM pedidos p 
+            WHERE p.usuario_id = $1 
+            ORDER BY p.fecha_creacion DESC
+        `;
+        
+        const params = [userId];
+        
+        if (limit) {
+            queryStr += ` LIMIT $2`;
+            params.push(limit);
+        }
+        
+        const result = await query(queryStr, params);
+        
+        console.log(`✅ ${result.rows.length} órdenes encontradas`);
+        
+        // Procesar órdenes con items
+        const orders = await Promise.all(result.rows.map(async (order) => {
+            // Obtener items de la orden
+            const itemsResult = await query(
+                `SELECT pi.*, p.nombre, p.imagen, p.categoria 
+                 FROM pedido_items pi
+                 JOIN productos p ON pi.producto_id = p.id
+                 WHERE pi.pedido_id = $1`,
+                [order.id]
+            );
+            
+            return {
+                ...order,
+                items: itemsResult.rows,
+                items_count: itemsResult.rows.length,
+                // Asegurar que el total sea un número
+                total: parseFloat(order.total) || 0,
+                // Formatear fecha
+                fecha_orden: order.fecha_creacion
+            };
+        }));
+        
+        res.json(orders);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo órdenes:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Obtener detalle de una orden específica
+app.get('/api/orders/:orderId', requireAuth, async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+        
+        console.log('🔍 Obteniendo detalle de orden ID:', orderId);
+        
+        // Obtener orden
+        const orderResult = await query(
+            `SELECT p.*, u.nombre as nombre_cliente, u.apellido as apellido_cliente,
+                    u.email as email_cliente, u.telefono as telefono_cliente
+             FROM pedidos p
+             LEFT JOIN usuarios u ON p.usuario_id = u.id
+             WHERE p.id = $1`,
+            [orderId]
+        );
+        
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
+        
+        const order = orderResult.rows[0];
+        
+        // Verificar permisos (solo el dueño o admin puede ver)
+        if (req.session.userId != order.usuario_id && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        // Obtener items de la orden
+        const itemsResult = await query(
+            `SELECT pi.*, p.nombre, p.imagen, p.categoria, p.sku,
+                    p.precio as precio_unitario
+             FROM pedido_items pi
+             JOIN productos p ON pi.producto_id = p.id
+             WHERE pi.pedido_id = $1`,
+            [orderId]
+        );
+        
+        // Calcular subtotal
+        const subtotal = itemsResult.rows.reduce((sum, item) => {
+            return sum + (parseFloat(item.precio_unitario) * parseInt(item.cantidad));
+        }, 0);
+        
+        const orderDetails = {
+            ...order,
+            items: itemsResult.rows,
+            subtotal: subtotal,
+            shipping_cost: parseFloat(order.shipping_cost) || 0,
+            total: parseFloat(order.total) || subtotal,
+            // Información del cliente
+            cliente: {
+                nombre: order.nombre_cliente,
+                apellido: order.apellido_cliente,
+                email: order.email_cliente,
+                telefono: order.telefono_cliente
+            }
+        };
+        
+        console.log('✅ Detalles de orden obtenidos');
+        res.json(orderDetails);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo detalles de orden:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - WISHLIST =================
+// Obtener wishlist del usuario
+app.get('/api/users/:id/wishlist', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        console.log('💖 Obteniendo wishlist para usuario ID:', userId);
+        
+        // Verificar permisos
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        const result = await query(
+            `SELECT w.*, p.nombre, p.imagen, p.precio, p.descuento_porcentaje,
+                    p.descuento_precio, p.categoria, p.tallas, p.colores, p.stock,
+                    p.activo
+             FROM wishlist w
+             JOIN productos p ON w.producto_id = p.id
+             WHERE w.usuario_id = $1 AND p.activo = true
+             ORDER BY w.fecha_agregado DESC`,
+            [userId]
+        );
+        
+        // Procesar productos para formato DOP
+        const wishlistItems = result.rows.map(item => {
+            const precioDOP = parseFloat(item.precio) || 0;
+            let precioFinalDOP = precioDOP;
+            let tieneDescuento = false;
+            
+            if (item.descuento_porcentaje > 0) {
+                precioFinalDOP = Math.round(precioDOP * (1 - item.descuento_porcentaje / 100));
+                tieneDescuento = true;
+            } else if (item.descuento_precio > 0) {
+                precioFinalDOP = parseFloat(item.descuento_precio) || 0;
+                tieneDescuento = true;
+            }
+            
+            return {
+                producto_id: item.producto_id,
+                id: item.id,
+                nombre: item.nombre,
+                imagen: item.imagen || '/public/images/default-product.jpg',
+                precio: precioDOP,
+                precio_final: precioFinalDOP,
+                precio_formateado: formatDOP(precioFinalDOP),
+                precio_original_formateado: formatDOP(precioDOP),
+                categoria: item.categoria,
+                tallas: parseArrayFromPostgres(item.tallas),
+                colores: parseArrayFromPostgres(item.colores),
+                stock: item.stock || 0,
+                tiene_descuento: tieneDescuento,
+                descuento_porcentaje: item.descuento_porcentaje || 0,
+                fecha_agregado: item.fecha_agregado,
+                activo: item.activo
+            };
+        });
+        
+        console.log(`✅ ${wishlistItems.length} items en wishlist`);
+        res.json(wishlistItems);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo wishlist:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Agregar a wishlist
+app.post('/api/users/:id/wishlist', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { producto_id } = req.body;
+        
+        console.log('💖 Agregando a wishlist usuario ID:', userId, 'Producto ID:', producto_id);
+        
+        // Verificar permisos
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        // Verificar que el producto existe
+        const productResult = await query(
+            'SELECT id FROM productos WHERE id = $1 AND activo = true',
+            [producto_id]
+        );
+        
+        if (productResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        // Verificar si ya está en wishlist
+        const existingResult = await query(
+            'SELECT id FROM wishlist WHERE usuario_id = $1 AND producto_id = $2',
+            [userId, producto_id]
+        );
+        
+        if (existingResult.rows.length > 0) {
+            return res.status(400).json({ error: 'El producto ya está en tu wishlist' });
+        }
+        
+        // Agregar a wishlist
+        const result = await query(
+            `INSERT INTO wishlist (usuario_id, producto_id) 
+             VALUES ($1, $2) 
+             RETURNING *`,
+            [userId, producto_id]
+        );
+        
+        console.log('✅ Producto agregado a wishlist');
+        res.status(201).json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('❌ Error agregando a wishlist:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Eliminar de wishlist
+app.delete('/api/users/:id/wishlist/:productId', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const productId = req.params.productId;
+        
+        console.log('🗑️ Eliminando de wishlist usuario ID:', userId, 'Producto ID:', productId);
+        
+        // Verificar permisos
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        const result = await query(
+            'DELETE FROM wishlist WHERE usuario_id = $1 AND producto_id = $2 RETURNING *',
+            [userId, productId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado en wishlist' });
+        }
+        
+        console.log('✅ Producto eliminado de wishlist');
+        res.json({ success: true, message: 'Producto eliminado de wishlist' });
+        
+    } catch (error) {
+        console.error('❌ Error eliminando de wishlist:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - PAGOS =================
 app.get('/api/payments/config', (req, res) => {
     console.log('🔧 Enviando configuración de pagos al frontend');
     
@@ -1208,7 +1952,7 @@ app.delete('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res
     }
 });
 
-// ================= API - USUARIOS =================
+// ================= API - USUARIOS ADMIN =================
 app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
     try {
         const result = await query(`
@@ -1294,7 +2038,7 @@ app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-// ================= API - ÓRDENES =================
+// ================= API - ÓRDENES ADMIN =================
 app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
     try {
         const result = await query(`
@@ -1322,17 +2066,7 @@ app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
                 ciudad_envio: order.ciudad_envio,
                 telefono_contacto: order.telefono_contacto,
                 nombre_cliente: order.nombre_cliente,
-                email_cliente: order.email_cliente,
-                // Items simulados
-                items: [
-                    {
-                        nombre: 'Producto de ejemplo',
-                        cantidad: 1,
-                        precio_unitario: totalDOP,
-                        precio_unitario_formateado: formatDOP(totalDOP),
-                        imagen: '/public/images/default-product.jpg'
-                    }
-                ]
+                email_cliente: order.email_cliente
             };
         });
         
@@ -1593,11 +2327,14 @@ app.listen(PORT, () => {
     console.log(`   • Carrito: http://localhost:${PORT}/cart`);
     console.log(`   • Checkout: http://localhost:${PORT}/checkout`);
     console.log(`   • Admin: http://localhost:${PORT}/admin`);
-    console.log(`\n🔧 RUTAS DE API:`);
-    console.log(`   • Test: http://localhost:${PORT}/api/test`);
-    console.log(`   • Config moneda: http://localhost:${PORT}/api/currency/config`);
-    console.log(`   • Productos (DOP): http://localhost:${PORT}/api/products`);
-    console.log(`   • Config pagos: http://localhost:${PORT}/api/payments/config`);
+    console.log(`   • Cuenta: http://localhost:${PORT}/account`);
+    console.log(`\n🔧 RUTAS DE API (CUENTA):`);
+    console.log(`   • Datos usuario: GET /api/users/:id`);
+    console.log(`   • Actualizar perfil: PUT /api/users/:id`);
+    console.log(`   • Cambiar contraseña: PUT /api/users/:id/password`);
+    console.log(`   • Órdenes usuario: GET /api/users/:id/orders`);
+    console.log(`   • Direcciones: GET /api/users/:id/addresses`);
+    console.log(`   • Wishlist: GET /api/users/:id/wishlist`);
     console.log(`\n👤 CREDENCIALES:`);
     console.log(`   • Admin: admin@gmail.com / admin123`);
     console.log(`\n✅ Listo para usar! Todos los precios se muestran en Pesos Dominicanos (DOP)`);
