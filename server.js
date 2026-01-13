@@ -1583,6 +1583,140 @@ app.put('/api/users/:id', requireAuth, async (req, res) => {
     }
 });
 
+// ================= API - WISHLIST COMPLETA =================
+
+// Agregar a wishlist
+app.post('/api/users/:userId/wishlist', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { producto_id } = req.body;
+        
+        console.log('❤️ Agregando a wishlist - Usuario:', userId, 'Producto:', producto_id);
+        
+        // Verificar autorización
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Verificar si el producto existe
+        const productCheck = await query(
+            'SELECT id FROM productos WHERE id = $1 AND activo = true',
+            [producto_id]
+        );
+        
+        if (productCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        // Verificar si ya está en la wishlist
+        const existingCheck = await query(
+            'SELECT id FROM wishlist WHERE usuario_id = $1 AND producto_id = $2',
+            [userId, producto_id]
+        );
+        
+        if (existingCheck.rows.length > 0) {
+            return res.status(400).json({ 
+                error: 'El producto ya está en tu wishlist',
+                already_in_wishlist: true 
+            });
+        }
+        
+        // Agregar a la wishlist
+        const result = await query(
+            'INSERT INTO wishlist (usuario_id, producto_id) VALUES ($1, $2) RETURNING *',
+            [userId, producto_id]
+        );
+        
+        console.log('✅ Producto agregado a wishlist');
+        
+        res.status(201).json({ 
+            success: true, 
+            message: 'Producto agregado a wishlist',
+            wishlist_item: result.rows[0]
+        });
+        
+    } catch (error) {
+        console.error('❌ Error agregando a wishlist:', error);
+        
+        // Si la tabla no existe, crearla
+        if (error.message.includes('relation "wishlist" does not exist')) {
+            console.log('⚠️ Tabla wishlist no existe, intentando crear...');
+            
+            try {
+                await query(`
+                    CREATE TABLE IF NOT EXISTS wishlist (
+                        id SERIAL PRIMARY KEY,
+                        usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+                        producto_id INTEGER REFERENCES productos(id) ON DELETE CASCADE,
+                        fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(usuario_id, producto_id)
+                    )
+                `);
+                
+                // Intentar nuevamente después de crear la tabla
+                const result = await query(
+                    'INSERT INTO wishlist (usuario_id, producto_id) VALUES ($1, $2) RETURNING *',
+                    [req.params.userId, req.body.producto_id]
+                );
+                
+                return res.status(201).json({ 
+                    success: true, 
+                    message: 'Producto agregado a wishlist (tabla creada)',
+                    wishlist_item: result.rows[0]
+                });
+                
+            } catch (createError) {
+                console.error('❌ Error creando tabla wishlist:', createError);
+            }
+        }
+        
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
+// Eliminar de wishlist
+app.delete('/api/users/:userId/wishlist/:productId', requireAuth, async (req, res) => {
+    try {
+        const { userId, productId } = req.params;
+        
+        console.log('🗑️ Eliminando de wishlist - Usuario:', userId, 'Producto:', productId);
+        
+        // Verificar autorización
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        const result = await query(
+            'DELETE FROM wishlist WHERE usuario_id = $1 AND producto_id = $2 RETURNING *',
+            [userId, productId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ 
+                error: 'Producto no encontrado en wishlist',
+                already_removed: true 
+            });
+        }
+        
+        console.log('✅ Producto eliminado de wishlist');
+        
+        res.json({ 
+            success: true, 
+            message: 'Producto eliminado de wishlist'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error eliminando de wishlist:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
 // ================= API - DIRECCIONES DEL USUARIO =================
 app.get('/api/users/:userId/addresses', requireAuth, async (req, res) => {
     try {
@@ -1796,6 +1930,174 @@ app.put('/api/users/:userId/addresses/:addressId/default', requireAuth, async (r
     } catch (error) {
         console.error('Error estableciendo dirección predeterminada:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - AGREGAR DIRECCIÓN =================
+
+app.post('/api/users/:userId/addresses', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const addressData = req.body;
+        
+        console.log('📍 Agregando dirección para usuario:', userId);
+        console.log('📦 Datos recibidos:', addressData);
+        
+        // Verificar autorización
+        if (req.session.userId != userId) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Validar campos requeridos
+        const requiredFields = [
+            'nombre_completo',
+            'telefono',
+            'provincia',
+            'municipio',
+            'sector',
+            'calle',
+            'referencia',
+            'paqueteria_preferida'
+        ];
+        
+        const missingFields = [];
+        requiredFields.forEach(field => {
+            if (!addressData[field] || addressData[field].trim() === '') {
+                missingFields.push(field);
+            }
+        });
+        
+        if (missingFields.length > 0) {
+            return res.status(400).json({ 
+                error: 'Campos requeridos faltantes',
+                missing_fields: missingFields
+            });
+        }
+        
+        // Si es predeterminada, quitar predeterminada de otras direcciones
+        if (addressData.predeterminada) {
+            try {
+                await query(
+                    'UPDATE direcciones SET predeterminada = false WHERE usuario_id = $1',
+                    [userId]
+                );
+            } catch (updateError) {
+                console.warn('Error actualizando direcciones predeterminadas:', updateError);
+                // Continuar de todos modos
+            }
+        }
+        
+        // Insertar la nueva dirección
+        const result = await query(
+            `INSERT INTO direcciones (
+                usuario_id, 
+                nombre, 
+                nombre_completo, 
+                telefono, 
+                municipio, 
+                sector,
+                provincia, 
+                referencia, 
+                predeterminada, 
+                paqueteria_preferida,
+                calle,
+                apartamento,
+                codigo_postal,
+                fecha_creacion
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP)
+            RETURNING *`,
+            [
+                userId,
+                addressData.nombre || 'Dirección Principal',
+                addressData.nombre_completo,
+                addressData.telefono,
+                addressData.municipio,
+                addressData.sector,
+                addressData.provincia,
+                addressData.referencia,
+                addressData.predeterminada || false,
+                addressData.paqueteria_preferida,
+                addressData.calle || '',
+                addressData.apartamento || null,
+                addressData.codigo_postal || null
+            ]
+        );
+        
+        console.log('✅ Dirección creada exitosamente');
+        
+        res.status(201).json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('❌ Error creando dirección:', error);
+        
+        // Si la tabla no existe, crearla
+        if (error.message.includes('relation "direcciones" does not exist')) {
+            console.log('⚠️ Tabla direcciones no existe, intentando crear...');
+            
+            try {
+                await query(`
+                    CREATE TABLE IF NOT EXISTS direcciones (
+                        id SERIAL PRIMARY KEY,
+                        usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+                        nombre VARCHAR(100),
+                        nombre_completo VARCHAR(200) NOT NULL,
+                        telefono VARCHAR(20) NOT NULL,
+                        municipio VARCHAR(100) NOT NULL,
+                        sector VARCHAR(100) NOT NULL,
+                        provincia VARCHAR(100) NOT NULL,
+                        referencia TEXT NOT NULL,
+                        calle VARCHAR(200),
+                        apartamento VARCHAR(50),
+                        codigo_postal VARCHAR(10),
+                        predeterminada BOOLEAN DEFAULT false,
+                        paqueteria_preferida VARCHAR(100) NOT NULL,
+                        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                `);
+                
+                console.log('✅ Tabla direcciones creada exitosamente');
+                
+                // Intentar nuevamente después de crear la tabla
+                const result = await query(
+                    `INSERT INTO direcciones (
+                        usuario_id, nombre, nombre_completo, telefono, municipio, sector,
+                        provincia, referencia, predeterminada, paqueteria_preferida,
+                        calle, apartamento, codigo_postal
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                    RETURNING *`,
+                    [
+                        req.params.userId,
+                        req.body.nombre || 'Dirección Principal',
+                        req.body.nombre_completo,
+                        req.body.telefono,
+                        req.body.municipio,
+                        req.body.sector,
+                        req.body.provincia,
+                        req.body.referencia,
+                        req.body.predeterminada || false,
+                        req.body.paqueteria_preferida,
+                        req.body.calle || '',
+                        req.body.apartamento || null,
+                        req.body.codigo_postal || null
+                    ]
+                );
+                
+                return res.status(201).json(result.rows[0]);
+                
+            } catch (createError) {
+                console.error('❌ Error creando tabla direcciones:', createError);
+                return res.status(500).json({ 
+                    error: 'Error creando tabla de direcciones',
+                    details: createError.message 
+                });
+            }
+        }
+        
+        res.status(500).json({ 
+            error: 'Error interno del servidor al crear dirección',
+            details: error.message 
+        });
     }
 });
 

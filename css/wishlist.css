@@ -1,0 +1,60 @@
+/* Estilos para botones de wishlist */
+.wishlist-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.wishlist-btn:hover {
+    background-color: rgba(255, 71, 87, 0.1);
+    transform: scale(1.1);
+}
+
+.wishlist-btn i {
+    transition: color 0.3s ease;
+}
+
+.wishlist-btn.in-wishlist i {
+    color: #ff4757 !important;
+}
+
+.wishlist-btn.not-in-wishlist i {
+    color: #666;
+}
+
+/* En cards de productos */
+.product-card .wishlist-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.product-card:hover .wishlist-btn {
+    background-color: white;
+}
+
+/* En página de producto */
+.product-detail-wishlist {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.product-detail-wishlist .wishlist-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.4rem;
+}

@@ -1852,27 +1852,28 @@ class AccountManager {
     async saveAddress(e) {
         e.preventDefault();
         
+        console.log('💾 Guardando dirección...');
+        
         const addressId = document.getElementById('address-id').value;
         const isEdit = !!addressId;
         
+        // Recoger todos los datos del formulario
         const addressData = {
             paqueteria_preferida: document.getElementById('address-paqueteria_preferida').value,
-            nombre_completo: document.getElementById('address-nombre_completo').value,
-            telefono: document.getElementById('address-telefono').value,
+            nombre_completo: document.getElementById('address-nombre_completo').value.trim(),
+            telefono: document.getElementById('address-telefono').value.trim(),
             provincia: document.getElementById('address-provincia').value,
-            municipio: document.getElementById('address-municipio').value,
-            sector: document.getElementById('address-sector').value,
-            calle: document.getElementById('address-calle').value,
-            apartamento: document.getElementById('address-apartamento').value,
-            codigo_postal: document.getElementById('address-codigo_postal').value,
-            referencia: document.getElementById('address-referencia').value,
-            predeterminada: document.getElementById('address-predeterminada').checked
+            municipio: document.getElementById('address-municipio').value.trim(),
+            sector: document.getElementById('address-sector').value.trim(),
+            calle: document.getElementById('address-calle').value.trim(),
+            apartamento: document.getElementById('address-apartamento').value.trim(),
+            codigo_postal: document.getElementById('address-codigo_postal').value.trim(),
+            referencia: document.getElementById('address-referencia').value.trim(),
+            predeterminada: document.getElementById('address-predeterminada').checked,
+            nombre: 'Dirección ' + (this.addresses.length + 1) // Nombre automático
         };
         
-        // Agregar prefijo al teléfono si no lo tiene
-        if (addressData.telefono && !addressData.telefono.startsWith('809-')) {
-            addressData.telefono = `809-${addressData.telefono.replace(/\D/g, '').slice(0, 7)}`;
-        }
+        console.log('📦 Datos a guardar:', addressData);
         
         // Validar campos obligatorios
         const requiredFields = [
@@ -1886,10 +1887,24 @@ class AccountManager {
             'referencia'
         ];
         
-        for (const field of requiredFields) {
-            if (!addressData[field] || addressData[field].trim() === '') {
-                this.showNotification(`El campo ${field.replace('_', ' ')} es obligatorio`, 'error');
-                return;
+        let missingFields = [];
+        requiredFields.forEach(field => {
+            if (!addressData[field] || addressData[field].toString().trim() === '') {
+                missingFields.push(field);
+            }
+        });
+        
+        if (missingFields.length > 0) {
+            this.showNotification(`Faltan campos obligatorios: ${missingFields.join(', ')}`, 'error');
+            return;
+        }
+        
+        // Formatear teléfono
+        if (addressData.telefono) {
+            let phone = addressData.telefono.replace(/\D/g, '');
+            if (phone.length >= 7) {
+                phone = phone.slice(-7); // Tomar últimos 7 dígitos
+                addressData.telefono = `809-${phone.slice(0, 3)}-${phone.slice(3)}`;
             }
         }
         
@@ -1900,6 +1915,8 @@ class AccountManager {
             
             const method = isEdit ? 'PUT' : 'POST';
             
+            console.log(`📤 Enviando a ${url} con método ${method}`);
+            
             const response = await fetch(url, {
                 method,
                 headers: {
@@ -1908,21 +1925,36 @@ class AccountManager {
                 body: JSON.stringify(addressData)
             });
             
+            const result = await response.json();
+            
             if (response.ok) {
                 this.showNotification(
                     `Dirección ${isEdit ? 'actualizada' : 'agregada'} correctamente`, 
                     'success'
                 );
-                document.getElementById('address-modal').remove();
-                this.loadSection('addresses');
+                
+                // Cerrar modal
+                const modal = document.getElementById('address-modal');
+                if (modal) modal.remove();
+                
+                // Recargar sección de direcciones
+                await this.loadSection('addresses');
+                
             } else {
-                const error = await response.json();
-                this.showNotification(error.error || `Error ${isEdit ? 'actualizando' : 'agregando'} dirección`, 'error');
+                console.error('❌ Error del servidor:', result);
+                
+                let errorMessage = result.error || `Error ${isEdit ? 'actualizando' : 'agregando'} dirección`;
+                
+                if (result.missing_fields) {
+                    errorMessage = `Faltan campos: ${result.missing_fields.join(', ')}`;
+                }
+                
+                this.showNotification(errorMessage, 'error');
             }
             
         } catch (error) {
-            console.error('Error guardando dirección:', error);
-            this.showNotification('Error guardando dirección', 'error');
+            console.error('❌ Error guardando dirección:', error);
+            this.showNotification('Error de conexión al guardar dirección', 'error');
         }
     }
 
