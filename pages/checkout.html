@@ -1527,12 +1527,23 @@
                     if (!validateForm()) {
                         return;
                     }
+
                     
                     // Redirigir a WhatsApp
-                    const orderData = collectOrderData();
-                    const whatsappMessage = createWhatsAppMessage(orderData);
-                    
-                    window.open(`https://wa.me/18292202292?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
+const orderData = collectOrderData();
+const whatsappMessage = createWhatsAppMessage(orderData);
+
+// Mensaje automático inicial
+const greeting = "Hola 👋 Bienvenido a Mabel Activewear.\n\n";
+
+// Mensaje final (saludo + pedido)
+const finalMessage = greeting + whatsappMessage;
+
+// Abrir WhatsApp
+window.open(
+  `https://wa.me/18292202292?text=${encodeURIComponent(finalMessage)}`,
+  '_blank'
+);
                 });
             }
         }

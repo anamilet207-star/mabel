@@ -1574,7 +1574,6 @@
             if (!container) return;
             
             try {
-                // URL corregida para el API
                 const response = await fetch('/api/products');
                 if (!response.ok) throw new Error('Error al cargar productos');
                 
@@ -1583,7 +1582,7 @@
                 // Filtrar productos activos y con stock
                 const featured = products
                     .filter(p => p.activo !== false && p.stock > 0)
-                    .slice(0, 4); // Primeros 4 productos
+                    .slice(0, 4);
                 
                 if (featured.length === 0) {
                     container.innerHTML = `
@@ -1596,10 +1595,6 @@
                     return;
                 }
                 
-                // Determinar el número de columnas según el tamaño de pantalla
-                const isMobile = window.innerWidth < 768;
-                const gridColumns = isMobile ? 1 : (window.innerWidth < 1024 ? 2 : 4);
-                
                 container.innerHTML = featured.map(product => `
                     <div class="product-card fade-in">
                         <div class="product-image">
@@ -1608,15 +1603,23 @@
                                      alt="${product.nombre}"
                                      onerror="this.src='./public/images/default-product.jpg'">
                             </a>
+                            ${product.tiene_descuento ? 
+                                '<span class="product-badge">-' + product.descuento_porcentaje + '%</span>' : ''}
                             ${product.stock <= 5 ? 
-                                '<span class="product-badge">ÚLTIMAS UNIDADES</span>' : ''}
+                                '<span class="product-badge" style="background:#dc3545;">ÚLTIMAS UNIDADES</span>' : ''}
                         </div>
                         <div class="product-info">
                             <div class="product-category">${formatCategory(product.categoria)}</div>
                             <h3 class="product-name">
                                 <a href="./pages/product-detail.html?id=${product.id}">${product.nombre}</a>
                             </h3>
-                            <div class="product-price">$${parseFloat(product.precio).toFixed(2)}</div>
+                            <div class="product-price">
+                                ${product.tiene_descuento ? 
+                                    `<span style="text-decoration: line-through; color: #999; font-size: 14px; margin-right: 8px;">
+                                        ${product.precio_original_formateado}
+                                    </span>` : ''}
+                                ${product.precio_formateado}
+                            </div>
                             <div class="product-actions">
                                 <button class="btn btn-small" onclick="addToCart(${product.id})">
                                     AGREGAR AL CARRITO
@@ -1768,47 +1771,6 @@
             }
         }
     </script>
-    <script>
-        // Conversión en tiempo real para todos los precios
-        document.addEventListener('DOMContentLoaded', function() {
-            const EXCHANGE_RATE = 58.5;
-            
-            // Función para convertir y formatear precios
-            function convertPricesToDOP() {
-                // Buscar elementos con precio en USD
-                document.querySelectorAll('.product-price').forEach(element => {
-                    let text = element.textContent;
-                    // Si encuentra formato USD ($99.99)
-                    if (text.includes('$') && !text.includes('RD$')) {
-                        const usdPrice = parseFloat(text.replace('$', '').trim());
-                        if (!isNaN(usdPrice)) {
-                            const dopPrice = Math.round(usdPrice * EXCHANGE_RATE);
-                            element.innerHTML = `
-                                <span class="price-dop">RD$ ${dopPrice.toLocaleString('es-DO')}</span>
-                                <span class="price-usd">(US$ ${usdPrice.toFixed(2)})</span>
-                            `;
-                        }
-                    }
-                });
-            }
-            
-            // Ejecutar conversión inmediatamente
-            convertPricesToDOP();
-            
-            // También convertir precios que se carguen dinámicamente
-            const observer = new MutationObserver(convertPricesToDOP);
-            observer.observe(document.body, { childList: true, subtree: true });
-            
-            // Configurar para cargar productos con precios en DOP
-            if (typeof loadFeaturedProducts === 'function') {
-                // Sobrescribir temporalmente la función
-                const originalLoadFeaturedProducts = loadFeaturedProducts;
-                loadFeaturedProducts = async function() {
-                    await originalLoadFeaturedProducts();
-                    convertPricesToDOP();
-                };
-            }
-        });
-        </script>
+    
 </body>
 </html>
