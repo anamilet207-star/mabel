@@ -1,5 +1,5 @@
 // ============================================
-// CUENTA DE USUARIO - VERSIÓN CORREGIDA
+// CUENTA DE USUARIO - VERSIÓN MEJORADA Y CORREGIDA
 // ============================================
 
 class AccountManager {
@@ -49,9 +49,7 @@ class AccountManager {
                 return false;
             }
             
-            // IMPORTANTE: Guardar el usuario COMPLETO de la sesión
             this.user = data.user;
-            console.log('👤 Usuario autenticado:', this.user);
             return true;
             
         } catch (error) {
@@ -63,36 +61,21 @@ class AccountManager {
 
     async loadUserData() {
         try {
-            // Primero verificar que tenemos un user.id válido
-            if (!this.user || !this.user.id) {
-                console.error('❌ Error: Usuario no tiene ID');
-                throw new Error('Usuario no válido');
-            }
-            
-            console.log('📥 Cargando datos del usuario ID:', this.user.id);
-            
             const response = await fetch(`/api/users/${this.user.id}`);
-            
-            if (!response.ok) {
-                // Si el endpoint no existe o falla, usar los datos de sesión
-                console.warn('⚠️ No se pudieron cargar datos adicionales del usuario, usando datos de sesión');
-                this.updateUserUI();
-                this.updateHeaderStats();
-                return;
-            }
+            if (!response.ok) throw new Error('Error cargando datos del usuario');
             
             const userData = await response.json();
             this.user = { ...this.user, ...userData };
             
             // Actualizar UI con datos del usuario
             this.updateUserUI();
+            
+            // Actualizar estadísticas en el header
             this.updateHeaderStats();
             
         } catch (error) {
             console.error('❌ Error cargando datos del usuario:', error);
-            // No mostrar error al usuario, solo usar datos básicos
-            this.updateUserUI();
-            this.updateHeaderStats();
+            this.showNotification('Error cargando datos del perfil', 'error');
         }
     }
 
@@ -138,90 +121,23 @@ class AccountManager {
     updateHeaderStats() {
         const statsContainer = document.getElementById('account-header-stats');
         if (statsContainer) {
-            // Simular estadísticas si no hay endpoint real
-            const stats = {
-                totalOrders: 0,
-                wishlistItems: 0,
-                pendingOrders: 0,
-                totalSpent: 0
-            };
+            const stats = this.getSampleStats();
             
             const statsElements = statsContainer.querySelectorAll('.header-stat');
             
             // Actualizar pedidos
-            if (statsElements[0]) {
-                const numberElement = statsElements[0].querySelector('.number');
-                if (numberElement) {
-                    numberElement.textContent = stats.totalOrders || 0;
-                }
-            }
+            statsElements[0].querySelector('.number').textContent = stats.totalOrders || 0;
             
             // Actualizar favoritos
-            if (statsElements[1]) {
-                const numberElement = statsElements[1].querySelector('.number');
-                if (numberElement) {
-                    numberElement.textContent = stats.wishlistItems || 0;
-                }
-            }
+            statsElements[1].querySelector('.number').textContent = stats.wishlistItems || 0;
             
             // Actualizar puntos (ejemplo)
-            if (statsElements[2]) {
-                const numberElement = statsElements[2].querySelector('.number');
-                if (numberElement) {
-                    numberElement.textContent = Math.floor(stats.totalSpent / 10) || 0;
-                }
-            }
+            statsElements[2].querySelector('.number').textContent = Math.floor(stats.totalSpent / 10) || 0;
             
             // Actualizar pendientes
-            if (statsElements[3]) {
-                const numberElement = statsElements[3].querySelector('.number');
-                if (numberElement) {
-                    numberElement.textContent = stats.pendingOrders || 0;
-                }
-            }
+            statsElements[3].querySelector('.number').textContent = stats.pendingOrders || 0;
         }
     }
-
-    async getUserAddresses() {
-        try {
-            // Verificar que tenemos un usuario válido
-            if (!this.user || !this.user.id) {
-                console.error('❌ Error: Usuario no tiene ID para cargar direcciones');
-                return [];
-            }
-            
-            console.log('📍 Cargando direcciones para usuario ID:', this.user.id);
-            
-            const response = await fetch(`/api/users/${this.user.id}/addresses`);
-            
-            if (!response.ok) {
-                // Si es 404, significa que no hay direcciones (lo cual es normal)
-                if (response.status === 404) {
-                    console.log('ℹ️ No se encontraron direcciones (404) - retornando array vacío');
-                    return [];
-                }
-                
-                // Para otros errores, mostrar mensaje
-                const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
-                console.warn('⚠️ Error cargando direcciones:', response.status, errorData);
-                
-                return []; // Retornar array vacío
-            }
-            
-            const addresses = await response.json();
-            console.log(`✅ Direcciones cargadas: ${addresses.length} encontradas`);
-            return addresses;
-            
-        } catch (error) {
-            console.error('❌ Error cargando direcciones:', error);
-            // No mostrar error al usuario, solo retornar array vacío
-            return [];
-        }
-    }
-
-    // ... EL RESTO DEL CÓDIGO PERMANECE IGUAL ...
-    // Solo actualiza los métodos que mencioné arriba
-
 
     setupNavigation() {
         // Navegación del sidebar
@@ -408,24 +324,46 @@ class AccountManager {
         try {
             const response = await fetch(`/api/users/${this.user.id}/orders?limit=${limit}`);
             if (!response.ok) {
-                // Retornar array vacío en lugar de datos de prueba
-                return [];
+                // Si hay error, devolver datos de ejemplo para desarrollo
+                return this.getSampleOrders(limit);
             }
-            
-            const orders = await response.json();
-            
-            // Si hay órdenes reales, retornarlas
-            if (orders && orders.length > 0) {
-                return orders.slice(0, limit);
-            }
-            
-            // Si no hay órdenes, retornar array vacío
-            return [];
-            
+            return await response.json();
         } catch (error) {
             console.error('Error cargando órdenes:', error);
-            return [];
+            return this.getSampleOrders(limit);
         }
+    }
+
+    getSampleOrders(limit = 5) {
+        return [
+            {
+                id: 1001,
+                fecha_orden: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+                total: 149.97,
+                estado: 'entregado',
+                items_count: 2,
+                tracking_number: 'VMP123456789RD',
+                paqueteria: 'VIMENPAQ'
+            },
+            {
+                id: 1002,
+                fecha_orden: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+                total: 89.99,
+                estado: 'procesando',
+                items_count: 1,
+                tracking_number: null,
+                paqueteria: null
+            },
+            {
+                id: 1003,
+                fecha_orden: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+                total: 210.50,
+                estado: 'pendiente',
+                items_count: 3,
+                tracking_number: null,
+                paqueteria: null
+            }
+        ].slice(0, limit);
     }
 
     async getUserStats() {
@@ -443,11 +381,11 @@ class AccountManager {
 
     getSampleStats() {
         return {
-            totalOrders: 0,
-            wishlistItems: 0,
-            reviews: 0,
-            pendingOrders: 0,
-            totalSpent: 0
+            totalOrders: 3,
+            wishlistItems: 5,
+            reviews: 2,
+            pendingOrders: 1,
+            totalSpent: 450.46
         };
     }
 
@@ -595,23 +533,12 @@ class AccountManager {
         try {
             const response = await fetch(`/api/users/${this.user.id}/orders`);
             if (!response.ok) {
-                // Retornar array vacío
-                return [];
+                return this.getSampleOrders(10);
             }
-            
-            const orders = await response.json();
-            
-            // Si hay órdenes reales, retornarlas
-            if (orders && orders.length > 0) {
-                return orders;
-            }
-            
-            // Si no hay órdenes, retornar array vacío
-            return [];
-            
+            return await response.json();
         } catch (error) {
             console.error('Error cargando todas las órdenes:', error);
-            return [];
+            return this.getSampleOrders(10);
         }
     }
 
@@ -695,66 +622,6 @@ class AccountManager {
         try {
             this.addresses = await this.getUserAddresses();
             
-            let addressesHTML = '';
-            
-            if (this.addresses.length === 0) {
-                addressesHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-map-marker-alt fa-3x"></i>
-                        <h3>No tienes direcciones guardadas</h3>
-                        <p>Agrega una dirección de envío para recibir tus compras</p>
-                    </div>
-                `;
-            } else {
-                addressesHTML = this.addresses.map((address, index) => `
-                    <div class="address-card ${address.predeterminada ? 'default-address' : ''}">
-                        <div class="address-header">
-                            <h3><i class="fas fa-map-marker-alt"></i> ${address.nombre || 'Dirección ' + (index + 1)}</h3>
-                            ${address.predeterminada ? 
-                                '<span class="default-badge"><i class="fas fa-star"></i> Predeterminada</span>' : 
-                                ''
-                            }
-                        </div>
-                        <div class="address-details">
-                            <p><strong><i class="fas fa-user"></i> ${address.nombre_completo || 'No especificado'}</strong></p>
-                            <p><i class="fas fa-phone"></i> ${address.telefono || 'No especificado'}</p>
-                            ${address.paqueteria_preferida ? 
-                                `<p><i class="fas fa-shipping-fast"></i> <strong>Paquetería:</strong> ${address.paqueteria_preferida}</p>` : 
-                                ''
-                            }
-                            <p><i class="fas fa-map-marker-alt"></i> <strong>Ubicación:</strong> 
-                                ${[address.sector, address.municipio, address.provincia].filter(Boolean).join(', ')}
-                            </p>
-                            ${address.referencia ? 
-                                `<p><i class="fas fa-info-circle"></i> <strong>Referencia:</strong> ${address.referencia}</p>` : 
-                                ''
-                            }
-                            ${address.apartamento ? `<p><i class="fas fa-building"></i> ${address.apartamento}</p>` : ''}
-                            <p><i class="fas fa-road"></i> ${address.calle || ''} ${address.numero || ''}</p>
-                            <p><i class="fas fa-city"></i> ${address.ciudad || address.municipio || ''}, ${address.provincia}</p>
-                            ${address.codigo_postal ? `<p><i class="fas fa-mail-bulk"></i> ${address.codigo_postal}</p>` : ''}
-                        </div>
-                        <div class="address-actions">
-                            <button class="edit-address" data-id="${address.id}">
-                                <i class="fas fa-edit"></i> Editar
-                            </button>
-                            ${!address.predeterminada ? 
-                                `<button class="set-default" data-id="${address.id}">
-                                    <i class="fas fa-star"></i> Predeterminar
-                                </button>` : 
-                                ''
-                            }
-                            ${this.addresses.length > 1 ? 
-                                `<button class="delete-address" data-id="${address.id}">
-                                    <i class="fas fa-trash"></i> Eliminar
-                                </button>` : 
-                                ''
-                            }
-                        </div>
-                    </div>
-                `).join('');
-            }
-            
             return `
                 <div class="addresses-content">
                     <div class="section-header">
@@ -763,7 +630,53 @@ class AccountManager {
                     </div>
                     
                     <div class="addresses-grid">
-                        ${addressesHTML}
+                        ${this.addresses.map((address, index) => `
+                            <div class="address-card ${address.predeterminada ? 'default-address' : ''}">
+                                <div class="address-header">
+                                    <h3><i class="fas fa-map-marker-alt"></i> ${address.nombre || 'Dirección ' + (index + 1)}</h3>
+                                    ${address.predeterminada ? 
+                                        '<span class="default-badge"><i class="fas fa-star"></i> Predeterminada</span>' : 
+                                        ''
+                                    }
+                                </div>
+                                <div class="address-details">
+                                    <p><strong><i class="fas fa-user"></i> ${address.nombre_completo || 'No especificado'}</strong></p>
+                                    <p><i class="fas fa-phone"></i> ${address.telefono || 'No especificado'}</p>
+                                    ${address.paqueteria_preferida ? 
+                                        `<p><i class="fas fa-shipping-fast"></i> <strong>Paquetería:</strong> ${address.paqueteria_preferida}</p>` : 
+                                        ''
+                                    }
+                                    <p><i class="fas fa-map-marker-alt"></i> <strong>Ubicación:</strong> 
+                                        ${[address.sector, address.municipio, address.provincia].filter(Boolean).join(', ')}
+                                    </p>
+                                    ${address.referencia ? 
+                                        `<p><i class="fas fa-info-circle"></i> <strong>Referencia:</strong> ${address.referencia}</p>` : 
+                                        ''
+                                    }
+                                    ${address.apartamento ? `<p><i class="fas fa-building"></i> ${address.apartamento}</p>` : ''}
+                                    <p><i class="fas fa-road"></i> ${address.calle} ${address.numero}</p>
+                                    <p><i class="fas fa-city"></i> ${address.ciudad}, ${address.provincia}</p>
+                                    ${address.codigo_postal ? `<p><i class="fas fa-mail-bulk"></i> ${address.codigo_postal}</p>` : ''}
+                                </div>
+                                <div class="address-actions">
+                                    <button class="edit-address" data-id="${address.id}">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                    ${!address.predeterminada ? 
+                                        `<button class="set-default" data-id="${address.id}">
+                                            <i class="fas fa-star"></i> Predeterminar
+                                        </button>` : 
+                                        ''
+                                    }
+                                    ${this.addresses.length > 1 ? 
+                                        `<button class="delete-address" data-id="${address.id}">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </button>` : 
+                                        ''
+                                    }
+                                </div>
+                            </div>
+                        `).join('')}
                         
                         <div class="add-address-card" id="add-address-btn">
                             <div class="add-address-icon">
@@ -801,24 +714,43 @@ class AccountManager {
         try {
             const response = await fetch(`/api/users/${this.user.id}/addresses`);
             if (!response.ok) {
-                // Si no hay direcciones reales, retornar array vacío
-                return [];
+                // Si hay error, devolver direcciones de ejemplo
+                return this.getSampleAddresses();
             }
-            
-            const addresses = await response.json();
-            
-            // Si hay direcciones reales, retornarlas
-            if (addresses && addresses.length > 0) {
-                return addresses;
-            }
-            
-            // Si no hay direcciones, retornar array vacío
-            return [];
-            
+            return await response.json();
         } catch (error) {
             console.error('Error cargando direcciones:', error);
-            return []; // Retornar array vacío en lugar de datos de prueba
+            return this.getSampleAddresses();
         }
+    }
+
+    getSampleAddresses() {
+        return [
+            {
+                id: 1,
+                nombre: 'Casa',
+                nombre_completo: `${this.user.nombre} ${this.user.apellido}`,
+                telefono: '809-555-1234',
+                municipio: 'Santo Domingo Este',
+                sector: 'Naco',
+                provincia: 'Distrito Nacional',
+                referencia: 'Paquetería VIMENPAQ frente al supermercado Nacional, al lado de la farmacia Carol',
+                predeterminada: true,
+                paqueteria_preferida: 'VIMENPAQ'
+            },
+            {
+                id: 2,
+                nombre: 'Oficina',
+                nombre_completo: `${this.user.nombre} ${this.user.apellido}`,
+                telefono: '809-555-5678',
+                municipio: 'Santo Domingo',
+                sector: 'Piantini',
+                provincia: 'Distrito Nacional',
+                referencia: 'Paquetería Mundo Cargo en la Torre A, Piso 8, frente al Banco Popular',
+                predeterminada: false,
+                paqueteria_preferida: 'Mundo Cargo'
+            }
+        ];
     }
 
     async loadWishlist() {
@@ -934,21 +866,52 @@ class AccountManager {
         try {
             const response = await fetch(`/api/users/${this.user.id}/wishlist`);
             if (!response.ok) {
-                return []; // Retornar array vacío
+                return this.getSampleWishlist();
             }
-            
-            const wishlist = await response.json();
-            
-            if (wishlist && wishlist.length > 0) {
-                return wishlist;
-            }
-            
-            return []; // Retornar array vacío
-            
+            return await response.json();
         } catch (error) {
             console.error('Error cargando wishlist:', error);
-            return []; // Retornar array vacío
+            return this.getSampleWishlist();
         }
+    }
+
+    getSampleWishlist() {
+        return [
+            {
+                producto_id: 1,
+                nombre: 'Legging High-Waist Black',
+                imagen: '/public/images/default-product.jpg',
+                precio: 59.99,
+                precio_final: 59.99,
+                categoria: 'leggings',
+                tallas: ['XS', 'S', 'M', 'L'],
+                stock: 10,
+                tiene_descuento: false
+            },
+            {
+                producto_id: 2,
+                nombre: 'Sports Bra Essential',
+                imagen: '/public/images/default-product.jpg',
+                precio: 34.99,
+                precio_final: 27.99,
+                categoria: 'tops',
+                tallas: ['S', 'M', 'L'],
+                stock: 3,
+                tiene_descuento: true,
+                descuento_porcentaje: 20
+            },
+            {
+                producto_id: 3,
+                nombre: 'Set Active Premium',
+                imagen: '/public/images/default-product.jpg',
+                precio: 89.99,
+                precio_final: 89.99,
+                categoria: 'sets',
+                tallas: ['S', 'M', 'L', 'XL'],
+                stock: 0,
+                tiene_descuento: false
+            }
+        ];
     }
 
     loadSettingsForm() {
@@ -1752,46 +1715,14 @@ class AccountManager {
                                 </div>
                             </div>
                             
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="address-sector">
-                                        <i class="fas fa-map-pin"></i> Sector/Barrio *
-                                    </label>
-                                    <input type="text" id="address-sector" 
-                                           value="${address?.sector || ''}" 
-                                           placeholder="Ej: Naco, Los Prados, Bella Vista"
-                                           required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="address-calle">
-                                        <i class="fas fa-road"></i> Calle y Número *
-                                    </label>
-                                    <input type="text" id="address-calle" 
-                                           value="${address?.calle || ''}" 
-                                           placeholder="Ej: Calle Principal #123"
-                                           required>
-                                    <small class="hint">Nombre de la calle y número</small>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="address-apartamento">
-                                        <i class="fas fa-building"></i> Apartamento/Edificio
-                                    </label>
-                                    <input type="text" id="address-apartamento" 
-                                           value="${address?.apartamento || ''}" 
-                                           placeholder="Ej: Edificio Azul, Apt 5B">
-                                </div>
-                                <div class="form-group">
-                                    <label for="address-codigo_postal">
-                                        <i class="fas fa-mail-bulk"></i> Código Postal
-                                    </label>
-                                    <input type="text" id="address-codigo_postal" 
-                                           value="${address?.codigo_postal || ''}" 
-                                           placeholder="Ej: 10101"
-                                           pattern="[0-9]{5}">
-                                </div>
+                            <div class="form-group">
+                                <label for="address-sector">
+                                    <i class="fas fa-map-pin"></i> Sector/Barrio *
+                                </label>
+                                <input type="text" id="address-sector" 
+                                       value="${address?.sector || ''}" 
+                                       placeholder="Ej: Naco, Los Prados, Bella Vista"
+                                       required>
                             </div>
                             
                             <div class="form-group">
@@ -1852,28 +1783,24 @@ class AccountManager {
     async saveAddress(e) {
         e.preventDefault();
         
-        console.log('💾 Guardando dirección...');
-        
         const addressId = document.getElementById('address-id').value;
         const isEdit = !!addressId;
         
-        // Recoger todos los datos del formulario
         const addressData = {
             paqueteria_preferida: document.getElementById('address-paqueteria_preferida').value,
-            nombre_completo: document.getElementById('address-nombre_completo').value.trim(),
-            telefono: document.getElementById('address-telefono').value.trim(),
+            nombre_completo: document.getElementById('address-nombre_completo').value,
+            telefono: document.getElementById('address-telefono').value,
             provincia: document.getElementById('address-provincia').value,
-            municipio: document.getElementById('address-municipio').value.trim(),
-            sector: document.getElementById('address-sector').value.trim(),
-            calle: document.getElementById('address-calle').value.trim(),
-            apartamento: document.getElementById('address-apartamento').value.trim(),
-            codigo_postal: document.getElementById('address-codigo_postal').value.trim(),
-            referencia: document.getElementById('address-referencia').value.trim(),
-            predeterminada: document.getElementById('address-predeterminada').checked,
-            nombre: 'Dirección ' + (this.addresses.length + 1) // Nombre automático
+            municipio: document.getElementById('address-municipio').value,
+            sector: document.getElementById('address-sector').value,
+            referencia: document.getElementById('address-referencia').value,
+            predeterminada: document.getElementById('address-predeterminada').checked
         };
         
-        console.log('📦 Datos a guardar:', addressData);
+        // Agregar prefijo al teléfono si no lo tiene
+        if (addressData.telefono && !addressData.telefono.startsWith('809-')) {
+            addressData.telefono = `809-${addressData.telefono.replace(/\D/g, '').slice(0, 7)}`;
+        }
         
         // Validar campos obligatorios
         const requiredFields = [
@@ -1883,28 +1810,13 @@ class AccountManager {
             'provincia',
             'municipio',
             'sector',
-            'calle',
             'referencia'
         ];
         
-        let missingFields = [];
-        requiredFields.forEach(field => {
-            if (!addressData[field] || addressData[field].toString().trim() === '') {
-                missingFields.push(field);
-            }
-        });
-        
-        if (missingFields.length > 0) {
-            this.showNotification(`Faltan campos obligatorios: ${missingFields.join(', ')}`, 'error');
-            return;
-        }
-        
-        // Formatear teléfono
-        if (addressData.telefono) {
-            let phone = addressData.telefono.replace(/\D/g, '');
-            if (phone.length >= 7) {
-                phone = phone.slice(-7); // Tomar últimos 7 dígitos
-                addressData.telefono = `809-${phone.slice(0, 3)}-${phone.slice(3)}`;
+        for (const field of requiredFields) {
+            if (!addressData[field] || addressData[field].trim() === '') {
+                this.showNotification(`El campo ${field.replace('_', ' ')} es obligatorio`, 'error');
+                return;
             }
         }
         
@@ -1915,8 +1827,6 @@ class AccountManager {
             
             const method = isEdit ? 'PUT' : 'POST';
             
-            console.log(`📤 Enviando a ${url} con método ${method}`);
-            
             const response = await fetch(url, {
                 method,
                 headers: {
@@ -1925,36 +1835,21 @@ class AccountManager {
                 body: JSON.stringify(addressData)
             });
             
-            const result = await response.json();
-            
             if (response.ok) {
                 this.showNotification(
                     `Dirección ${isEdit ? 'actualizada' : 'agregada'} correctamente`, 
                     'success'
                 );
-                
-                // Cerrar modal
-                const modal = document.getElementById('address-modal');
-                if (modal) modal.remove();
-                
-                // Recargar sección de direcciones
-                await this.loadSection('addresses');
-                
+                document.getElementById('address-modal').remove();
+                this.loadSection('addresses');
             } else {
-                console.error('❌ Error del servidor:', result);
-                
-                let errorMessage = result.error || `Error ${isEdit ? 'actualizando' : 'agregando'} dirección`;
-                
-                if (result.missing_fields) {
-                    errorMessage = `Faltan campos: ${result.missing_fields.join(', ')}`;
-                }
-                
-                this.showNotification(errorMessage, 'error');
+                const error = await response.json();
+                this.showNotification(error.error || `Error ${isEdit ? 'actualizando' : 'agregando'} dirección`, 'error');
             }
             
         } catch (error) {
-            console.error('❌ Error guardando dirección:', error);
-            this.showNotification('Error de conexión al guardar dirección', 'error');
+            console.error('Error guardando dirección:', error);
+            this.showNotification('Error guardando dirección', 'error');
         }
     }
 
