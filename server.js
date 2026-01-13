@@ -1,6 +1,9 @@
-// 🔕 Stripe desactivado permanentemente - Código eliminado
+// 🔕 Stripe desactivado temporalmente
+const STRIPE_ENABLED = false;
+const DEFAULT_CURRENCY = 'DOP'; // Cambiar USD por DOP
+const EXCHANGE_RATE = 58.5; // Tasa de cambio aproximada USD a DOP
 
-// server.js - VERSIÓN COMPLETA CON MÚLTIPLES IMÁGENES (SIN STRIPE)
+// server.js - VERSIÓN COMPLETA CON MÚLTIPLES IMÁGENES
 require('dotenv').config();
 
 const express = require('express');
@@ -14,11 +17,19 @@ const multer = require('multer');
 // Importar configuración de base de datos
 const { query } = require('./env/db.js');
 
-// Importar SDK de PayPal
+// Importar SDKs de pago
+
 const paypal = require('@paypal/checkout-server-sdk');
 
 const app = express();
 const PORT = 3000;
+
+let stripe = null;
+
+if (STRIPE_ENABLED) {
+    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+}
+
 
 // ================= CONFIGURACIÓN MULTER PARA SUBIR IMÁGENES =================
 const storage = multer.diskStorage({
@@ -52,6 +63,8 @@ const upload = multer({
         }
     }
 });
+
+
 
 // ================= FUNCIONES AUXILIARES =================
 
@@ -382,22 +395,46 @@ app.get('/api/session', (req, res) => {
 
 // ================= RUTAS DE PAGOS =================
 
-// Configuración de pagos
+// Busca esta función (alrededor de la línea 235)
 app.get('/api/payments/config', (req, res) => {
     console.log('🔧 Enviando configuración de pagos al frontend');
     
     res.json({
+        stripePublicKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx',
         paypalClientId: process.env.PAYPAL_CLIENT_ID || 'test',
-        currency: 'USD',
+        currency: 'DOP', // CAMBIAR AQUÍ
+        currencySymbol: 'RD$', // AGREGAR SÍMBOLO
+        exchangeRate: 58.5, // AGREGAR TASA DE CAMBIO
         environment: process.env.NODE_ENV || 'development',
-        country: 'DO', // República Dominicana
-        paymentMethods: ['paypal', 'transfer'],
+        country: 'DO',
+        paymentMethods: ['card', 'paypal', 'transfer'],
         features: {
+            stripe: true,
             paypal: true,
             bankTransfer: true
         }
     });
 });
+
+// ================= FUNCIÓN DE CONVERSIÓN DE MONEDA =================
+
+const convertToDOP = (usdAmount) => {
+    const rate = EXCHANGE_RATE || 58.5;
+    return Math.round(usdAmount * rate);
+};
+
+const convertToUSD = (dopAmount) => {
+    const rate = EXCHANGE_RATE || 58.5;
+    return parseFloat((dopAmount / rate).toFixed(2));
+};
+
+const formatDOP = (amount) => {
+    return `RD$ ${parseFloat(amount).toLocaleString('es-DO', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+};
+
 
 // ========== PAYPAL ==========
 
@@ -866,6 +903,7 @@ app.delete('/api/admin/images/:imageName', requireAuth, requireAdmin, async (req
 });
 
 // ================= API - USUARIOS REALES =================
+// ================= API - USUARIOS REALES =================
 
 // Obtener todos los usuarios (con estadísticas reales)
 app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
@@ -1123,7 +1161,6 @@ app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
-
 // ================= API - USUARIO =================
 app.get('/api/users/:id', requireAuth, async (req, res) => {
     try {
@@ -1523,10 +1560,6 @@ app.post('/api/orders', requireAuth, async (req, res) => {
         
         console.log('🛒 Creando pedido para usuario:', userId);
         
-        // Calcular totales
-        const subtotal = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-        const shipping_cost = 0; // Gratis por ahora
-        const total = subtotal + shipping_cost;
         
         // Simulación de pedido
         const order = {
@@ -1646,21 +1679,37 @@ app.get('/api/products', async (req, res) => {
         );
         
         // Procesar arrays de PostgreSQL
-        const products = result.rows.map(product => ({
-            ...product,
-            imagen: product.imagen || '/public/images/default-product.jpg',
-            imagenes_adicionales: parseArrayFromPostgres(product.imagenes_adicionales),
-            tallas: parseArrayFromPostgres(product.tallas),
-            colores: parseArrayFromPostgres(product.colores),
-            precio_final: product.descuento_porcentaje > 0 ? 
-                parseFloat(product.precio) * (1 - product.descuento_porcentaje / 100) :
-                product.descuento_precio > 0 ? 
-                    parseFloat(product.descuento_precio) : 
-                    parseFloat(product.precio),
-            tiene_descuento: product.descuento_porcentaje > 0 || product.descuento_precio > 0
-        }));
+        const products = result.rows.map(product => {
+            const precioUSD = parseFloat(product.precio) || 0;
+            const precioDOP = convertToDOP(precioUSD);
+            
+            // Calcular descuento en DOP
+            let precioFinalDOP = precioDOP;
+            if (product.descuento_porcentaje > 0) {
+                precioFinalDOP = Math.round(precioDOP * (1 - product.descuento_porcentaje / 100));
+            } else if (product.descuento_precio > 0) {
+                precioFinalDOP = convertToDOP(product.descuento_precio);
+            }
+            
+            return {
+                ...product,
+                imagen: product.imagen || '/public/images/default-product.jpg',
+                imagenes_adicionales: parseArrayFromPostgres(product.imagenes_adicionales),
+                tallas: parseArrayFromPostgres(product.tallas),
+                colores: parseArrayFromPostgres(product.colores),
+                // Precios en DOP
+                precio: precioDOP,
+                precio_formateado: formatDOP(precioDOP),
+                precio_usd: precioUSD, // Mantener USD para referencia
+                precio_final: precioFinalDOP,
+                precio_final_formateado: formatDOP(precioFinalDOP),
+                tiene_descuento: product.descuento_porcentaje > 0 || product.descuento_precio > 0,
+                // Para compatibilidad con el frontend existente
+                precio_original: precioUSD // DEPRECATED - mantener temporalmente
+            };
+        });
         
-        console.log(`✅ Enviando ${products.length} productos`);
+        console.log(`✅ Enviando ${products.length} productos en DOP`);
         res.json(products);
         
     } catch (error) {
@@ -2557,6 +2606,24 @@ app.get('/api/create-test-data', async (req, res) => {
     }
 });
 
+// ================= MANEJO DE ERRORES =================
+app.use((req, res, next) => {
+    console.log(`❌ 404: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({ 
+        error: 'Ruta no encontrada',
+        method: req.method,
+        url: req.originalUrl
+    });
+});
+
+app.use((err, req, res, next) => {
+    console.error('🔥 Error del servidor:', err);
+    res.status(500).json({ 
+        error: 'Error interno del servidor',
+        message: err.message
+    });
+});
+
 // ================= API - RESEÑAS DE PRODUCTOS =================
 
 // Obtener reseñas de un producto
@@ -2755,24 +2822,6 @@ app.delete('/api/admin/reviews/:id', requireAuth, requireAdmin, async (req, res)
     }
 });
 
-// ================= MANEJO DE ERRORES =================
-app.use((req, res, next) => {
-    console.log(`❌ 404: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ 
-        error: 'Ruta no encontrada',
-        method: req.method,
-        url: req.originalUrl
-    });
-});
-
-app.use((err, req, res, next) => {
-    console.error('🔥 Error del servidor:', err);
-    res.status(500).json({ 
-        error: 'Error interno del servidor',
-        message: err.message
-    });
-});
-
 // ================= INICIAR SERVIDOR =================
 app.listen(PORT, () => {
     console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}`);
@@ -2792,4 +2841,16 @@ app.listen(PORT, () => {
     console.log(`\n👤 CREDENCIALES:`);
     console.log(`   • Admin: admin@gmail.com / admin123`);
     console.log(`\n✅ Listo para usar!`);
+});
+
+app.post('/api/payments/create-stripe-payment', async (req, res) => {
+    console.log('📨 Petición recibida en create-stripe-payment');
+    console.log('👤 Usuario en sesión:', req.session.userId);
+    console.log('📦 Body recibido:', req.body);
+    
+    // Simular respuesta exitosa para pruebas
+    res.json({
+        clientSecret: 'pi_test_secret_123456',
+        paymentIntentId: 'pi_123456789'
+    });
 });
