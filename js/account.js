@@ -324,46 +324,24 @@ class AccountManager {
         try {
             const response = await fetch(`/api/users/${this.user.id}/orders?limit=${limit}`);
             if (!response.ok) {
-                // Si hay error, devolver datos de ejemplo para desarrollo
-                return this.getSampleOrders(limit);
+                // Retornar array vacío en lugar de datos de prueba
+                return [];
             }
-            return await response.json();
+            
+            const orders = await response.json();
+            
+            // Si hay órdenes reales, retornarlas
+            if (orders && orders.length > 0) {
+                return orders.slice(0, limit);
+            }
+            
+            // Si no hay órdenes, retornar array vacío
+            return [];
+            
         } catch (error) {
             console.error('Error cargando órdenes:', error);
-            return this.getSampleOrders(limit);
+            return [];
         }
-    }
-
-    getSampleOrders(limit = 5) {
-        return [
-            {
-                id: 1001,
-                fecha_orden: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-                total: 149.97,
-                estado: 'entregado',
-                items_count: 2,
-                tracking_number: 'VMP123456789RD',
-                paqueteria: 'VIMENPAQ'
-            },
-            {
-                id: 1002,
-                fecha_orden: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-                total: 89.99,
-                estado: 'procesando',
-                items_count: 1,
-                tracking_number: null,
-                paqueteria: null
-            },
-            {
-                id: 1003,
-                fecha_orden: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-                total: 210.50,
-                estado: 'pendiente',
-                items_count: 3,
-                tracking_number: null,
-                paqueteria: null
-            }
-        ].slice(0, limit);
     }
 
     async getUserStats() {
@@ -381,11 +359,11 @@ class AccountManager {
 
     getSampleStats() {
         return {
-            totalOrders: 3,
-            wishlistItems: 5,
-            reviews: 2,
-            pendingOrders: 1,
-            totalSpent: 450.46
+            totalOrders: 0,
+            wishlistItems: 0,
+            reviews: 0,
+            pendingOrders: 0,
+            totalSpent: 0
         };
     }
 
@@ -533,12 +511,23 @@ class AccountManager {
         try {
             const response = await fetch(`/api/users/${this.user.id}/orders`);
             if (!response.ok) {
-                return this.getSampleOrders(10);
+                // Retornar array vacío
+                return [];
             }
-            return await response.json();
+            
+            const orders = await response.json();
+            
+            // Si hay órdenes reales, retornarlas
+            if (orders && orders.length > 0) {
+                return orders;
+            }
+            
+            // Si no hay órdenes, retornar array vacío
+            return [];
+            
         } catch (error) {
             console.error('Error cargando todas las órdenes:', error);
-            return this.getSampleOrders(10);
+            return [];
         }
     }
 
@@ -622,6 +611,66 @@ class AccountManager {
         try {
             this.addresses = await this.getUserAddresses();
             
+            let addressesHTML = '';
+            
+            if (this.addresses.length === 0) {
+                addressesHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-map-marker-alt fa-3x"></i>
+                        <h3>No tienes direcciones guardadas</h3>
+                        <p>Agrega una dirección de envío para recibir tus compras</p>
+                    </div>
+                `;
+            } else {
+                addressesHTML = this.addresses.map((address, index) => `
+                    <div class="address-card ${address.predeterminada ? 'default-address' : ''}">
+                        <div class="address-header">
+                            <h3><i class="fas fa-map-marker-alt"></i> ${address.nombre || 'Dirección ' + (index + 1)}</h3>
+                            ${address.predeterminada ? 
+                                '<span class="default-badge"><i class="fas fa-star"></i> Predeterminada</span>' : 
+                                ''
+                            }
+                        </div>
+                        <div class="address-details">
+                            <p><strong><i class="fas fa-user"></i> ${address.nombre_completo || 'No especificado'}</strong></p>
+                            <p><i class="fas fa-phone"></i> ${address.telefono || 'No especificado'}</p>
+                            ${address.paqueteria_preferida ? 
+                                `<p><i class="fas fa-shipping-fast"></i> <strong>Paquetería:</strong> ${address.paqueteria_preferida}</p>` : 
+                                ''
+                            }
+                            <p><i class="fas fa-map-marker-alt"></i> <strong>Ubicación:</strong> 
+                                ${[address.sector, address.municipio, address.provincia].filter(Boolean).join(', ')}
+                            </p>
+                            ${address.referencia ? 
+                                `<p><i class="fas fa-info-circle"></i> <strong>Referencia:</strong> ${address.referencia}</p>` : 
+                                ''
+                            }
+                            ${address.apartamento ? `<p><i class="fas fa-building"></i> ${address.apartamento}</p>` : ''}
+                            <p><i class="fas fa-road"></i> ${address.calle || ''} ${address.numero || ''}</p>
+                            <p><i class="fas fa-city"></i> ${address.ciudad || address.municipio || ''}, ${address.provincia}</p>
+                            ${address.codigo_postal ? `<p><i class="fas fa-mail-bulk"></i> ${address.codigo_postal}</p>` : ''}
+                        </div>
+                        <div class="address-actions">
+                            <button class="edit-address" data-id="${address.id}">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            ${!address.predeterminada ? 
+                                `<button class="set-default" data-id="${address.id}">
+                                    <i class="fas fa-star"></i> Predeterminar
+                                </button>` : 
+                                ''
+                            }
+                            ${this.addresses.length > 1 ? 
+                                `<button class="delete-address" data-id="${address.id}">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>` : 
+                                ''
+                            }
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
             return `
                 <div class="addresses-content">
                     <div class="section-header">
@@ -630,53 +679,7 @@ class AccountManager {
                     </div>
                     
                     <div class="addresses-grid">
-                        ${this.addresses.map((address, index) => `
-                            <div class="address-card ${address.predeterminada ? 'default-address' : ''}">
-                                <div class="address-header">
-                                    <h3><i class="fas fa-map-marker-alt"></i> ${address.nombre || 'Dirección ' + (index + 1)}</h3>
-                                    ${address.predeterminada ? 
-                                        '<span class="default-badge"><i class="fas fa-star"></i> Predeterminada</span>' : 
-                                        ''
-                                    }
-                                </div>
-                                <div class="address-details">
-                                    <p><strong><i class="fas fa-user"></i> ${address.nombre_completo || 'No especificado'}</strong></p>
-                                    <p><i class="fas fa-phone"></i> ${address.telefono || 'No especificado'}</p>
-                                    ${address.paqueteria_preferida ? 
-                                        `<p><i class="fas fa-shipping-fast"></i> <strong>Paquetería:</strong> ${address.paqueteria_preferida}</p>` : 
-                                        ''
-                                    }
-                                    <p><i class="fas fa-map-marker-alt"></i> <strong>Ubicación:</strong> 
-                                        ${[address.sector, address.municipio, address.provincia].filter(Boolean).join(', ')}
-                                    </p>
-                                    ${address.referencia ? 
-                                        `<p><i class="fas fa-info-circle"></i> <strong>Referencia:</strong> ${address.referencia}</p>` : 
-                                        ''
-                                    }
-                                    ${address.apartamento ? `<p><i class="fas fa-building"></i> ${address.apartamento}</p>` : ''}
-                                    <p><i class="fas fa-road"></i> ${address.calle} ${address.numero}</p>
-                                    <p><i class="fas fa-city"></i> ${address.ciudad}, ${address.provincia}</p>
-                                    ${address.codigo_postal ? `<p><i class="fas fa-mail-bulk"></i> ${address.codigo_postal}</p>` : ''}
-                                </div>
-                                <div class="address-actions">
-                                    <button class="edit-address" data-id="${address.id}">
-                                        <i class="fas fa-edit"></i> Editar
-                                    </button>
-                                    ${!address.predeterminada ? 
-                                        `<button class="set-default" data-id="${address.id}">
-                                            <i class="fas fa-star"></i> Predeterminar
-                                        </button>` : 
-                                        ''
-                                    }
-                                    ${this.addresses.length > 1 ? 
-                                        `<button class="delete-address" data-id="${address.id}">
-                                            <i class="fas fa-trash"></i> Eliminar
-                                        </button>` : 
-                                        ''
-                                    }
-                                </div>
-                            </div>
-                        `).join('')}
+                        ${addressesHTML}
                         
                         <div class="add-address-card" id="add-address-btn">
                             <div class="add-address-icon">
@@ -714,43 +717,24 @@ class AccountManager {
         try {
             const response = await fetch(`/api/users/${this.user.id}/addresses`);
             if (!response.ok) {
-                // Si hay error, devolver direcciones de ejemplo
-                return this.getSampleAddresses();
+                // Si no hay direcciones reales, retornar array vacío
+                return [];
             }
-            return await response.json();
+            
+            const addresses = await response.json();
+            
+            // Si hay direcciones reales, retornarlas
+            if (addresses && addresses.length > 0) {
+                return addresses;
+            }
+            
+            // Si no hay direcciones, retornar array vacío
+            return [];
+            
         } catch (error) {
             console.error('Error cargando direcciones:', error);
-            return this.getSampleAddresses();
+            return []; // Retornar array vacío en lugar de datos de prueba
         }
-    }
-
-    getSampleAddresses() {
-        return [
-            {
-                id: 1,
-                nombre: 'Casa',
-                nombre_completo: `${this.user.nombre} ${this.user.apellido}`,
-                telefono: '809-555-1234',
-                municipio: 'Santo Domingo Este',
-                sector: 'Naco',
-                provincia: 'Distrito Nacional',
-                referencia: 'Paquetería VIMENPAQ frente al supermercado Nacional, al lado de la farmacia Carol',
-                predeterminada: true,
-                paqueteria_preferida: 'VIMENPAQ'
-            },
-            {
-                id: 2,
-                nombre: 'Oficina',
-                nombre_completo: `${this.user.nombre} ${this.user.apellido}`,
-                telefono: '809-555-5678',
-                municipio: 'Santo Domingo',
-                sector: 'Piantini',
-                provincia: 'Distrito Nacional',
-                referencia: 'Paquetería Mundo Cargo en la Torre A, Piso 8, frente al Banco Popular',
-                predeterminada: false,
-                paqueteria_preferida: 'Mundo Cargo'
-            }
-        ];
     }
 
     async loadWishlist() {
@@ -866,52 +850,21 @@ class AccountManager {
         try {
             const response = await fetch(`/api/users/${this.user.id}/wishlist`);
             if (!response.ok) {
-                return this.getSampleWishlist();
+                return []; // Retornar array vacío
             }
-            return await response.json();
+            
+            const wishlist = await response.json();
+            
+            if (wishlist && wishlist.length > 0) {
+                return wishlist;
+            }
+            
+            return []; // Retornar array vacío
+            
         } catch (error) {
             console.error('Error cargando wishlist:', error);
-            return this.getSampleWishlist();
+            return []; // Retornar array vacío
         }
-    }
-
-    getSampleWishlist() {
-        return [
-            {
-                producto_id: 1,
-                nombre: 'Legging High-Waist Black',
-                imagen: '/public/images/default-product.jpg',
-                precio: 59.99,
-                precio_final: 59.99,
-                categoria: 'leggings',
-                tallas: ['XS', 'S', 'M', 'L'],
-                stock: 10,
-                tiene_descuento: false
-            },
-            {
-                producto_id: 2,
-                nombre: 'Sports Bra Essential',
-                imagen: '/public/images/default-product.jpg',
-                precio: 34.99,
-                precio_final: 27.99,
-                categoria: 'tops',
-                tallas: ['S', 'M', 'L'],
-                stock: 3,
-                tiene_descuento: true,
-                descuento_porcentaje: 20
-            },
-            {
-                producto_id: 3,
-                nombre: 'Set Active Premium',
-                imagen: '/public/images/default-product.jpg',
-                precio: 89.99,
-                precio_final: 89.99,
-                categoria: 'sets',
-                tallas: ['S', 'M', 'L', 'XL'],
-                stock: 0,
-                tiene_descuento: false
-            }
-        ];
     }
 
     loadSettingsForm() {
@@ -1715,14 +1668,46 @@ class AccountManager {
                                 </div>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="address-sector">
-                                    <i class="fas fa-map-pin"></i> Sector/Barrio *
-                                </label>
-                                <input type="text" id="address-sector" 
-                                       value="${address?.sector || ''}" 
-                                       placeholder="Ej: Naco, Los Prados, Bella Vista"
-                                       required>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="address-sector">
+                                        <i class="fas fa-map-pin"></i> Sector/Barrio *
+                                    </label>
+                                    <input type="text" id="address-sector" 
+                                           value="${address?.sector || ''}" 
+                                           placeholder="Ej: Naco, Los Prados, Bella Vista"
+                                           required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="address-calle">
+                                        <i class="fas fa-road"></i> Calle y Número *
+                                    </label>
+                                    <input type="text" id="address-calle" 
+                                           value="${address?.calle || ''}" 
+                                           placeholder="Ej: Calle Principal #123"
+                                           required>
+                                    <small class="hint">Nombre de la calle y número</small>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="address-apartamento">
+                                        <i class="fas fa-building"></i> Apartamento/Edificio
+                                    </label>
+                                    <input type="text" id="address-apartamento" 
+                                           value="${address?.apartamento || ''}" 
+                                           placeholder="Ej: Edificio Azul, Apt 5B">
+                                </div>
+                                <div class="form-group">
+                                    <label for="address-codigo_postal">
+                                        <i class="fas fa-mail-bulk"></i> Código Postal
+                                    </label>
+                                    <input type="text" id="address-codigo_postal" 
+                                           value="${address?.codigo_postal || ''}" 
+                                           placeholder="Ej: 10101"
+                                           pattern="[0-9]{5}">
+                                </div>
                             </div>
                             
                             <div class="form-group">
@@ -1793,6 +1778,9 @@ class AccountManager {
             provincia: document.getElementById('address-provincia').value,
             municipio: document.getElementById('address-municipio').value,
             sector: document.getElementById('address-sector').value,
+            calle: document.getElementById('address-calle').value,
+            apartamento: document.getElementById('address-apartamento').value,
+            codigo_postal: document.getElementById('address-codigo_postal').value,
             referencia: document.getElementById('address-referencia').value,
             predeterminada: document.getElementById('address-predeterminada').checked
         };
@@ -1810,6 +1798,7 @@ class AccountManager {
             'provincia',
             'municipio',
             'sector',
+            'calle',
             'referencia'
         ];
         
