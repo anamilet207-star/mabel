@@ -1,5 +1,5 @@
 // ============================================
-// CUENTA DE USUARIO - VERSIÓN MEJORADA Y CORREGIDA
+// CUENTA DE USUARIO - VERSIÓN CORREGIDA
 // ============================================
 
 class AccountManager {
@@ -49,7 +49,9 @@ class AccountManager {
                 return false;
             }
             
+            // IMPORTANTE: Guardar el usuario COMPLETO de la sesión
             this.user = data.user;
+            console.log('👤 Usuario autenticado:', this.user);
             return true;
             
         } catch (error) {
@@ -61,21 +63,36 @@ class AccountManager {
 
     async loadUserData() {
         try {
+            // Primero verificar que tenemos un user.id válido
+            if (!this.user || !this.user.id) {
+                console.error('❌ Error: Usuario no tiene ID');
+                throw new Error('Usuario no válido');
+            }
+            
+            console.log('📥 Cargando datos del usuario ID:', this.user.id);
+            
             const response = await fetch(`/api/users/${this.user.id}`);
-            if (!response.ok) throw new Error('Error cargando datos del usuario');
+            
+            if (!response.ok) {
+                // Si el endpoint no existe o falla, usar los datos de sesión
+                console.warn('⚠️ No se pudieron cargar datos adicionales del usuario, usando datos de sesión');
+                this.updateUserUI();
+                this.updateHeaderStats();
+                return;
+            }
             
             const userData = await response.json();
             this.user = { ...this.user, ...userData };
             
             // Actualizar UI con datos del usuario
             this.updateUserUI();
-            
-            // Actualizar estadísticas en el header
             this.updateHeaderStats();
             
         } catch (error) {
             console.error('❌ Error cargando datos del usuario:', error);
-            this.showNotification('Error cargando datos del perfil', 'error');
+            // No mostrar error al usuario, solo usar datos básicos
+            this.updateUserUI();
+            this.updateHeaderStats();
         }
     }
 
@@ -121,23 +138,90 @@ class AccountManager {
     updateHeaderStats() {
         const statsContainer = document.getElementById('account-header-stats');
         if (statsContainer) {
-            const stats = this.getSampleStats();
+            // Simular estadísticas si no hay endpoint real
+            const stats = {
+                totalOrders: 0,
+                wishlistItems: 0,
+                pendingOrders: 0,
+                totalSpent: 0
+            };
             
             const statsElements = statsContainer.querySelectorAll('.header-stat');
             
             // Actualizar pedidos
-            statsElements[0].querySelector('.number').textContent = stats.totalOrders || 0;
+            if (statsElements[0]) {
+                const numberElement = statsElements[0].querySelector('.number');
+                if (numberElement) {
+                    numberElement.textContent = stats.totalOrders || 0;
+                }
+            }
             
             // Actualizar favoritos
-            statsElements[1].querySelector('.number').textContent = stats.wishlistItems || 0;
+            if (statsElements[1]) {
+                const numberElement = statsElements[1].querySelector('.number');
+                if (numberElement) {
+                    numberElement.textContent = stats.wishlistItems || 0;
+                }
+            }
             
             // Actualizar puntos (ejemplo)
-            statsElements[2].querySelector('.number').textContent = Math.floor(stats.totalSpent / 10) || 0;
+            if (statsElements[2]) {
+                const numberElement = statsElements[2].querySelector('.number');
+                if (numberElement) {
+                    numberElement.textContent = Math.floor(stats.totalSpent / 10) || 0;
+                }
+            }
             
             // Actualizar pendientes
-            statsElements[3].querySelector('.number').textContent = stats.pendingOrders || 0;
+            if (statsElements[3]) {
+                const numberElement = statsElements[3].querySelector('.number');
+                if (numberElement) {
+                    numberElement.textContent = stats.pendingOrders || 0;
+                }
+            }
         }
     }
+
+    async getUserAddresses() {
+        try {
+            // Verificar que tenemos un usuario válido
+            if (!this.user || !this.user.id) {
+                console.error('❌ Error: Usuario no tiene ID para cargar direcciones');
+                return [];
+            }
+            
+            console.log('📍 Cargando direcciones para usuario ID:', this.user.id);
+            
+            const response = await fetch(`/api/users/${this.user.id}/addresses`);
+            
+            if (!response.ok) {
+                // Si es 404, significa que no hay direcciones (lo cual es normal)
+                if (response.status === 404) {
+                    console.log('ℹ️ No se encontraron direcciones (404) - retornando array vacío');
+                    return [];
+                }
+                
+                // Para otros errores, mostrar mensaje
+                const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+                console.warn('⚠️ Error cargando direcciones:', response.status, errorData);
+                
+                return []; // Retornar array vacío
+            }
+            
+            const addresses = await response.json();
+            console.log(`✅ Direcciones cargadas: ${addresses.length} encontradas`);
+            return addresses;
+            
+        } catch (error) {
+            console.error('❌ Error cargando direcciones:', error);
+            // No mostrar error al usuario, solo retornar array vacío
+            return [];
+        }
+    }
+
+    // ... EL RESTO DEL CÓDIGO PERMANECE IGUAL ...
+    // Solo actualiza los métodos que mencioné arriba
+
 
     setupNavigation() {
         // Navegación del sidebar

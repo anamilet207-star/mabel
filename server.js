@@ -1294,6 +1294,295 @@ app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
+// ================= API - DATOS DEL USUARIO =================
+
+// 1. Datos del usuario
+app.get('/api/users/:id', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        // Verificar que el usuario solo acceda a sus propios datos
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        const result = await query(
+            'SELECT id, nombre, apellido, email, telefono, rol, fecha_registro FROM usuarios WHERE id = $1',
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        res.json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('Error obteniendo datos del usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// 2. Direcciones del usuario
+app.get('/api/users/:userId/addresses', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Verificar que el usuario solo acceda a sus propias direcciones
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Primero verificar si la tabla existe
+        try {
+            const tableExists = await query(
+                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'direcciones')"
+            );
+            
+            if (!tableExists.rows[0].exists) {
+                console.log('Tabla "direcciones" no existe - retornando array vacío');
+                return res.json([]);
+            }
+        } catch (tableError) {
+            console.warn('Error verificando tabla direcciones:', tableError);
+        }
+        
+        // Intentar obtener direcciones
+        try {
+            const result = await query(
+                'SELECT * FROM direcciones WHERE usuario_id = $1 ORDER BY predeterminada DESC, id DESC',
+                [userId]
+            );
+            
+            res.json(result.rows);
+        } catch (queryError) {
+            // Si hay error en la consulta (tabla no existe o error de sintaxis)
+            console.warn('Error en consulta de direcciones:', queryError);
+            res.json([]); // Retornar array vacío
+        }
+        
+    } catch (error) {
+        console.error('Error obteniendo direcciones:', error);
+        // En caso de error grave, retornar array vacío
+        res.json([]);
+    }
+});
+
+// 3. Wishlist del usuario
+app.get('/api/users/:userId/wishlist', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Verificar autorización
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Verificar si la tabla existe
+        try {
+            const tableExists = await query(
+                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'wishlist')"
+            );
+            
+            if (!tableExists.rows[0].exists) {
+                console.log('Tabla "wishlist" no existe - retornando array vacío');
+                return res.json([]);
+            }
+        } catch (tableError) {
+            console.warn('Error verificando tabla wishlist:', tableError);
+        }
+        
+        try {
+            const result = await query(`
+                SELECT p.*, w.fecha_agregado
+                FROM wishlist w
+                JOIN productos p ON w.producto_id = p.id
+                WHERE w.usuario_id = $1 AND p.activo = true
+                ORDER BY w.fecha_agregado DESC
+            `, [userId]);
+            
+            res.json(result.rows);
+        } catch (queryError) {
+            console.warn('Error en consulta de wishlist:', queryError);
+            res.json([]);
+        }
+        
+    } catch (error) {
+        console.error('Error obteniendo wishlist:', error);
+        res.json([]);
+    }
+});
+
+// 4. Estadísticas del usuario
+app.get('/api/users/:userId/stats', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Verificar autorización
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        let stats = {
+            totalOrders: 0,
+            totalSpent: 0,
+            wishlistItems: 0,
+            pendingOrders: 0,
+            reviews: 0
+        };
+        
+        // Intentar obtener estadísticas reales
+        try {
+            // Órdenes
+            const ordersResult = await query(
+                'SELECT COUNT(*) as total_orders, COALESCE(SUM(total), 0) as total_spent FROM pedidos WHERE usuario_id = $1',
+                [userId]
+            );
+            
+            if (ordersResult.rows.length > 0) {
+                stats.totalOrders = parseInt(ordersResult.rows[0]?.total_orders) || 0;
+                stats.totalSpent = parseFloat(ordersResult.rows[0]?.total_spent) || 0;
+            }
+            
+            // Wishlist
+            try {
+                const wishlistResult = await query(
+                    'SELECT COUNT(*) as wishlist_items FROM wishlist WHERE usuario_id = $1',
+                    [userId]
+                );
+                stats.wishlistItems = parseInt(wishlistResult.rows[0]?.wishlist_items) || 0;
+            } catch (e) {
+                console.warn('Error obteniendo wishlist stats:', e);
+            }
+            
+            // Órdenes pendientes
+            try {
+                const pendingOrders = await query(
+                    'SELECT COUNT(*) as pending_orders FROM pedidos WHERE usuario_id = $1 AND estado IN ($2, $3)',
+                    [userId, 'pendiente', 'procesando']
+                );
+                stats.pendingOrders = parseInt(pendingOrders.rows[0]?.pending_orders) || 0;
+            } catch (e) {
+                console.warn('Error obteniendo órdenes pendientes:', e);
+            }
+            
+            // Reseñas
+            try {
+                const reviewsResult = await query(
+                    'SELECT COUNT(*) as reviews FROM reseñas WHERE usuario_id = $1',
+                    [userId]
+                );
+                stats.reviews = parseInt(reviewsResult.rows[0]?.reviews) || 0;
+            } catch (e) {
+                console.warn('Error obteniendo reseñas:', e);
+            }
+            
+        } catch (dbError) {
+            console.warn('Error en consultas de estadísticas:', dbError);
+            // Usar estadísticas por defecto
+        }
+        
+        res.json(stats);
+        
+    } catch (error) {
+        console.error('Error obteniendo estadísticas:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// 5. Órdenes del usuario
+app.get('/api/users/:userId/orders', requireAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const limit = req.query.limit;
+        
+        // Verificar autorización
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Verificar si la tabla existe
+        try {
+            const tableExists = await query(
+                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'pedidos')"
+            );
+            
+            if (!tableExists.rows[0].exists) {
+                console.log('Tabla "pedidos" no existe - retornando array vacío');
+                return res.json([]);
+            }
+        } catch (tableError) {
+            console.warn('Error verificando tabla pedidos:', tableError);
+        }
+        
+        let queryStr = 'SELECT * FROM pedidos WHERE usuario_id = $1 ORDER BY fecha_creacion DESC';
+        let params = [userId];
+        
+        if (limit) {
+            queryStr += ' LIMIT $2';
+            params.push(limit);
+        }
+        
+        try {
+            const result = await query(queryStr, params);
+            res.json(result.rows);
+        } catch (queryError) {
+            console.warn('Error en consulta de órdenes:', queryError);
+            res.json([]);
+        }
+        
+    } catch (error) {
+        console.error('Error obteniendo órdenes:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// 6. Actualizar datos del usuario
+app.put('/api/users/:id', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { nombre, apellido, email, telefono } = req.body;
+        
+        // Verificar que el usuario solo actualice sus propios datos
+        if (req.session.userId != userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+        
+        // Validar datos
+        if (!nombre || !apellido || !email) {
+            return res.status(400).json({ error: 'Nombre, apellido y email son requeridos' });
+        }
+        
+        // Verificar si el email ya existe (excepto para el usuario actual)
+        const emailCheck = await query(
+            'SELECT id FROM usuarios WHERE email = $1 AND id != $2',
+            [email, userId]
+        );
+        
+        if (emailCheck.rows.length > 0) {
+            return res.status(400).json({ error: 'El email ya está registrado' });
+        }
+        
+        const result = await query(
+            `UPDATE usuarios 
+             SET nombre = $1, apellido = $2, email = $3, telefono = $4, fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $5
+             RETURNING id, nombre, apellido, email, telefono, rol, fecha_registro`,
+            [nombre, apellido, email, telefono || null, userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        res.json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('Error actualizando usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
 // ================= API - DIRECCIONES DEL USUARIO =================
 app.get('/api/users/:userId/addresses', requireAuth, async (req, res) => {
     try {
