@@ -156,18 +156,49 @@ class AdminPanel {
             `;
         }
     }
-
     async loadDashboard() {
         try {
-            const [productsRes, ordersRes, usersRes] = await Promise.all([
-                fetch('/api/admin/products').catch(() => ({ json: () => [] })),
-                fetch('/api/admin/orders').catch(() => ({ json: () => [] })),
-                fetch('/api/admin/users').catch(() => ({ json: () => [] }))
-            ]);
+            console.log('📊 Cargando dashboard...');
             
-            const products = await productsRes.json();
-            const orders = await ordersRes.json();
-            const users = await usersRes.json();
+            // Cargar productos (esta ruta sí existe)
+            let products = [];
+            try {
+                const productsRes = await fetch('/api/admin/products');
+                if (productsRes.ok) {
+                    products = await productsRes.json();
+                    console.log(`✅ ${products.length} productos cargados`);
+                }
+            } catch (error) {
+                console.warn('⚠️ Error cargando productos:', error);
+            }
+            
+            // Cargar órdenes (usar datos de ejemplo temporalmente)
+            let orders = [];
+            try {
+                // Temporalmente usar datos de ejemplo hasta que implementes la ruta
+                orders = this.getSampleOrders();
+                console.log(`✅ ${orders.length} órdenes de ejemplo cargadas`);
+                
+                // Comentado temporalmente hasta que implementes la ruta real:
+                // const ordersRes = await fetch('/api/admin/orders');
+                // if (ordersRes.ok) orders = await ordersRes.json();
+            } catch (error) {
+                console.warn('⚠️ Error cargando órdenes:', error);
+            }
+            
+            // Cargar usuarios (usar datos de ejemplo temporalmente)
+            let users = [];
+            try {
+                // Temporalmente usar datos de ejemplo
+                users = this.getSampleUsers();
+                console.log(`✅ ${users.length} usuarios de ejemplo cargados`);
+                
+                // Comentado temporalmente hasta que implementes la ruta real:
+                // const usersRes = await fetch('/api/admin/users');
+                // if (usersRes.ok) users = await usersRes.json();
+            } catch (error) {
+                console.warn('⚠️ Error cargando usuarios:', error);
+            }
             
             // Calcular estadísticas
             const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.total || 0), 0);
@@ -228,10 +259,10 @@ class AdminPanel {
                                     <i class="fas fa-dollar-sign"></i>
                                 </div>
                             </div>
-                            <div class="dashboard-card-value">$${totalRevenue.toFixed(2)}</div>
+                            <div class="dashboard-card-value">RD$ ${totalRevenue.toFixed(2)}</div>
                             <div class="dashboard-card-label">Ingresos Totales</div>
                             <div class="dashboard-card-subtext">
-                                <span class="avg-order">Promedio: $${orders.length > 0 ? (totalRevenue / orders.length).toFixed(2) : '0.00'}</span>
+                                <span class="avg-order">Promedio: RD$ ${orders.length > 0 ? (totalRevenue / orders.length).toFixed(2) : '0.00'}</span>
                             </div>
                         </div>
                     </div>
@@ -239,7 +270,7 @@ class AdminPanel {
                     <!-- Órdenes Recientes -->
                     <div class="admin-table-container" style="margin-top: 40px;">
                         <div class="admin-table-header">
-                            <h3 class="admin-table-title">Órdenes Recientes</h3>
+                            <h3 class="admin-table-title">Órdenes Recientes ${orders.length > 0 ? '' : '(Datos de Ejemplo)'}</h3>
                             <a href="#" data-section="orders" class="view-all-link">Ver todas</a>
                         </div>
                         <table class="admin-table">
@@ -259,19 +290,29 @@ class AdminPanel {
                                         <td>#${order.id || 'N/A'}</td>
                                         <td>${order.nombre_cliente || 'Cliente'}</td>
                                         <td>${order.fecha_orden ? new Date(order.fecha_orden).toLocaleDateString() : 'N/A'}</td>
-                                        <td>$${parseFloat(order.total || 0).toFixed(2)}</td>
+                                        <td>RD$ ${parseFloat(order.total || 0).toFixed(2)}</td>
                                         <td>
                                             <span class="order-status ${order.estado || 'pendiente'}">
                                                 ${this.formatOrderStatus(order.estado)}
                                             </span>
                                         </td>
                                         <td>
-                                            <button class="action-btn view" onclick="window.adminPanel.viewOrder(${order.id})">
+                                            <button class="action-btn view" onclick="window.adminPanel.viewOrder(${order.id})" 
+                                                    ${orders.length === 0 || order.id === undefined ? 'disabled' : ''}>
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                         </td>
                                     </tr>
                                 `).join('')}
+                                ${orders.length === 0 ? `
+                                    <tr>
+                                        <td colspan="6" class="empty-cell">
+                                            <i class="fas fa-shopping-bag"></i>
+                                            <p>No hay órdenes registradas</p>
+                                            <small>Implementa la ruta /api/admin/orders en el servidor</small>
+                                        </td>
+                                    </tr>
+                                ` : ''}
                             </tbody>
                         </table>
                     </div>
@@ -307,7 +348,7 @@ class AdminPanel {
                                                 <span class="stock-badge low">${product.stock}</span>
                                             </td>
                                             <td>${this.formatCategory(product.categoria)}</td>
-                                            <td>$${parseFloat(product.precio || 0).toFixed(2)}</td>
+                                            <td>RD$ ${parseFloat(product.precio || 0).toFixed(2)}</td>
                                             <td>
                                                 <button class="action-btn edit" onclick="window.adminPanel.editProduct(${product.id})">
                                                     <i class="fas fa-edit"></i>
@@ -326,17 +367,141 @@ class AdminPanel {
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Nota sobre datos de ejemplo -->
+                    ${orders.length > 0 && orders[0].isSample ? `
+                    <div class="info-message" style="margin-top: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #4a90e2;">
+                        <i class="fas fa-info-circle" style="color: #4a90e2; margin-right: 10px;"></i>
+                        <span>Mostrando datos de ejemplo. Para ver datos reales, implementa las rutas API en el servidor.</span>
+                    </div>
+                    ` : ''}
                 </div>
             `;
         } catch (error) {
-            console.error('Error cargando dashboard:', error);
+            console.error('❌ Error cargando dashboard:', error);
             return `
                 <div class="error-message">
                     <i class="fas fa-exclamation-triangle"></i>
                     <p>Error cargando el dashboard. Intenta recargar la página.</p>
+                    <p><small>${error.message}</small></p>
+                    <button onclick="window.location.reload()" class="btn-primary" style="margin-top: 15px;">
+                        <i class="fas fa-redo"></i> Recargar Página
+                    </button>
                 </div>
             `;
         }
+    }
+    
+    // Agregar estas funciones a la clase AdminPanel (fuera de loadDashboard):
+    
+    getSampleOrders() {
+        return [
+            {
+                id: 1001,
+                nombre_cliente: "María García",
+                fecha_orden: new Date(Date.now() - 2 * 86400000).toISOString(),
+                total: 3250.00,
+                estado: "entregado",
+                isSample: true
+            },
+            {
+                id: 1002,
+                nombre_cliente: "Carlos Rodríguez",
+                fecha_orden: new Date(Date.now() - 1 * 86400000).toISOString(),
+                total: 1850.50,
+                estado: "procesando",
+                isSample: true
+            },
+            {
+                id: 1003,
+                nombre_cliente: "Ana Martínez",
+                fecha_orden: new Date().toISOString(),
+                total: 2750.00,
+                estado: "pendiente",
+                isSample: true
+            },
+            {
+                id: 1004,
+                nombre_cliente: "José Pérez",
+                fecha_orden: new Date(Date.now() - 5 * 86400000).toISOString(),
+                total: 4200.00,
+                estado: "enviado",
+                isSample: true
+            },
+            {
+                id: 1005,
+                nombre_cliente: "Laura Fernández",
+                fecha_orden: new Date(Date.now() - 3 * 86400000).toISOString(),
+                total: 1500.00,
+                estado: "cancelado",
+                isSample: true
+            }
+        ];
+    }
+    
+    getSampleUsers() {
+        return [
+            {
+                id: 1,
+                nombre: "Admin",
+                apellido: "Principal",
+                email: "admin@gmail.com",
+                rol: "admin",
+                fecha_registro: new Date(Date.now() - 30 * 86400000).toISOString(),
+                activo: true,
+                total_orders: 0,
+                total_spent: 0,
+                wishlist_items: 0
+            },
+            {
+                id: 2,
+                nombre: "María",
+                apellido: "García",
+                email: "maria@ejemplo.com",
+                rol: "cliente",
+                fecha_registro: new Date(Date.now() - 15 * 86400000).toISOString(),
+                activo: true,
+                total_orders: 3,
+                total_spent: 12500.00,
+                wishlist_items: 2
+            },
+            {
+                id: 3,
+                nombre: "Carlos",
+                apellido: "Rodríguez",
+                email: "carlos@ejemplo.com",
+                rol: "cliente",
+                fecha_registro: new Date(Date.now() - 7 * 86400000).toISOString(),
+                activo: true,
+                total_orders: 1,
+                total_spent: 1850.50,
+                wishlist_items: 5
+            },
+            {
+                id: 4,
+                nombre: "Ana",
+                apellido: "Martínez",
+                email: "ana@ejemplo.com",
+                rol: "cliente",
+                fecha_registro: new Date(Date.now() - 3 * 86400000).toISOString(),
+                activo: true,
+                total_orders: 2,
+                total_spent: 4500.00,
+                wishlist_items: 3
+            },
+            {
+                id: 5,
+                nombre: "Luis",
+                apellido: "Hernández",
+                email: "luis@ejemplo.com",
+                rol: "cliente",
+                fecha_registro: new Date(Date.now() - 1 * 86400000).toISOString(),
+                activo: false,
+                total_orders: 0,
+                total_spent: 0,
+                wishlist_items: 0
+            }
+        ];
     }
 
     loadProductsSection() {

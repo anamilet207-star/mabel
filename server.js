@@ -1073,6 +1073,544 @@ app.get('/api/dominican-republic/provinces', async (req, res) => {
     res.json(provinces.sort());
 });
 
+// ================= API - ADMINISTRACIÓN (RUTAS FALTANTES) =================
+
+// Obtener todas las órdenes (admin)
+app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        console.log('📋 Admin: Obteniendo todas las órdenes');
+        
+        const result = await query(`
+            SELECT 
+                p.*,
+                u.nombre as nombre_cliente,
+                u.apellido as apellido_cliente,
+                u.email as email_cliente
+            FROM pedidos p
+            LEFT JOIN usuarios u ON p.usuario_id = u.id
+            ORDER BY p.fecha_creacion DESC
+        `);
+        
+        // Procesar las órdenes para el admin
+        const orders = result.rows.map(order => ({
+            id: order.id,
+            usuario_id: order.usuario_id,
+            nombre_cliente: order.nombre_cliente ? 
+                `${order.nombre_cliente} ${order.apellido_cliente}` : 
+                'Cliente no registrado',
+            email_cliente: order.email_cliente || 'N/A',
+            fecha_orden: order.fecha_creacion,
+            total: parseFloat(order.total) || 0,
+            subtotal: parseFloat(order.subtotal) || 0,
+            costo_envio: parseFloat(order.costo_envio) || 0,
+            estado: order.estado || 'pendiente',
+            estado_pago: order.estado_pago || 'pendiente',
+            metodo_pago: order.metodo_pago || 'N/A',
+            metodo_envio: order.metodo_envio || 'Estándar',
+            direccion_envio: order.direccion_envio || 'N/A',
+            ciudad_envio: order.ciudad_envio || 'N/A',
+            telefono_contacto: order.telefono_contacto || 'N/A',
+            notas: order.notas,
+            tracking_number: order.tracking_number,
+            paqueteria: order.paqueteria,
+            fecha_actualizacion: order.fecha_actualizacion,
+            items: [] // Se cargarán en otra consulta si es necesario
+        }));
+        
+        console.log(`✅ Admin: ${orders.length} órdenes obtenidas`);
+        res.json(orders);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo órdenes (admin):', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Obtener todos los usuarios (admin)
+app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        console.log('👥 Admin: Obteniendo todos los usuarios');
+        
+        const result = await query(`
+            SELECT 
+                id, 
+                nombre, 
+                apellido, 
+                email, 
+                telefono,
+                rol,
+                activo,
+                fecha_registro,
+                direccion,
+                ciudad
+            FROM usuarios 
+            WHERE rol != 'admin' OR id = $1
+            ORDER BY fecha_registro DESC
+        `, [req.session.userId]);
+        
+        // Obtener estadísticas para cada usuario
+        const usersWithStats = await Promise.all(result.rows.map(async (user) => {
+            try {
+                // Total de órdenes
+                const ordersResult = await query(
+                    'SELECT COUNT(*) as total_orders, SUM(total) as total_spent FROM pedidos WHERE usuario_id = $1',
+                    [user.id]
+                );
+                
+                // Total en wishlist
+                const wishlistResult = await query(
+                    'SELECT COUNT(*) as wishlist_items FROM wishlist WHERE usuario_id = $1',
+                    [user.id]
+                );
+                
+                return {
+                    ...user,
+                    total_orders: parseInt(ordersResult.rows[0].total_orders) || 0,
+                    total_spent: parseFloat(ordersResult.rows[0].total_spent) || 0,
+                    wishlist_items: parseInt(wishlistResult.rows[0].wishlist_items) || 0,
+                    // Agregar estadísticas adicionales
+                    stats: {
+                        total_orders: parseInt(ordersResult.rows[0].total_orders) || 0,
+                        total_spent: parseFloat(ordersResult.rows[0].total_spent) || 0,
+                        wishlist_items: parseInt(wishlistResult.rows[0].wishlist_items) || 0,
+                        avg_order_value: ordersResult.rows[0].total_orders > 0 ? 
+                            parseFloat(ordersResult.rows[0].total_spent) / parseInt(ordersResult.rows[0].total_orders) : 0
+                    }
+                };
+            } catch (error) {
+                console.error(`Error obteniendo stats para usuario ${user.id}:`, error);
+                return {
+                    ...user,
+                    total_orders: 0,
+                    total_spent: 0,
+                    wishlist_items: 0,
+                    stats: {
+                        total_orders: 0,
+                        total_spent: 0,
+                        wishlist_items: 0,
+                        avg_order_value: 0
+                    }
+                };
+            }
+        }));
+        
+        console.log(`✅ Admin: ${usersWithStats.length} usuarios obtenidos`);
+        res.json(usersWithStats);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo usuarios (admin):', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Obtener detalles de una orden específica (admin)
+app.get('/api/orders/:id', requireAuth, async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const userId = req.session.userId;
+        const isAdmin = req.session.userRole === 'admin';
+        
+        console.log(`📋 Obteniendo detalles de orden ${orderId}`);
+        
+        // Construir la consulta según permisos
+        let queryStr = `
+            SELECT 
+                p.*,
+                u.nombre as nombre_cliente,
+                u.apellido as apellido_cliente,
+                u.email as email_cliente,
+                u.telefono as telefono_cliente
+            FROM pedidos p
+            LEFT JOIN usuarios u ON p.usuario_id = u.id
+            WHERE p.id = $1
+        `;
+        
+        const params = [orderId];
+        
+        if (!isAdmin) {
+            queryStr += ' AND p.usuario_id = $2';
+            params.push(userId);
+        }
+        
+        const orderResult = await query(queryStr, params);
+        
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
+        
+        const order = orderResult.rows[0];
+        
+        // Obtener items de la orden
+        const itemsResult = await query(`
+            SELECT 
+                oi.*,
+                p.nombre,
+                p.imagen,
+                p.sku
+            FROM orden_items oi
+            LEFT JOIN productos p ON oi.producto_id = p.id
+            WHERE oi.orden_id = $1
+        `, [orderId]);
+        
+        // Formatear la respuesta
+        const formattedOrder = {
+            id: order.id,
+            usuario_id: order.usuario_id,
+            nombre_cliente: order.nombre_cliente ? 
+                `${order.nombre_cliente} ${order.apellido_cliente}` : 
+                'Cliente no registrado',
+            email_cliente: order.email_cliente || 'N/A',
+            telefono_cliente: order.telefono_cliente || order.telefono_contacto || 'N/A',
+            fecha_orden: order.fecha_creacion,
+            total: parseFloat(order.total) || 0,
+            subtotal: parseFloat(order.subtotal) || 0,
+            costo_envio: parseFloat(order.costo_envio) || 0,
+            descuento_aplicado: parseFloat(order.descuento_aplicado) || 0,
+            estado: order.estado || 'pendiente',
+            estado_pago: order.estado_pago || 'pendiente',
+            metodo_pago: order.metodo_pago || 'N/A',
+            metodo_envio: order.metodo_envio || 'Estándar',
+            direccion_envio: order.direccion_envio || 'N/A',
+            ciudad_envio: order.ciudad_envio || 'N/A',
+            telefono_contacto: order.telefono_contacto || 'N/A',
+            notas: order.notas,
+            tracking_number: order.tracking_number,
+            paqueteria: order.paqueteria,
+            fecha_actualizacion: order.fecha_actualizacion,
+            items: itemsResult.rows.map(item => ({
+                id: item.id,
+                producto_id: item.producto_id,
+                nombre: item.nombre || 'Producto no disponible',
+                imagen: item.imagen || '/public/images/default-product.jpg',
+                sku: item.sku || 'N/A',
+                talla: item.talla,
+                color: item.color,
+                cantidad: item.cantidad,
+                precio_unitario: parseFloat(item.precio_unitario) || 0,
+                subtotal: parseFloat(item.subtotal) || 0
+            }))
+        };
+        
+        console.log(`✅ Orden ${orderId} obtenida con ${formattedOrder.items.length} items`);
+        res.json(formattedOrder);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo detalles de orden:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Actualizar estado de orden (admin)
+app.put('/api/admin/orders/:id/status', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const { estado, notas } = req.body;
+        
+        console.log(`✏️ Actualizando estado de orden ${orderId} a: ${estado}`);
+        
+        const validStatuses = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
+        if (!validStatuses.includes(estado)) {
+            return res.status(400).json({ error: 'Estado inválido' });
+        }
+        
+        const result = await query(
+            `UPDATE pedidos 
+             SET estado = $1, 
+                 notas = COALESCE($2, notas),
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $3 
+             RETURNING *`,
+            [estado, notas || null, orderId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
+        
+        const updatedOrder = result.rows[0];
+        
+        console.log(`✅ Estado de orden ${orderId} actualizado a: ${updatedOrder.estado}`);
+        
+        res.json({
+            success: true,
+            message: 'Estado actualizado correctamente',
+            order: updatedOrder
+        });
+        
+    } catch (error) {
+        console.error('❌ Error actualizando estado de orden:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Actualizar usuario (admin)
+app.put('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { nombre, apellido, email, telefono, rol, activo } = req.body;
+        
+        console.log(`✏️ Admin actualizando usuario ${userId}`);
+        
+        // Verificar que no sea el propio admin
+        if (parseInt(userId) === req.session.userId && (rol !== 'admin' || activo === false)) {
+            return res.status(400).json({ 
+                error: 'No puedes cambiar tu propio rol o desactivarte a ti mismo' 
+            });
+        }
+        
+        const result = await query(
+            `UPDATE usuarios 
+             SET nombre = $1, 
+                 apellido = $2, 
+                 email = $3, 
+                 telefono = $4,
+                 rol = $5,
+                 activo = $6,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $7 
+             RETURNING id, nombre, apellido, email, telefono, rol, activo, fecha_registro`,
+            [nombre, apellido, email, telefono || null, rol || 'cliente', activo !== false, userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        console.log(`✅ Usuario ${userId} actualizado por admin`);
+        res.json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('❌ Error actualizando usuario (admin):', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Desactivar usuario (admin)
+app.delete('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        console.log(`🚫 Admin desactivando usuario ${userId}`);
+        
+        // Verificar que no sea el propio admin
+        if (parseInt(userId) === req.session.userId) {
+            return res.status(400).json({ 
+                error: 'No puedes desactivar tu propia cuenta' 
+            });
+        }
+        
+        const result = await query(
+            `UPDATE usuarios 
+             SET activo = false,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $1 
+             RETURNING id, nombre, apellido, email`,
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        console.log(`✅ Usuario ${userId} desactivado por admin`);
+        res.json({ 
+            success: true, 
+            message: 'Usuario desactivado correctamente',
+            user: result.rows[0]
+        });
+        
+    } catch (error) {
+        console.error('❌ Error desactivando usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Activar usuario (admin)
+app.post('/api/admin/users/:id/activate', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        console.log(`✅ Admin activando usuario ${userId}`);
+        
+        const result = await query(
+            `UPDATE usuarios 
+             SET activo = true,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $1 
+             RETURNING id, nombre, apellido, email`,
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        console.log(`✅ Usuario ${userId} activado por admin`);
+        res.json({ 
+            success: true, 
+            message: 'Usuario activado correctamente',
+            user: result.rows[0]
+        });
+        
+    } catch (error) {
+        console.error('❌ Error activando usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Aplicar descuento a producto (admin)
+app.post('/api/admin/products/:id/discount', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const { discount_type, discount_percent, discount_price, discount_expires } = req.body;
+        
+        console.log(`🎯 Aplicando descuento a producto ${productId}:`, {
+            discount_type,
+            discount_percent,
+            discount_price,
+            discount_expires
+        });
+        
+        let updateData = {};
+        
+        if (discount_type === 'percent') {
+            updateData = {
+                descuento_porcentaje: discount_percent || 0,
+                descuento_precio: null,
+                descuento_expiracion: discount_expires || null
+            };
+        } else if (discount_type === 'fixed') {
+            updateData = {
+                descuento_porcentaje: 0,
+                descuento_precio: discount_price || 0,
+                descuento_expiracion: discount_expires || null
+            };
+        } else {
+            return res.status(400).json({ error: 'Tipo de descuento inválido' });
+        }
+        
+        const result = await query(
+            `UPDATE productos 
+             SET descuento_porcentaje = $1,
+                 descuento_precio = $2,
+                 descuento_expiracion = $3,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $4 
+             RETURNING *`,
+            [
+                updateData.descuento_porcentaje,
+                updateData.descuento_precio,
+                updateData.descuento_expiracion,
+                productId
+            ]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        const updatedProduct = result.rows[0];
+        const processedProduct = processProductPrices(updatedProduct);
+        
+        console.log(`✅ Descuento aplicado a producto ${productId}`);
+        console.log(`💰 Precio con descuento: ${processedProduct.precio_formateado}`);
+        
+        res.json({
+            success: true,
+            message: 'Descuento aplicado correctamente',
+            product: processedProduct
+        });
+        
+    } catch (error) {
+        console.error('❌ Error aplicando descuento:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Eliminar descuento de producto (admin)
+app.delete('/api/admin/products/:id/discount', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const productId = req.params.id;
+        
+        console.log(`🗑️ Eliminando descuento de producto ${productId}`);
+        
+        const result = await query(
+            `UPDATE productos 
+             SET descuento_porcentaje = 0,
+                 descuento_precio = null,
+                 descuento_expiracion = null,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $1 
+             RETURNING *`,
+            [productId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        const updatedProduct = result.rows[0];
+        const processedProduct = processProductPrices(updatedProduct);
+        
+        console.log(`✅ Descuento eliminado de producto ${productId}`);
+        console.log(`💰 Precio actual: ${processedProduct.precio_formateado}`);
+        
+        res.json({
+            success: true,
+            message: 'Descuento eliminado correctamente',
+            product: processedProduct
+        });
+        
+    } catch (error) {
+        console.error('❌ Error eliminando descuento:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Ruta para descuentos generales (placeholder)
+app.get('/api/admin/discounts', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        // Por ahora devolvemos un array vacío o datos de ejemplo
+        // Puedes implementar la lógica real según tu base de datos
+        console.log('🎯 Admin: Obteniendo descuentos');
+        
+        // Ejemplo de datos de prueba
+        const sampleDiscounts = [
+            {
+                id: 1,
+                codigo: "VERANO20",
+                tipo: "porcentaje",
+                valor: 20,
+                aplicable_a: "todos",
+                minimo_compra: 50,
+                usos_totales: 100,
+                usos_actuales: 34,
+                expiracion: "2024-12-31",
+                activo: true
+            },
+            {
+                id: 2,
+                codigo: "ENVIOGRATIS",
+                tipo: "envio",
+                valor: 100,
+                aplicable_a: "todos",
+                minimo_compra: 30,
+                usos_totales: 200,
+                usos_actuales: 89,
+                expiracion: null,
+                activo: true
+            }
+        ];
+        
+        console.log(`✅ Admin: ${sampleDiscounts.length} descuentos de ejemplo`);
+        res.json(sampleDiscounts);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo descuentos:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
 // ================= API - ADMINISTRACIÓN =================
 // Obtener todos los productos (admin)
 app.get('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
