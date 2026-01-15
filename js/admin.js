@@ -392,53 +392,76 @@ class AdminPanel {
         }
     }
     
-    // Agregar estas funciones a la clase AdminPanel (fuera de loadDashboard):
-    
-    getSampleOrders() {
-        return [
-            {
-                id: 1001,
-                nombre_cliente: "María García",
-                fecha_orden: new Date(Date.now() - 2 * 86400000).toISOString(),
-                total: 3250.00,
-                estado: "entregado",
-                isSample: true
-            },
-            {
-                id: 1002,
-                nombre_cliente: "Carlos Rodríguez",
-                fecha_orden: new Date(Date.now() - 1 * 86400000).toISOString(),
-                total: 1850.50,
-                estado: "procesando",
-                isSample: true
-            },
-            {
-                id: 1003,
-                nombre_cliente: "Ana Martínez",
-                fecha_orden: new Date().toISOString(),
-                total: 2750.00,
-                estado: "pendiente",
-                isSample: true
-            },
-            {
-                id: 1004,
-                nombre_cliente: "José Pérez",
-                fecha_orden: new Date(Date.now() - 5 * 86400000).toISOString(),
-                total: 4200.00,
-                estado: "enviado",
-                isSample: true
-            },
-            {
-                id: 1005,
-                nombre_cliente: "Laura Fernández",
-                fecha_orden: new Date(Date.now() - 3 * 86400000).toISOString(),
-                total: 1500.00,
-                estado: "cancelado",
-                isSample: true
-            }
-        ];
-    }
-    
+  // Agrega esto en la clase AdminPanel, después del constructor:
+getSampleUsers() {
+    return [
+        {
+            id: 1,
+            nombre: "Admin",
+            apellido: "Principal",
+            email: "admin@gmail.com",
+            rol: "admin",
+            fecha_registro: new Date(Date.now() - 30 * 86400000).toISOString(),
+            activo: true,
+            total_orders: 0,
+            total_spent: 0,
+            wishlist_items: 0
+        },
+        {
+            id: 2,
+            nombre: "María",
+            apellido: "García",
+            email: "maria@ejemplo.com",
+            rol: "cliente",
+            fecha_registro: new Date(Date.now() - 15 * 86400000).toISOString(),
+            activo: true,
+            total_orders: 3,
+            total_spent: 12500.00,
+            wishlist_items: 2
+        },
+        {
+            id: 3,
+            nombre: "Carlos",
+            apellido: "Rodríguez",
+            email: "carlos@ejemplo.com",
+            rol: "cliente",
+            fecha_registro: new Date(Date.now() - 7 * 86400000).toISOString(),
+            activo: true,
+            total_orders: 1,
+            total_spent: 1850.50,
+            wishlist_items: 5
+        }
+    ];
+}
+
+getSampleOrders() {
+    return [
+        {
+            id: 1001,
+            nombre_cliente: "María García",
+            fecha_orden: new Date(Date.now() - 2 * 86400000).toISOString(),
+            total: 3250.00,
+            estado: "entregado",
+            isSample: true
+        },
+        {
+            id: 1002,
+            nombre_cliente: "Carlos Rodríguez",
+            fecha_orden: new Date(Date.now() - 1 * 86400000).toISOString(),
+            total: 1850.50,
+            estado: "procesando",
+            isSample: true
+        },
+        {
+            id: 1003,
+            nombre_cliente: "Ana Martínez",
+            fecha_orden: new Date().toISOString(),
+            total: 2750.00,
+            estado: "pendiente",
+            isSample: true
+        }
+    ];
+}
 
     loadProductsSection() {
         return `
@@ -521,10 +544,91 @@ class AdminPanel {
             </div>
         `;
     }
+    async saveProduct() {
+        const form = document.getElementById('product-form');
+        if (!form || !form.checkValidity()) {
+            this.showNotification('⚠️ Completa todos los campos requeridos', 'warning');
+            return;
+        }
+        
+        const productId = document.getElementById('product-id').value;
+        const isEdit = !!productId;
+        
+        // Recopilar URLs de imágenes adicionales
+        const additionalImages = [];
+        for (let i = 1; i <= 5; i++) {
+            const input = document.getElementById(`additional-image-url-${i}`);
+            if (input && input.value && input.value.trim() !== '') {
+                additionalImages.push(input.value.trim());
+            }
+        }
+        
+        const productData = {
+            nombre: document.getElementById('nombre').value,
+            descripcion: document.getElementById('descripcion').value,
+            precio: parseFloat(document.getElementById('precio').value) || 0,
+            categoria: document.getElementById('categoria').value,
+            stock: parseInt(document.getElementById('stock').value) || 0,
+            tallas: document.getElementById('tallas').value,
+            colores: document.getElementById('colores').value,
+            material: document.getElementById('material').value || '',
+            coleccion: document.getElementById('coleccion').value || '',
+            sku: document.getElementById('sku').value,
+            activo: document.getElementById('activo').checked,
+            imagen: document.getElementById('main-image-url').value || '/public/images/default-product.jpg',
+            imagenes_adicionales: additionalImages
+        };
+        
+        console.log('📤 Guardando producto:', productData);
+        
+        try {
+            const url = isEdit ? `/api/admin/products/${productId}` : '/api/admin/products';
+            const method = isEdit ? 'PUT' : 'POST';
+            
+            // IMPORTANTE: Agregar credentials para enviar las cookies de sesión
+            const response = await fetch(url, {
+                method,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'include', // ← Esto envía las cookies de sesión
+                body: JSON.stringify(productData)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                this.showNotification(
+                    isEdit ? '✅ Producto actualizado' : '✅ Producto creado', 
+                    'success'
+                );
+                
+                const modalClose = document.querySelector('.product-modal .modal-close');
+                if (modalClose) modalClose.click();
+                
+                await this.loadProducts();
+            } else {
+                if (response.status === 401) {
+                    this.showNotification('❌ Sesión expirada. Inicia sesión nuevamente.', 'error');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const error = await response.json();
+                throw new Error(error.error || 'Error guardando producto');
+            }
+        } catch (error) {
+            console.error('❌ Error guardando producto:', error);
+            this.showNotification(`❌ ${error.message}`, 'error');
+        }
+    }
+   
 
     async loadProducts() {
         try {
-            const response = await fetch('/api/admin/products');
+            const response = await fetch('/api/admin/products', {
+                credentials: 'include' // ← Agregar esto
+            });
             if (!response.ok) throw new Error('Error en la respuesta del servidor');
             this.products = await response.json();
             this.renderProductsTable();

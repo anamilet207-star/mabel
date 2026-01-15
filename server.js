@@ -8,6 +8,26 @@ const CURRENCY_SYMBOL = 'RD$'; // Símbolo de pesos dominicanos
 // server.js - VERSIÓN COMPLETA CON MONEDA DOP
 require('dotenv').config();
 
+// Actualizar la configuración de CORS
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true, // ← Esto permite enviar cookies
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+}));
+
+// Configuración de sesión - actualizar cookie
+app.use(session({
+    secret: 'mabel-activewear-secret-key-2024',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: false, // Cambiar a true si usas HTTPS
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'lax' // Importante para que funcione con CORS
+    }
+}));
+
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
@@ -1670,4 +1690,13 @@ app.post('/api/payments/create-stripe-payment', async (req, res) => {
         currency: 'DOP',
         amount: req.body.amount || 0
     });
+});
+
+// Middleware de depuración
+app.use((req, res, next) => {
+    console.log(`📨 ${req.method} ${req.url}`);
+    console.log('👤 Sesión:', req.session);
+    console.log('🔑 User ID:', req.session.userId);
+    console.log('👑 User Role:', req.session.userRole);
+    next();
 });
