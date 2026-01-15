@@ -34,37 +34,6 @@ if (STRIPE_ENABLED) {
     console.log('🔕 Stripe desactivado temporalmente');
 }
 
-// ================= CONFIGURACIÓN MIDDLEWARE =================
-// Trust proxy para Railway
-app.set('trust proxy', 1);
-
-// Configuración CORS
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(__dirname));
-
-// Configuración de sesión para producción
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'mabel-activewear-secret-key-2024',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-    }
-}));
-
-// ... resto de tu código ...
-// ... resto de tu código ...
 // ================= FUNCIONES DE FORMATO DOP =================
 
 /**
@@ -240,21 +209,47 @@ const parseArrayFromPostgres = (pgArray) => {
     return [];
 };
 
+// Función auxiliar para nombres de campos (ACTUALIZADA)
+function getFieldName(field) {
+    const fieldNames = {
+        'nombre': 'Nombre para la dirección',
+        'nombre_completo': 'Nombre completo',
+        'telefono': 'Teléfono',
+        'provincia': 'Provincia',
+        'municipio': 'Municipio',
+        'sector': 'Sector/Barrio',
+        'referencia': 'Punto de referencia'
+        // Eliminados: 'calle', 'numero', 'apartamento'
+    };
+    return fieldNames[field] || field;
+}
+
 // ================= CONFIGURACIÓN MIDDLEWARE =================
-app.use(cors());
+// Trust proxy para Railway
+app.set('trust proxy', 1);
+
+// Configuración CORS
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
-// Configuración de sesión
+// Configuración de sesión para producción
 app.use(session({
-    secret: 'mabel-activewear-secret-key-2024',
+    secret: process.env.SESSION_SECRET || 'mabel-activewear-secret-key-2024',
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: false,
-        maxAge: 24 * 60 * 60 * 1000
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     }
 }));
 
@@ -289,41 +284,6 @@ app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Servir imágenes placeholder si no existen
-app.get('/public/images/products/:imageName', (req, res) => {
-    const imageName = req.params.imageName;
-    const imagePath = path.join(__dirname, 'public/images/products', imageName);
-    
-    if (fs.existsSync(imagePath)) {
-        res.sendFile(imagePath);
-    } else {
-        const placeholder = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600">
-                <rect width="400" height="600" fill="#f5f5f5"/>
-                <text x="200" y="300" font-family="Arial" font-size="20" text-anchor="middle" fill="#666">
-                    ${imageName.replace('.jpg', '').replace(/[_-]/g, ' ')}
-                </text>
-            </svg>
-        `;
-        res.set('Content-Type', 'image/svg+xml');
-        res.send(placeholder);
-    }
-});
-
-// Imagen por defecto
-app.get('/public/images/default-product.jpg', (req, res) => {
-    const placeholder = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
-            <rect width="400" height="500" fill="#f8f8f8"/>
-            <text x="200" y="250" font-family="Arial" font-size="24" text-anchor="middle" fill="#666">
-                MABEL ACTIVEWEAR
-            </text>
-        </svg>
-    `;
-    res.set('Content-Type', 'image/svg+xml');
-    res.send(placeholder);
-});
-
 // ================= RUTAS PARA PÁGINAS HTML =================
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'pages/index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'pages/login.html')));
@@ -344,15 +304,6 @@ app.get('/devoluciones', (req, res) => res.redirect('/ayuda#devoluciones'));
 app.get('/faq', (req, res) => res.redirect('/ayuda#faq'));
 app.get('/privacidad', (req, res) => res.redirect('/ayuda#privacidad'));
 app.get('/terminos', (req, res) => res.redirect('/ayuda#terminos'));
-
-// ================= API - CONFIGURACIÓN DE MONEDA =================
-app.get('/api/currency/config', (req, res) => {
-    res.json({
-        currency: DEFAULT_CURRENCY,
-        symbol: CURRENCY_SYMBOL,
-        format_example: formatDOP(1000)
-    });
-});
 
 // ================= API - AUTENTICACIÓN =================
 app.post('/api/login', async (req, res) => {
@@ -481,20 +432,1175 @@ app.get('/api/session', (req, res) => {
     }
 });
 
-// ================= RUTAS DE PAGOS =================
+// ================= API - DIRECCIONES (ACTUALIZADO SIN CALLE/NUMERO/APARTAMENTO) =================
+
+// Obtener direcciones del usuario
+app.get('/api/users/:id/addresses', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        if (parseInt(userId) !== req.session.userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        console.log('📍 Obteniendo direcciones para usuario:', userId);
+        
+        const result = await query(
+            `SELECT * FROM direcciones 
+             WHERE usuario_id = $1 
+             ORDER BY predeterminada DESC, fecha_creacion DESC`,
+            [userId]
+        );
+        
+        const addresses = result.rows.map(addr => ({
+            ...addr,
+            // Formatear teléfono para mostrar
+            telefono_formateado: addr.telefono
+        }));
+        
+        console.log(`✅ ${addresses.length} direcciones encontradas`);
+        res.json(addresses);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo direcciones:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Crear nueva dirección (ACTUALIZADO)
+app.post('/api/users/:id/addresses', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const addressData = req.body;
+        
+        if (parseInt(userId) !== req.session.userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        console.log('➕ Creando dirección para usuario:', userId);
+        console.log('📦 Datos recibidos:', addressData);
+        
+        // Validación de campos requeridos (ACTUALIZADO - sin calle, numero, apartamento)
+        const required = ['nombre', 'nombre_completo', 'telefono', 'provincia', 
+                         'municipio', 'sector', 'referencia'];
+        
+        for (const field of required) {
+            if (!addressData[field] || addressData[field].trim() === '') {
+                return res.status(400).json({ 
+                    error: `El campo ${getFieldName(field)} es requerido` 
+                });
+            }
+        }
+        
+        // Si se marca como predeterminada, quitar predeterminada de otras direcciones
+        if (addressData.predeterminada) {
+            await query(
+                'UPDATE direcciones SET predeterminada = false WHERE usuario_id = $1',
+                [userId]
+            );
+        }
+        
+        // Insertar nueva dirección (ACTUALIZADO - sin calle, numero, apartamento)
+        const result = await query(
+            `INSERT INTO direcciones (
+                usuario_id, 
+                nombre, 
+                nombre_completo, 
+                telefono, 
+                provincia,
+                municipio,
+                sector, 
+                referencia, 
+                paqueteria_preferida, 
+                predeterminada,
+                fecha_creacion
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
+             RETURNING *`,
+            [
+                userId,
+                addressData.nombre,
+                addressData.nombre_completo,
+                addressData.telefono,
+                addressData.provincia,
+                addressData.municipio,
+                addressData.sector,
+                addressData.referencia,
+                addressData.paqueteria_preferida || null,
+                addressData.predeterminada || false
+            ]
+        );
+        
+        const newAddress = result.rows[0];
+        console.log('✅ Dirección creada ID:', newAddress.id);
+        
+        res.status(201).json(newAddress);
+        
+    } catch (error) {
+        console.error('❌ Error creando dirección:', error);
+        
+        if (error.message.includes('unique_usuario_predeterminada')) {
+            return res.status(400).json({ 
+                error: 'Solo puedes tener una dirección predeterminada' 
+            });
+        }
+        
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
+// Actualizar dirección (ACTUALIZADO)
+app.put('/api/users/:id/addresses/:addressId', requireAuth, async (req, res) => {
+    try {
+        const { id, addressId } = req.params;
+        const addressData = req.body;
+        
+        if (parseInt(id) !== req.session.userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        console.log('✏️ Actualizando dirección:', addressId);
+        
+        // Verificar que la dirección pertenece al usuario
+        const verifyResult = await query(
+            'SELECT id FROM direcciones WHERE id = $1 AND usuario_id = $2',
+            [addressId, id]
+        );
+        
+        if (verifyResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dirección no encontrada' });
+        }
+        
+        // Si se marca como predeterminada, quitar predeterminada de otras direcciones
+        if (addressData.predeterminada) {
+            await query(
+                'UPDATE direcciones SET predeterminada = false WHERE usuario_id = $1 AND id != $2',
+                [id, addressId]
+            );
+        }
+        
+        // Actualizar dirección (ACTUALIZADO - sin calle, numero, apartamento)
+        const updateResult = await query(
+            `UPDATE direcciones SET
+                nombre = $1,
+                nombre_completo = $2,
+                telefono = $3,
+                provincia = $4,
+                municipio = $5,
+                sector = $6,
+                referencia = $7,
+                paqueteria_preferida = $8,
+                predeterminada = $9,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $10 AND usuario_id = $11
+             RETURNING *`,
+            [
+                addressData.nombre,
+                addressData.nombre_completo,
+                addressData.telefono,
+                addressData.provincia,
+                addressData.municipio,
+                addressData.sector,
+                addressData.referencia,
+                addressData.paqueteria_preferida || null,
+                addressData.predeterminada || false,
+                addressId,
+                id
+            ]
+        );
+        
+        const updatedAddress = updateResult.rows[0];
+        console.log('✅ Dirección actualizada ID:', updatedAddress.id);
+        
+        res.json(updatedAddress);
+        
+    } catch (error) {
+        console.error('❌ Error actualizando dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Eliminar dirección
+app.delete('/api/users/:id/addresses/:addressId', requireAuth, async (req, res) => {
+    try {
+        const { id, addressId } = req.params;
+        
+        if (parseInt(id) !== req.session.userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        console.log('🗑️ Eliminando dirección:', addressId);
+        
+        // Verificar que no sea la única dirección
+        const countResult = await query(
+            'SELECT COUNT(*) FROM direcciones WHERE usuario_id = $1',
+            [id]
+        );
+        
+        const addressCount = parseInt(countResult.rows[0].count);
+        
+        if (addressCount <= 1) {
+            return res.status(400).json({ 
+                error: 'No puedes eliminar tu única dirección. Agrega otra dirección primero.' 
+            });
+        }
+        
+        // Verificar que la dirección pertenece al usuario
+        const verifyResult = await query(
+            'SELECT predeterminada FROM direcciones WHERE id = $1 AND usuario_id = $2',
+            [addressId, id]
+        );
+        
+        if (verifyResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dirección no encontrada' });
+        }
+        
+        const isDefault = verifyResult.rows[0].predeterminada;
+        
+        // Eliminar dirección
+        const deleteResult = await query(
+            'DELETE FROM direcciones WHERE id = $1 AND usuario_id = $2 RETURNING *',
+            [addressId, id]
+        );
+        
+        if (deleteResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dirección no encontrada' });
+        }
+        
+        // Si la dirección eliminada era predeterminada, establecer otra como predeterminada
+        if (isDefault) {
+            await query(
+                `UPDATE direcciones SET predeterminada = true 
+                 WHERE usuario_id = $1 
+                 AND id = (
+                     SELECT id FROM direcciones 
+                     WHERE usuario_id = $1 
+                     ORDER BY fecha_creacion DESC 
+                     LIMIT 1
+                 )`,
+                [id]
+            );
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Dirección eliminada correctamente'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error eliminando dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Establecer dirección como predeterminada
+app.put('/api/users/:id/addresses/:addressId/default', requireAuth, async (req, res) => {
+    try {
+        const { id, addressId } = req.params;
+        
+        if (parseInt(id) !== req.session.userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        console.log('⭐ Estableciendo dirección predeterminada:', addressId);
+        
+        // Verificar que la dirección pertenece al usuario
+        const verifyResult = await query(
+            'SELECT id FROM direcciones WHERE id = $1 AND usuario_id = $2',
+            [addressId, id]
+        );
+        
+        if (verifyResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dirección no encontrada' });
+        }
+        
+        // Usar transacción para asegurar consistencia
+        await query('BEGIN');
+        
+        try {
+            // Quitar predeterminada de todas las direcciones
+            await query(
+                'UPDATE direcciones SET predeterminada = false WHERE usuario_id = $1',
+                [id]
+            );
+            
+            // Establecer la nueva predeterminada
+            const result = await query(
+                `UPDATE direcciones SET predeterminada = true, fecha_actualizacion = CURRENT_TIMESTAMP
+                 WHERE id = $1 AND usuario_id = $2
+                 RETURNING *`,
+                [addressId, id]
+            );
+            
+            await query('COMMIT');
+            
+            res.json({ 
+                success: true, 
+                message: 'Dirección predeterminada actualizada',
+                address: result.rows[0]
+            });
+            
+        } catch (error) {
+            await query('ROLLBACK');
+            throw error;
+        }
+        
+    } catch (error) {
+        console.error('❌ Error estableciendo dirección predeterminada:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - USUARIO =================
+app.get('/api/users/:id', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        if (parseInt(userId) !== req.session.userId && req.session.userRole !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        const result = await query(
+            'SELECT id, nombre, apellido, email, telefono, fecha_registro FROM usuarios WHERE id = $1',
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('❌ Error obteniendo usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Actualizar perfil
+app.put('/api/users/:id', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        if (parseInt(userId) !== req.session.userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        const { nombre, apellido, email, telefono } = req.body;
+        
+        const result = await query(
+            `UPDATE usuarios 
+             SET nombre = $1, apellido = $2, email = $3, telefono = $4
+             WHERE id = $5 
+             RETURNING id, nombre, apellido, email, telefono`,
+            [nombre, apellido, email, telefono, userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        // Actualizar sesión
+        req.session.userName = `${nombre} ${apellido}`;
+        req.session.userEmail = email;
+        
+        res.json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('Error actualizando usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Cambiar contraseña
+app.put('/api/users/:id/password', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        if (parseInt(userId) !== req.session.userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        const { current_password, new_password } = req.body;
+        
+        const userResult = await query(
+            'SELECT password_hash FROM usuarios WHERE id = $1',
+            [userId]
+        );
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        const isValid = await bcrypt.compare(current_password, userResult.rows[0].password_hash);
+        if (!isValid) {
+            return res.status(400).json({ error: 'Contraseña actual incorrecta' });
+        }
+        
+        const hashedPassword = await bcrypt.hash(new_password, 10);
+        
+        await query(
+            'UPDATE usuarios SET password_hash = $1 WHERE id = $2',
+            [hashedPassword, userId]
+        );
+        
+        res.json({ success: true, message: 'Contraseña actualizada' });
+        
+    } catch (error) {
+        console.error('Error cambiando contraseña:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - ORDENES =================
+app.get('/api/users/:id/orders', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const limit = req.query.limit || 10;
+        
+        if (parseInt(userId) !== req.session.userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        console.log('📋 Obteniendo órdenes para usuario:', userId);
+        
+        const ordersResult = await query(`
+            SELECT 
+                id, 
+                fecha_creacion, 
+                total, 
+                estado,
+                metodo_envio,
+                direccion_envio,
+                ciudad_envio,
+                telefono_contacto
+            FROM pedidos 
+            WHERE usuario_id = $1 
+            ORDER BY fecha_creacion DESC 
+            LIMIT $2
+        `, [userId, limit]);
+        
+        const orders = ordersResult.rows.map(order => ({
+            id: order.id,
+            fecha_orden: order.fecha_creacion,
+            total: parseFloat(order.total) || 0,
+            estado: order.estado || 'pendiente',
+            items_count: 1,
+            tracking_number: null,
+            paqueteria: order.metodo_envio || null,
+            direccion_envio: order.direccion_envio,
+            ciudad_envio: order.ciudad_envio,
+            telefono_contacto: order.telefono_contacto
+        }));
+        
+        console.log(`✅ ${orders.length} órdenes obtenidas para usuario ${userId}`);
+        res.json(orders);
+        
+    } catch (error) {
+        console.error('Error obteniendo órdenes:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - WISHLIST =================
+app.get('/api/users/:id/wishlist', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        console.log('🔍 DEBUG Wishlist - Usuario ID recibido:', userId);
+        console.log('🔍 DEBUG Wishlist - Sesión UserId:', req.session.userId);
+        console.log('🔍 DEBUG Wishlist - Sesión Role:', req.session.userRole);
+        
+        if (parseInt(userId) !== req.session.userId) {
+            console.log('❌ Acceso denegado: userId no coincide');
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        console.log('❤️ Obteniendo wishlist para usuario:', userId);
+        
+        // Verificar si la tabla wishlist existe
+        try {
+            const tableCheck = await query(`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'wishlist'
+                );
+            `);
+            
+            console.log('🔍 Tabla wishlist existe?:', tableCheck.rows[0].exists);
+            
+            if (!tableCheck.rows[0].exists) {
+                console.log('⚠️ Tabla wishlist no existe, creándola...');
+                await query(`
+                    CREATE TABLE wishlist (
+                        id SERIAL PRIMARY KEY,
+                        usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+                        producto_id INTEGER REFERENCES productos(id) ON DELETE CASCADE,
+                        fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(usuario_id, producto_id)
+                    );
+                `);
+                console.log('✅ Tabla wishlist creada');
+                return res.json([]);
+            }
+            
+        } catch (tableError) {
+            console.error('❌ Error verificando tabla wishlist:', tableError);
+        }
+        
+        const result = await query(
+            `SELECT w.*, 
+                    p.nombre, p.imagen, p.precio, p.categoria, p.stock,
+                    p.descuento_porcentaje, p.descuento_precio,
+                    p.descripcion
+             FROM wishlist w
+             LEFT JOIN productos p ON w.producto_id = p.id
+             WHERE w.usuario_id = $1
+             ORDER BY w.fecha_agregado DESC`,
+            [userId]
+        );
+        
+        console.log(`✅ ${result.rows.length} productos encontrados en wishlist`);
+        
+        // Procesar precios
+        const wishlist = result.rows.map(row => {
+            const product = row.nombre ? processProductPrices(row) : null;
+            
+            return {
+                id: row.id,
+                producto_id: row.producto_id,
+                fecha_agregado: row.fecha_agregado,
+                nombre: row.nombre || 'Producto no disponible',
+                imagen: row.imagen || '/public/images/default-product.jpg',
+                descripcion: row.descripcion || '',
+                categoria: row.categoria || 'sin-categoria',
+                stock: row.stock || 0,
+                
+                // Precios procesados
+                precio_original: product ? product.precio_original_dop : 0,
+                precio_original_formateado: product ? product.precio_original_formateado : 'RD$ 0.00',
+                precio_final: product ? product.precio_final_dop : 0,
+                precio_formateado: product ? product.precio_formateado : 'RD$ 0.00',
+                tiene_descuento: product ? product.tiene_descuento : false,
+                descuento_porcentaje: product ? product.descuento_porcentaje : 0
+            };
+        }).filter(item => item.producto_id !== null);
+        
+        console.log(`📊 Wishlist procesada: ${wishlist.length} productos válidos`);
+        res.json(wishlist);
+        
+    } catch (error) {
+        console.error('❌ Error completo obteniendo wishlist:', error);
+        // Devolver array vacío en lugar de error
+        res.json([]);
+    }
+});
+
+// Eliminar de wishlist
+app.delete('/api/users/:id/wishlist/:productId', requireAuth, async (req, res) => {
+    try {
+        const { id, productId } = req.params;
+        
+        if (parseInt(id) !== req.session.userId) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        
+        console.log('🗑️ Eliminando de wishlist:', productId);
+        
+        const result = await query(
+            'DELETE FROM wishlist WHERE usuario_id = $1 AND producto_id = $2 RETURNING *',
+            [id, productId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado en wishlist' });
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Producto eliminado de tu wishlist'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error eliminando de wishlist:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - PROVINCIAS RD =================
+app.get('/api/dominican-republic/provinces', async (req, res) => {
+    console.log('🗺️ Obteniendo provincias de RD');
+    
+    const provinces = [
+        'Distrito Nacional', 'Santo Domingo', 'Santiago', 'La Vega', 'San Cristóbal',
+        'San Pedro de Macorís', 'La Altagracia', 'Puerto Plata', 'Duarte', 'Espaillat',
+        'San Juan', 'Azua', 'Barahona', 'Dajabón', 'El Seibo', 'Elías Piña', 'Hato Mayor',
+        'Hermanas Mirabal', 'Independencia', 'María Trinidad Sánchez', 'Monseñor Nouel',
+        'Monte Cristi', 'Monte Plata', 'Pedernales', 'Peravia', 'Samaná', 'San José de Ocoa',
+        'Sánchez Ramírez', 'Valverde', 'La Romana'
+    ];
+    
+    res.json(provinces.sort());
+});
+
+// ================= API - ADMINISTRACIÓN (RUTAS FALTANTES) =================
+
+// Obtener todas las órdenes (admin)
+app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        console.log('📋 Admin: Obteniendo todas las órdenes');
+        
+        const result = await query(`
+            SELECT 
+                p.*,
+                u.nombre as nombre_cliente,
+                u.apellido as apellido_cliente,
+                u.email as email_cliente
+            FROM pedidos p
+            LEFT JOIN usuarios u ON p.usuario_id = u.id
+            ORDER BY p.fecha_creacion DESC
+        `);
+        
+        // Procesar las órdenes para el admin
+        const orders = result.rows.map(order => ({
+            id: order.id,
+            usuario_id: order.usuario_id,
+            nombre_cliente: order.nombre_cliente ? 
+                `${order.nombre_cliente} ${order.apellido_cliente}` : 
+                'Cliente no registrado',
+            email_cliente: order.email_cliente || 'N/A',
+            fecha_orden: order.fecha_creacion,
+            total: parseFloat(order.total) || 0,
+            subtotal: parseFloat(order.subtotal) || 0,
+            costo_envio: parseFloat(order.costo_envio) || 0,
+            estado: order.estado || 'pendiente',
+            estado_pago: order.estado_pago || 'pendiente',
+            metodo_pago: order.metodo_pago || 'N/A',
+            metodo_envio: order.metodo_envio || 'Estándar',
+            direccion_envio: order.direccion_envio || 'N/A',
+            ciudad_envio: order.ciudad_envio || 'N/A',
+            telefono_contacto: order.telefono_contacto || 'N/A',
+            notas: order.notas,
+            tracking_number: order.tracking_number,
+            paqueteria: order.paqueteria,
+            fecha_actualizacion: order.fecha_actualizacion,
+            items: [] // Se cargarán en otra consulta si es necesario
+        }));
+        
+        console.log(`✅ Admin: ${orders.length} órdenes obtenidas`);
+        res.json(orders);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo órdenes (admin):', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Obtener todos los usuarios (admin)
+app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        console.log('👥 Admin: Obteniendo todos los usuarios');
+        
+        const result = await query(`
+            SELECT 
+                id, 
+                nombre, 
+                apellido, 
+                email, 
+                telefono,
+                rol,
+                activo,
+                fecha_registro,
+                direccion,
+                ciudad
+            FROM usuarios 
+            WHERE rol != 'admin' OR id = $1
+            ORDER BY fecha_registro DESC
+        `, [req.session.userId]);
+        
+        // Obtener estadísticas para cada usuario
+        const usersWithStats = await Promise.all(result.rows.map(async (user) => {
+            try {
+                // Total de órdenes
+                const ordersResult = await query(
+                    'SELECT COUNT(*) as total_orders, SUM(total) as total_spent FROM pedidos WHERE usuario_id = $1',
+                    [user.id]
+                );
+                
+                // Total en wishlist
+                const wishlistResult = await query(
+                    'SELECT COUNT(*) as wishlist_items FROM wishlist WHERE usuario_id = $1',
+                    [user.id]
+                );
+                
+                return {
+                    ...user,
+                    total_orders: parseInt(ordersResult.rows[0].total_orders) || 0,
+                    total_spent: parseFloat(ordersResult.rows[0].total_spent) || 0,
+                    wishlist_items: parseInt(wishlistResult.rows[0].wishlist_items) || 0,
+                    // Agregar estadísticas adicionales
+                    stats: {
+                        total_orders: parseInt(ordersResult.rows[0].total_orders) || 0,
+                        total_spent: parseFloat(ordersResult.rows[0].total_spent) || 0,
+                        wishlist_items: parseInt(wishlistResult.rows[0].wishlist_items) || 0,
+                        avg_order_value: ordersResult.rows[0].total_orders > 0 ? 
+                            parseFloat(ordersResult.rows[0].total_spent) / parseInt(ordersResult.rows[0].total_orders) : 0
+                    }
+                };
+            } catch (error) {
+                console.error(`Error obteniendo stats para usuario ${user.id}:`, error);
+                return {
+                    ...user,
+                    total_orders: 0,
+                    total_spent: 0,
+                    wishlist_items: 0,
+                    stats: {
+                        total_orders: 0,
+                        total_spent: 0,
+                        wishlist_items: 0,
+                        avg_order_value: 0
+                    }
+                };
+            }
+        }));
+        
+        console.log(`✅ Admin: ${usersWithStats.length} usuarios obtenidos`);
+        res.json(usersWithStats);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo usuarios (admin):', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Obtener detalles de una orden específica (admin)
+app.get('/api/orders/:id', requireAuth, async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const userId = req.session.userId;
+        const isAdmin = req.session.userRole === 'admin';
+        
+        console.log(`📋 Obteniendo detalles de orden ${orderId}`);
+        
+        // Construir la consulta según permisos
+        let queryStr = `
+            SELECT 
+                p.*,
+                u.nombre as nombre_cliente,
+                u.apellido as apellido_cliente,
+                u.email as email_cliente,
+                u.telefono as telefono_cliente
+            FROM pedidos p
+            LEFT JOIN usuarios u ON p.usuario_id = u.id
+            WHERE p.id = $1
+        `;
+        
+        const params = [orderId];
+        
+        if (!isAdmin) {
+            queryStr += ' AND p.usuario_id = $2';
+            params.push(userId);
+        }
+        
+        const orderResult = await query(queryStr, params);
+        
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
+        
+        const order = orderResult.rows[0];
+        
+        // Obtener items de la orden
+        const itemsResult = await query(`
+            SELECT 
+                oi.*,
+                p.nombre,
+                p.imagen,
+                p.sku
+            FROM orden_items oi
+            LEFT JOIN productos p ON oi.producto_id = p.id
+            WHERE oi.orden_id = $1
+        `, [orderId]);
+        
+        // Formatear la respuesta
+        const formattedOrder = {
+            id: order.id,
+            usuario_id: order.usuario_id,
+            nombre_cliente: order.nombre_cliente ? 
+                `${order.nombre_cliente} ${order.apellido_cliente}` : 
+                'Cliente no registrado',
+            email_cliente: order.email_cliente || 'N/A',
+            telefono_cliente: order.telefono_cliente || order.telefono_contacto || 'N/A',
+            fecha_orden: order.fecha_creacion,
+            total: parseFloat(order.total) || 0,
+            subtotal: parseFloat(order.subtotal) || 0,
+            costo_envio: parseFloat(order.costo_envio) || 0,
+            descuento_aplicado: parseFloat(order.descuento_aplicado) || 0,
+            estado: order.estado || 'pendiente',
+            estado_pago: order.estado_pago || 'pendiente',
+            metodo_pago: order.metodo_pago || 'N/A',
+            metodo_envio: order.metodo_envio || 'Estándar',
+            direccion_envio: order.direccion_envio || 'N/A',
+            ciudad_envio: order.ciudad_envio || 'N/A',
+            telefono_contacto: order.telefono_contacto || 'N/A',
+            notas: order.notas,
+            tracking_number: order.tracking_number,
+            paqueteria: order.paqueteria,
+            fecha_actualizacion: order.fecha_actualizacion,
+            items: itemsResult.rows.map(item => ({
+                id: item.id,
+                producto_id: item.producto_id,
+                nombre: item.nombre || 'Producto no disponible',
+                imagen: item.imagen || '/public/images/default-product.jpg',
+                sku: item.sku || 'N/A',
+                talla: item.talla,
+                color: item.color,
+                cantidad: item.cantidad,
+                precio_unitario: parseFloat(item.precio_unitario) || 0,
+                subtotal: parseFloat(item.subtotal) || 0
+            }))
+        };
+        
+        console.log(`✅ Orden ${orderId} obtenida con ${formattedOrder.items.length} items`);
+        res.json(formattedOrder);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo detalles de orden:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Actualizar estado de orden (admin)
+app.put('/api/admin/orders/:id/status', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const { estado, notas } = req.body;
+        
+        console.log(`✏️ Actualizando estado de orden ${orderId} a: ${estado}`);
+        
+        const validStatuses = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
+        if (!validStatuses.includes(estado)) {
+            return res.status(400).json({ error: 'Estado inválido' });
+        }
+        
+        const result = await query(
+            `UPDATE pedidos 
+             SET estado = $1, 
+                 notas = COALESCE($2, notas),
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $3 
+             RETURNING *`,
+            [estado, notas || null, orderId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
+        
+        const updatedOrder = result.rows[0];
+        
+        console.log(`✅ Estado de orden ${orderId} actualizado a: ${updatedOrder.estado}`);
+        
+        res.json({
+            success: true,
+            message: 'Estado actualizado correctamente',
+            order: updatedOrder
+        });
+        
+    } catch (error) {
+        console.error('❌ Error actualizando estado de orden:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Actualizar usuario (admin)
+app.put('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { nombre, apellido, email, telefono, rol, activo } = req.body;
+        
+        console.log(`✏️ Admin actualizando usuario ${userId}`);
+        
+        // Verificar que no sea el propio admin
+        if (parseInt(userId) === req.session.userId && (rol !== 'admin' || activo === false)) {
+            return res.status(400).json({ 
+                error: 'No puedes cambiar tu propio rol o desactivarte a ti mismo' 
+            });
+        }
+        
+        const result = await query(
+            `UPDATE usuarios 
+             SET nombre = $1, 
+                 apellido = $2, 
+                 email = $3, 
+                 telefono = $4,
+                 rol = $5,
+                 activo = $6,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $7 
+             RETURNING id, nombre, apellido, email, telefono, rol, activo, fecha_registro`,
+            [nombre, apellido, email, telefono || null, rol || 'cliente', activo !== false, userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        console.log(`✅ Usuario ${userId} actualizado por admin`);
+        res.json(result.rows[0]);
+        
+    } catch (error) {
+        console.error('❌ Error actualizando usuario (admin):', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Desactivar usuario (admin)
+app.delete('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        console.log(`🚫 Admin desactivando usuario ${userId}`);
+        
+        // Verificar que no sea el propio admin
+        if (parseInt(userId) === req.session.userId) {
+            return res.status(400).json({ 
+                error: 'No puedes desactivar tu propia cuenta' 
+            });
+        }
+        
+        const result = await query(
+            `UPDATE usuarios 
+             SET activo = false,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $1 
+             RETURNING id, nombre, apellido, email`,
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        console.log(`✅ Usuario ${userId} desactivado por admin`);
+        res.json({ 
+            success: true, 
+            message: 'Usuario desactivado correctamente',
+            user: result.rows[0]
+        });
+        
+    } catch (error) {
+        console.error('❌ Error desactivando usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Activar usuario (admin)
+app.post('/api/admin/users/:id/activate', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        console.log(`✅ Admin activando usuario ${userId}`);
+        
+        const result = await query(
+            `UPDATE usuarios 
+             SET activo = true,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $1 
+             RETURNING id, nombre, apellido, email`,
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        console.log(`✅ Usuario ${userId} activado por admin`);
+        res.json({ 
+            success: true, 
+            message: 'Usuario activado correctamente',
+            user: result.rows[0]
+        });
+        
+    } catch (error) {
+        console.error('❌ Error activando usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Aplicar descuento a producto (admin)
+app.post('/api/admin/products/:id/discount', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const { discount_type, discount_percent, discount_price, discount_expires } = req.body;
+        
+        console.log(`🎯 Aplicando descuento a producto ${productId}:`, {
+            discount_type,
+            discount_percent,
+            discount_price,
+            discount_expires
+        });
+        
+        let updateData = {};
+        
+        if (discount_type === 'percent') {
+            updateData = {
+                descuento_porcentaje: discount_percent || 0,
+                descuento_precio: null,
+                descuento_expiracion: discount_expires || null
+            };
+        } else if (discount_type === 'fixed') {
+            updateData = {
+                descuento_porcentaje: 0,
+                descuento_precio: discount_price || 0,
+                descuento_expiracion: discount_expires || null
+            };
+        } else {
+            return res.status(400).json({ error: 'Tipo de descuento inválido' });
+        }
+        
+        const result = await query(
+            `UPDATE productos 
+             SET descuento_porcentaje = $1,
+                 descuento_precio = $2,
+                 descuento_expiracion = $3,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $4 
+             RETURNING *`,
+            [
+                updateData.descuento_porcentaje,
+                updateData.descuento_precio,
+                updateData.descuento_expiracion,
+                productId
+            ]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        const updatedProduct = result.rows[0];
+        const processedProduct = processProductPrices(updatedProduct);
+        
+        console.log(`✅ Descuento aplicado a producto ${productId}`);
+        console.log(`💰 Precio con descuento: ${processedProduct.precio_formateado}`);
+        
+        res.json({
+            success: true,
+            message: 'Descuento aplicado correctamente',
+            product: processedProduct
+        });
+        
+    } catch (error) {
+        console.error('❌ Error aplicando descuento:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Eliminar descuento de producto (admin)
+app.delete('/api/admin/products/:id/discount', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const productId = req.params.id;
+        
+        console.log(`🗑️ Eliminando descuento de producto ${productId}`);
+        
+        const result = await query(
+            `UPDATE productos 
+             SET descuento_porcentaje = 0,
+                 descuento_precio = null,
+                 descuento_expiracion = null,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $1 
+             RETURNING *`,
+            [productId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        const updatedProduct = result.rows[0];
+        const processedProduct = processProductPrices(updatedProduct);
+        
+        console.log(`✅ Descuento eliminado de producto ${productId}`);
+        console.log(`💰 Precio actual: ${processedProduct.precio_formateado}`);
+        
+        res.json({
+            success: true,
+            message: 'Descuento eliminado correctamente',
+            product: processedProduct
+        });
+        
+    } catch (error) {
+        console.error('❌ Error eliminando descuento:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Ruta para descuentos generales (placeholder)
+app.get('/api/admin/discounts', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        console.log('🎯 Admin: Obteniendo descuentos');
+        
+        // Ejemplo de datos de prueba
+        const sampleDiscounts = [
+            {
+                id: 1,
+                codigo: "VERANO20",
+                tipo: "porcentaje",
+                valor: 20,
+                aplicable_a: "todos",
+                minimo_compra: 50,
+                usos_totales: 100,
+                usos_actuales: 34,
+                expiracion: "2024-12-31",
+                activo: true
+            },
+            {
+                id: 2,
+                codigo: "ENVIOGRATIS",
+                tipo: "envio",
+                valor: 100,
+                aplicable_a: "todos",
+                minimo_compra: 30,
+                usos_totales: 200,
+                usos_actuales: 89,
+                expiracion: null,
+                activo: true
+            }
+        ];
+        
+        console.log(`✅ Admin: ${sampleDiscounts.length} descuentos de ejemplo`);
+        res.json(sampleDiscounts);
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo descuentos:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= API - CONFIGURACIÓN DE MONEDA =================
+app.get('/api/currency/config', (req, res) => {
+    res.json({
+        currency: DEFAULT_CURRENCY,
+        symbol: CURRENCY_SYMBOL,
+        format_example: formatDOP(1000)
+    });
+});
+
+// ================= API - PAGOS PAYPAL =================
+// Configuración de pagos
 app.get('/api/payments/config', (req, res) => {
     console.log('🔧 Enviando configuración de pagos al frontend');
     
     res.json({
-        stripePublicKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx',
         paypalClientId: process.env.PAYPAL_CLIENT_ID || 'test',
-        currency: DEFAULT_CURRENCY,
-        currency_symbol: CURRENCY_SYMBOL,
+        currency: 'USD',
         environment: process.env.NODE_ENV || 'development',
         country: 'DO',
-        paymentMethods: ['card', 'paypal', 'transfer'],
+        paymentMethods: ['paypal', 'transfer'],
         features: {
-            stripe: true,
             paypal: true,
             bankTransfer: true
         }
@@ -1046,48 +2152,6 @@ function generateUniqueSKU(productId = null) {
     return `MAB-${timestamp}-${random}`;
 }
 
-// Luego en la ruta POST /api/admin/products:
-app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
-    // ... tu código existente ...
-    
-    try {
-        // PRIMERO insertar para obtener el ID
-        const result = await query(
-            `INSERT INTO productos (
-                nombre, descripcion, precio, categoria, imagen, stock, 
-                tallas, colores, sku, material, coleccion, 
-                imagenes_adicionales, descuento_porcentaje, descuento_precio, activo, fecha_creacion
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'TEMP-SKU', $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP) 
-             RETURNING id`,
-            [
-                // ... parámetros ...
-            ]
-        );
-        
-        const newId = result.rows[0].id;
-        
-        // AHORA generar SKU único basado en el ID
-        const uniqueSku = generateUniqueSKU(newId);
-        
-        // Actualizar con SKU real
-        await query(
-            'UPDATE productos SET sku = $1 WHERE id = $2',
-            [uniqueSku, newId]
-        );
-        
-        // Obtener producto completo
-        const finalResult = await query(
-            'SELECT * FROM productos WHERE id = $1',
-            [newId]
-        );
-        
-        res.status(201).json(finalResult.rows[0]);
-        
-    } catch (error) {
-        // ... manejo de errores ...
-    }
-});
-
 // Crear producto (admin) - Precio se ingresa en DOP
 app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
     const { 
@@ -1297,143 +2361,6 @@ app.delete('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res
     }
 });
 
-// ================= API - USUARIOS =================
-app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
-    try {
-        const result = await query(`
-            SELECT 
-                u.id, 
-                u.nombre, 
-                u.apellido, 
-                u.email, 
-                u.telefono, 
-                u.direccion,
-                u.rol, 
-                u.fecha_registro,
-                u.activo,
-                COUNT(DISTINCT p.id) as total_ordenes,
-                COALESCE(SUM(p.total), 0) as total_gastado
-            FROM usuarios u
-            LEFT JOIN pedidos p ON p.usuario_id = u.id
-            GROUP BY u.id
-            ORDER BY u.fecha_registro DESC
-        `);
-        
-        const users = result.rows.map(user => ({
-            id: user.id,
-            nombre: user.nombre,
-            apellido: user.apellido,
-            email: user.email,
-            telefono: user.telefono || '-',
-            direccion: user.direccion || '-',
-            rol: user.rol,
-            fecha_registro: user.fecha_registro,
-            activo: user.activo,
-            total_orders: parseInt(user.total_ordenes) || 0,
-            total_spent: parseFloat(user.total_gastado) || 0,
-            total_spent_formatted: formatDOP(parseFloat(user.total_gastado) || 0)
-        }));
-        
-        console.log(`✅ Enviando ${users.length} usuarios`);
-        res.json(users);
-        
-    } catch (error) {
-        console.error('❌ Error obteniendo usuarios:', error);
-        
-        try {
-            const result = await query(`
-                SELECT 
-                    u.id, 
-                    u.nombre, 
-                    u.apellido, 
-                    u.email, 
-                    u.telefono, 
-                    u.direccion,
-                    u.rol, 
-                    u.fecha_registro,
-                    u.activo
-                FROM usuarios u
-                ORDER BY u.fecha_registro DESC
-            `);
-            
-            const usersWithStats = await Promise.all(result.rows.map(async (user) => {
-                const ordersResult = await query(
-                    'SELECT COUNT(*) as count, COALESCE(SUM(total), 0) as total FROM pedidos WHERE usuario_id = $1',
-                    [user.id]
-                );
-                
-                return {
-                    ...user,
-                    telefono: user.telefono || '-',
-                    direccion: user.direccion || '-',
-                    total_orders: parseInt(ordersResult.rows[0]?.count) || 0,
-                    total_spent: parseFloat(ordersResult.rows[0]?.total) || 0,
-                    total_spent_formatted: formatDOP(parseFloat(ordersResult.rows[0]?.total) || 0),
-                    wishlist_items: 0
-                };
-            }));
-            
-            console.log(`✅ Enviando ${usersWithStats.length} usuarios`);
-            res.json(usersWithStats);
-            
-        } catch (fallbackError) {
-            console.error('❌ Error en consulta alternativa:', fallbackError);
-            res.status(500).json({ error: 'Error interno del servidor' });
-        }
-    }
-});
-
-// ================= API - ÓRDENES =================
-app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
-    try {
-        const result = await query(`
-            SELECT p.*, 
-                   u.nombre as nombre_cliente, 
-                   u.email as email_cliente,
-                   u.telefono as telefono_contacto
-            FROM pedidos p
-            LEFT JOIN usuarios u ON p.usuario_id = u.id
-            ORDER BY p.fecha_creacion DESC
-        `);
-        
-        const orders = result.rows.map(order => {
-            const totalDOP = parseFloat(order.total) || 0;
-            
-            return {
-                id: order.id,
-                fecha_orden: order.fecha_creacion,
-                total: totalDOP,
-                total_formateado: formatDOP(totalDOP),
-                estado: order.estado || 'pendiente',
-                metodo_pago: order.metodo_pago,
-                metodo_envio: order.metodo_envio,
-                direccion_envio: order.direccion_envio,
-                ciudad_envio: order.ciudad_envio,
-                telefono_contacto: order.telefono_contacto,
-                nombre_cliente: order.nombre_cliente,
-                email_cliente: order.email_cliente,
-                // Items simulados
-                items: [
-                    {
-                        nombre: 'Producto de ejemplo',
-                        cantidad: 1,
-                        precio_unitario: totalDOP,
-                        precio_unitario_formateado: formatDOP(totalDOP),
-                        imagen: '/public/images/default-product.jpg'
-                    }
-                ]
-            };
-        });
-        
-        console.log(`✅ Enviando ${orders.length} órdenes en DOP`);
-        res.json(orders);
-        
-    } catch (error) {
-        console.error('❌ Error obteniendo órdenes:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
 // ================= API - DESCUENTOS =================
 app.post('/api/discounts/validate', async (req, res) => {
     const { codigo, total } = req.body; // total viene en DOP
@@ -1495,22 +2422,6 @@ app.post('/api/discounts/validate', async (req, res) => {
     }
 });
 
-// ================= API - PROVINCIAS RD =================
-app.get('/api/dominican-republic/provinces', async (req, res) => {
-    console.log('🗺️ Obteniendo provincias de RD');
-    
-    const provinces = [
-        'Distrito Nacional', 'Santo Domingo', 'Santiago', 'La Vega', 'San Cristóbal',
-        'San Pedro de Macorís', 'La Altagracia', 'Puerto Plata', 'Duarte', 'Espaillat',
-        'San Juan', 'Azua', 'Barahona', 'Dajabón', 'El Seibo', 'Elías Piña', 'Hato Mayor',
-        'Hermanas Mirabal', 'Independencia', 'María Trinidad Sánchez', 'Monseñor Nouel',
-        'Monte Cristi', 'Monte Plata', 'Pedernales', 'Peravia', 'Samaná', 'San José de Ocoa',
-        'Sánchez Ramírez', 'Valverde', 'La Romana'
-    ];
-    
-    res.json(provinces.sort());
-});
-
 // ================= RUTAS DE UTILIDAD =================
 app.get('/api/test', async (req, res) => {
     try {
@@ -1555,6 +2466,28 @@ app.get('/api/currency/test', (req, res) => {
 // Crear datos de prueba con precios en DOP
 app.get('/api/create-test-data', async (req, res) => {
     try {
+        // Crear tabla direcciones si no existe (ACTUALIZADO - sin calle, numero, apartamento)
+        await query(`
+            CREATE TABLE IF NOT EXISTS direcciones (
+                id SERIAL PRIMARY KEY,
+                usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+                nombre VARCHAR(100) NOT NULL,
+                nombre_completo VARCHAR(200) NOT NULL,
+                telefono VARCHAR(20) NOT NULL,
+                provincia VARCHAR(100) NOT NULL,
+                municipio VARCHAR(100) NOT NULL,
+                sector VARCHAR(100) NOT NULL,
+                referencia TEXT NOT NULL,
+                paqueteria_preferida VARCHAR(50),
+                predeterminada BOOLEAN DEFAULT false,
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_actualizacion TIMESTAMP,
+                UNIQUE(usuario_id, predeterminada) WHERE predeterminada = true
+            )
+        `);
+        
+        console.log('✅ Tabla direcciones creada/verificada (formato simplificado)');
+        
         const existing = await query('SELECT COUNT(*) FROM productos');
         const count = parseInt(existing.rows[0].count);
         
@@ -1620,7 +2553,7 @@ app.get('/api/create-test-data', async (req, res) => {
             
             res.json({ 
                 success: true, 
-                message: `${testProducts.length} productos de prueba creados`,
+                message: `Tabla direcciones lista y ${testProducts.length} productos de prueba creados`,
                 products: processedProducts.map(p => ({
                     nombre: p.nombre,
                     precio_original: p.precio_original_formateado,
@@ -1634,7 +2567,7 @@ app.get('/api/create-test-data', async (req, res) => {
             
             res.json({ 
                 success: true, 
-                message: `Ya existen ${count} productos`,
+                message: `Tabla direcciones lista y ya existen ${count} productos`,
                 sample_products: processedProducts.map(p => ({
                     nombre: p.nombre,
                     precio_original: p.precio_original_formateado,
@@ -1682,14 +2615,19 @@ app.listen(PORT, () => {
     console.log(`   • Carrito: http://localhost:${PORT}/cart`);
     console.log(`   • Checkout: http://localhost:${PORT}/checkout`);
     console.log(`   • Admin: http://localhost:${PORT}/admin`);
+    console.log(`   • Cuenta: http://localhost:${PORT}/account`);
+    console.log(`\n📍 DIRECCIONES (FORMATO SIMPLIFICADO):`);
+    console.log(`   • API Direcciones: http://localhost:${PORT}/api/users/:id/addresses`);
+    console.log(`   • Campos requeridos: nombre, nombre_completo, telefono, provincia, municipio, sector, referencia`);
     console.log(`\n🔧 RUTAS DE API:`);
     console.log(`   • Test: http://localhost:${PORT}/api/test`);
     console.log(`   • Config moneda: http://localhost:${PORT}/api/currency/config`);
     console.log(`   • Productos (DOP): http://localhost:${PORT}/api/products`);
+    console.log(`   • Provincias RD: http://localhost:${PORT}/api/dominican-republic/provinces`);
     console.log(`   • Config pagos: http://localhost:${PORT}/api/payments/config`);
     console.log(`\n👤 CREDENCIALES:`);
     console.log(`   • Admin: admin@gmail.com / admin123`);
-    console.log(`\n✅ Listo para usar! Todos los precios se muestran en Pesos Dominicanos (DOP)`);
+    console.log(`\n✅ Listo para usar! Direcciones simplificadas y todos los precios en Pesos Dominicanos (DOP)`);
 });
 
 // Endpoint temporal para compatibilidad
@@ -1704,13 +2642,4 @@ app.post('/api/payments/create-stripe-payment', async (req, res) => {
         currency: 'DOP',
         amount: req.body.amount || 0
     });
-});
-
-// Middleware de depuración
-app.use((req, res, next) => {
-    console.log(`📨 ${req.method} ${req.url}`);
-    console.log('👤 Sesión:', req.session);
-    console.log('🔑 User ID:', req.session.userId);
-    console.log('👑 User Role:', req.session.userRole);
-    next();
 });
