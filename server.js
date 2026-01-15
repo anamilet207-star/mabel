@@ -1,3 +1,4 @@
+// server.js - VERSIÓN COMPLETA DE LAS PRIMERAS LÍNEAS
 require('dotenv').config();
 
 const express = require('express');
@@ -14,22 +15,30 @@ const { query } = require('./env/db.js');
 // Importar SDKs de pago
 const paypal = require('@paypal/checkout-server-sdk');
 
-// ← PRIMERO INICIALIZAR LA APP
+// ================= CONFIGURACIÓN GLOBAL =================
+const STRIPE_ENABLED = false; // ← PRIMERO DEFINIR
+const DEFAULT_CURRENCY = 'DOP';
+const CURRENCY_SYMBOL = 'RD$';
+
+// ================= INICIALIZAR APP =================
 const app = express();
 const PORT = 3000;
 
 let stripe = null;
 
+// ================= CONFIGURAR STRIPE (SI ESTÁ HABILITADO) =================
 if (STRIPE_ENABLED) {
     stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    console.log('✅ Stripe configurado');
+} else {
+    console.log('🔕 Stripe desactivado temporalmente');
 }
 
 // ================= CONFIGURACIÓN MIDDLEWARE =================
-
 // Trust proxy para Railway
 app.set('trust proxy', 1);
 
-// ← AHORA SÍ PUEDES USAR app.use()
+// Configuración CORS
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
@@ -42,18 +51,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
-// Configuración de sesión para Railway
+// Configuración de sesión para producción
 app.use(session({
     secret: process.env.SESSION_SECRET || 'mabel-activewear-secret-key-2024',
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: process.env.NODE_ENV === 'production', // true en Railway
+        secure: process.env.NODE_ENV === 'production',
         maxAge: 24 * 60 * 60 * 1000,
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     }
 }));
 
+// ... resto de tu código ...
 // ... resto de tu código ...
 // ================= FUNCIONES DE FORMATO DOP =================
 
