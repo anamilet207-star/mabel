@@ -22,7 +22,7 @@ const { query } = require('./env/db.js');
 const paypal = require('@paypal/checkout-server-sdk');
 
 const app = express();
-const PORT = 3002;
+const PORT = 3000;
 
 let stripe = null;
 
