@@ -999,6 +999,61 @@ app.get('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
+// En server.js, agrega esta función mejorada
+function generateUniqueSKU(productId = null) {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    
+    // Si tenemos un productId, usarlo para mayor unicidad
+    if (productId) {
+        return `MAB-${productId}-${timestamp.toString().slice(-6)}-${random}`;
+    }
+    
+    return `MAB-${timestamp}-${random}`;
+}
+
+// Luego en la ruta POST /api/admin/products:
+app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
+    // ... tu código existente ...
+    
+    try {
+        // PRIMERO insertar para obtener el ID
+        const result = await query(
+            `INSERT INTO productos (
+                nombre, descripcion, precio, categoria, imagen, stock, 
+                tallas, colores, sku, material, coleccion, 
+                imagenes_adicionales, descuento_porcentaje, descuento_precio, activo, fecha_creacion
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'TEMP-SKU', $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP) 
+             RETURNING id`,
+            [
+                // ... parámetros ...
+            ]
+        );
+        
+        const newId = result.rows[0].id;
+        
+        // AHORA generar SKU único basado en el ID
+        const uniqueSku = generateUniqueSKU(newId);
+        
+        // Actualizar con SKU real
+        await query(
+            'UPDATE productos SET sku = $1 WHERE id = $2',
+            [uniqueSku, newId]
+        );
+        
+        // Obtener producto completo
+        const finalResult = await query(
+            'SELECT * FROM productos WHERE id = $1',
+            [newId]
+        );
+        
+        res.status(201).json(finalResult.rows[0]);
+        
+    } catch (error) {
+        // ... manejo de errores ...
+    }
+});
+
 // Crear producto (admin) - Precio se ingresa en DOP
 app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
     const { 
