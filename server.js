@@ -1,32 +1,4 @@
-// 🔕 Stripe desactivado temporalmente
-const STRIPE_ENABLED = false;
-
-// ================= CONFIGURACIÓN DE MONEDA =================
-const DEFAULT_CURRENCY = 'DOP'; // Solo pesos dominicanos
-const CURRENCY_SYMBOL = 'RD$'; // Símbolo de pesos dominicanos
-
-// server.js - VERSIÓN COMPLETA CON MONEDA DOP
 require('dotenv').config();
-
-// Actualizar la configuración de CORS
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true, // ← Esto permite enviar cookies
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}));
-
-// Configuración de sesión - actualizar cookie
-app.use(session({
-    secret: 'mabel-activewear-secret-key-2024',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-        secure: false, // Cambiar a true si usas HTTPS
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: 'lax' // Importante para que funcione con CORS
-    }
-}));
 
 const express = require('express');
 const cors = require('cors');
@@ -42,6 +14,7 @@ const { query } = require('./env/db.js');
 // Importar SDKs de pago
 const paypal = require('@paypal/checkout-server-sdk');
 
+// ← PRIMERO INICIALIZAR LA APP
 const app = express();
 const PORT = 3000;
 
@@ -51,6 +24,37 @@ if (STRIPE_ENABLED) {
     stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 }
 
+// ================= CONFIGURACIÓN MIDDLEWARE =================
+
+// Trust proxy para Railway
+app.set('trust proxy', 1);
+
+// ← AHORA SÍ PUEDES USAR app.use()
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
+
+// Configuración de sesión para Railway
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'mabel-activewear-secret-key-2024',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production', // true en Railway
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    }
+}));
+
+// ... resto de tu código ...
 // ================= FUNCIONES DE FORMATO DOP =================
 
 /**
