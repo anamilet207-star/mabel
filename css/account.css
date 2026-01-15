@@ -695,77 +695,87 @@ textarea:focus {
 }
 
 /* ============================================
-   BOTÓN CANCELAR - VERSIÓN CORREGIDA
+   CORRECCIÓN BOTÓN CANCELAR - NO REDONDO
    ============================================ */
 
-   .btn-save,
-   .btn-cancel,
-   .btn-danger {
-       background: var(--black);
-       color: var(--white);
-       border: 1px solid var(--black);
-       padding: 14px 32px;
-       font-size: 14px;
-       letter-spacing: 2px;
-       cursor: pointer;
-       transition: all 0.3s ease;
-       border-radius: var(--radius-sm);
-       font-weight: 400;
-       text-transform: uppercase;
-       position: relative;
-       overflow: hidden;
-   }
-   
-   .btn-save:hover {
-       background: transparent;
-       color: var(--black);
-       transform: translateY(-1px);
-   }
-   
-   .btn-cancel {
-       background: transparent !important;
-       color: var(--black) !important;
-       border: 1px solid var(--border-subtle) !important;
-   }
-   
-   .btn-cancel:hover {
-       background: #f8f8f8 !important;
-       border-color: var(--black) !important;
-       transform: translateY(-1px);
-   }
-
-/* Efecto ripple para botones */
-.btn-save:after,
-.btn-cancel:after,
-.btn-danger:after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.5);
-    opacity: 0;
-    border-radius: 100%;
-    transform: scale(1, 1) translate(-50%);
-    transform-origin: 50% 50%;
+   .modal-footer .btn-cancel {
+    background: transparent !important;
+    color: var(--black) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-sm) !important; /* Mismo radio que otros botones */
+    padding: 14px 32px !important;
+    font-size: 14px !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    font-weight: 400 !important;
+    transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
-.btn-save:hover:after,
-.btn-cancel:hover:after,
-.btn-danger:hover:after {
-    animation: ripple 1s ease-out;
+.modal-footer .btn-cancel:hover {
+    background: #f8f8f8 !important;
+    border-color: var(--black) !important;
+    color: var(--black) !important;
+    transform: translateY(-1px) !important;
 }
 
-@keyframes ripple {
-    0% {
-        transform: scale(0, 0);
-        opacity: 0.5;
-    }
-    100% {
-        transform: scale(40, 40);
-        opacity: 0;
-    }
+/* Efecto ripple para botón cancelar */
+.modal-footer .btn-cancel:after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    width: 5px !important;
+    height: 5px !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    opacity: 0 !important;
+    border-radius: 100% !important;
+    transform: scale(1, 1) translate(-50%) !important;
+    transform-origin: 50% 50% !important;
+}
+
+.modal-footer .btn-cancel:hover:after {
+    animation: ripple 1s ease-out !important;
+}
+
+/* Asegurar que todos los botones cancelar tengan el mismo estilo */
+.btn-cancel,
+#cancel-address-modal,
+#cancel-settings,
+.btn-outline {
+    background: transparent !important;
+    color: var(--black) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 14px 32px !important;
+    font-size: 14px !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    font-weight: 400 !important;
+    transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+}
+
+.btn-cancel:hover,
+#cancel-address-modal:hover,
+#cancel-settings:hover,
+.btn-outline:hover {
+    background: #f8f8f8 !important;
+    border-color: var(--black) !important;
+    color: var(--black) !important;
+    transform: translateY(-1px) !important;
 }
 
 /* DIRECCIONES - DISEÑO ELEGANTE */
