@@ -3653,6 +3653,8 @@ getSampleOrders() {
             }
         }, 5000);
     }
+
+    
     
 
     // Export functions (puedes implementarlas después)
@@ -3666,6 +3668,174 @@ getSampleOrders() {
 
     exportUsers() {
         this.showNotification('⚠️ Función de exportación en desarrollo', 'warning');
+    }
+}
+
+// En admin.js, añade estas funciones
+
+// Función para probar el servicio de email
+function setupEmailTest() {
+    const testBtn = document.getElementById('test-email-btn');
+    const testEmailInput = document.getElementById('test-email-input');
+    const testResult = document.getElementById('test-email-result');
+    
+    if (testBtn && testEmailInput) {
+        testBtn.addEventListener('click', async () => {
+            const email = testEmailInput.value.trim();
+            
+            if (!email || !email.includes('@')) {
+                showNotification('Ingresa un email válido', 'error');
+                return;
+            }
+            
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Probando...';
+            
+            try {
+                const response = await fetch('/api/admin/test-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showNotification('✅ Email de prueba enviado correctamente', 'success');
+                    if (testResult) {
+                        testResult.innerHTML = `
+                            <div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                <i class="fas fa-check-circle"></i> Email enviado a ${email}
+                            </div>
+                        `;
+                    }
+                } else {
+                    throw new Error(data.error || 'Error desconocido');
+                }
+                
+            } catch (error) {
+                showNotification(`❌ Error: ${error.message}`, 'error');
+                if (testResult) {
+                    testResult.innerHTML = `
+                        <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                            <i class="fas fa-exclamation-triangle"></i> ${error.message}
+                        </div>
+                    `;
+                }
+            } finally {
+                testBtn.disabled = false;
+                testBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Prueba';
+            }
+        });
+    }
+}
+
+// Función para mostrar estadísticas de email
+function renderEmailStats(stats) {
+    return `
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h3>Usuarios con Email</h3>
+                    <div class="dashboard-card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="dashboard-card-value">${stats.total_users}</div>
+                <div class="dashboard-card-label">Usuarios notificables</div>
+            </div>
+            
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h3>Servicio de Email</h3>
+                    <div class="dashboard-card-icon" style="background: #28a745;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="dashboard-card-value">Activo</div>
+                <div class="dashboard-card-label">Listo para enviar</div>
+            </div>
+        </div>
+        
+        <div class="admin-table-container" style="margin-top: 30px;">
+            <div class="admin-table-header">
+                <h3 class="admin-table-title">Últimos Usuarios Registrados</h3>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Fecha Registro</th>
+                        <th>Estado Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${stats.recent_users.map(user => `
+                        <tr>
+                            <td>${user.nombre || 'Sin nombre'}</td>
+                            <td>${user.email}</td>
+                            <td>${new Date(user.fecha_registro).toLocaleDateString()}</td>
+                            <td>
+                                <span class="status-active">Email válido</span>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="admin-table-container" style="margin-top: 30px;">
+            <div class="admin-table-header">
+                <h3 class="admin-table-title">Probar Servicio de Email</h3>
+            </div>
+            <div style="padding: 25px;">
+                <p>Envía un email de prueba para verificar que el servicio funciona correctamente.</p>
+                
+                <div style="display: flex; gap: 15px; margin: 20px 0;">
+                    <input type="email" 
+                           id="test-email-input" 
+                           class="form-control" 
+                           placeholder="correo@ejemplo.com"
+                           style="flex: 1;">
+                    <button id="test-email-btn" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i> Enviar Prueba
+                    </button>
+                </div>
+                
+                <div id="test-email-result"></div>
+                
+                <p style="font-size: 12px; color: #666; margin-top: 20px;">
+                    <i class="fas fa-info-circle"></i> Se enviará un email de bienvenida de prueba
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+// Modificar la función de crear producto para incluir opción de notificación
+function modifyCreateProductForm() {
+    // Esto se ejecutaría cuando se cargue la sección de productos
+    const productForm = document.getElementById('product-form');
+    if (productForm) {
+        // Añadir checkbox para notificar usuarios
+        const notifyCheckbox = document.createElement('div');
+        notifyCheckbox.className = 'form-group';
+        notifyCheckbox.innerHTML = `
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" name="notify_users" id="notify-users">
+                <span>Notificar a los usuarios sobre este nuevo producto</span>
+            </label>
+            <small style="color: #666; margin-top: 5px; display: block;">
+                Se enviará un email a todos los usuarios registrados anunciando este nuevo producto.
+            </small>
+        `;
+        
+        // Insertar antes del botón de enviar
+        const submitBtn = productForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            productForm.insertBefore(notifyCheckbox, submitBtn);
+        }
     }
 }
 

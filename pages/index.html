@@ -1377,10 +1377,17 @@
                 <p class="newsletter-text">
                     Sé la primera en conocer nuestras nuevas colecciones, ofertas exclusivas y consejos de entrenamiento.
                 </p>
-                <form class="newsletter-form" id="newsletterForm">
-                    <input type="email" placeholder="Tu correo electrónico" required>
-                    <button type="submit" class="btn">SUSCRIBIRSE</button>
-                </form>
+                <!-- Reemplaza el formulario de newsletter existente con este: -->
+<form class="newsletter-form" id="newsletterForm">
+    <input type="email" placeholder="Tu correo electrónico" required id="newsletter-email">
+    <input type="text" placeholder="Tu nombre (opcional)" id="newsletter-name">
+    <button type="submit" class="btn" id="newsletter-submit">
+        <span class="btn-text">SUSCRIBIRSE</span>
+        <span class="btn-loading" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+        </span>
+    </button>
+</form>
                 <p class="privacy-notice">
                     Al suscribirte aceptas nuestra <a href="/privacidad">Política de Privacidad</a>.
                 </p>
@@ -1538,26 +1545,55 @@
             }
             
             // Newsletter form
-            const newsletterForm = document.getElementById('newsletterForm');
-            if (newsletterForm) {
-                newsletterForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const email = this.querySelector('input[type="email"]').value;
-                    
-                    // Simular envío
-                    const submitBtn = this.querySelector('button');
-                    const originalText = submitBtn.textContent;
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    submitBtn.disabled = true;
-                    
-                    setTimeout(() => {
-                        alert('¡Gracias por suscribirte! Te hemos enviado un email de confirmación.');
-                        this.reset();
-                        submitBtn.textContent = originalText;
-                        submitBtn.disabled = false;
-                    }, 1500);
-                });
+            // Newsletter form - Versión mejorada
+const newsletterForm = document.getElementById('newsletterForm');
+if (newsletterForm) {
+    newsletterForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('newsletter-email').value;
+        const nombre = document.getElementById('newsletter-name').value;
+        const submitBtn = document.getElementById('newsletter-submit');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoading = submitBtn.querySelector('.btn-loading');
+        
+        // Validar email
+        if (!email || !email.includes('@')) {
+            showNotification('Por favor ingresa un email válido', 'error');
+            return;
+        }
+        
+        // Mostrar estado de carga
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'inline-block';
+        submitBtn.disabled = true;
+        
+        try {
+            const response = await fetch('/api/newsletter/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, nombre })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showNotification('¡Te has suscrito exitosamente! Revisa tu email.', 'success');
+                this.reset();
+            } else {
+                throw new Error(data.error || 'Error al suscribirse');
             }
+            
+        } catch (error) {
+            showNotification(`Error: ${error.message}`, 'error');
+        } finally {
+            // Restaurar botón
+            btnText.style.display = 'inline-block';
+            btnLoading.style.display = 'none';
+            submitBtn.disabled = false;
+        }
+    });
+}
             
             // Cargar productos destacados
             loadFeaturedProducts();

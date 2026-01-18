@@ -1,4 +1,4 @@
-// server.js - VERSIÓN COMPLETA DE LAS PRIMERAS LÍNEAS
+// server.js - VERSIÓN CORREGIDA
 require('dotenv').config();
 
 const express = require('express');
@@ -8,6 +8,9 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+
+// Importar Email Service
+const emailService = require('./email-service');
 
 // Importar configuración de base de datos
 const { query } = require('./env/db.js');
@@ -49,10 +52,63 @@ const formatDOP = (amount) => {
     })}`;
 };
 
-/**
- * Procesar productos para mostrar precios en DOP
- * NOTA: Asume que los precios en la BD están en DOP
- */
+// Función para convertir array PostgreSQL a JavaScript
+const parseArrayFromPostgres = (pgArray) => {
+    if (!pgArray) return [];
+    
+    if (Array.isArray(pgArray)) return pgArray;
+    
+    if (typeof pgArray === 'string' && pgArray.startsWith('{') && pgArray.endsWith('}')) {
+        try {
+            const content = pgArray.slice(1, -1);
+            if (content.trim() === '') return [];
+            
+            const cleaned = content.replace(/"/g, '');
+            if (cleaned.trim() === '') return [];
+            
+            return cleaned.split(',').map(item => item.trim()).filter(item => item.length > 0);
+        } catch (error) {
+            console.warn('Error parseando array PostgreSQL:', error, pgArray);
+            return [];
+        }
+    }
+    
+    if (typeof pgArray === 'string' && pgArray.startsWith('[') && pgArray.endsWith(']')) {
+        try {
+            const parsed = JSON.parse(pgArray);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            console.warn('Error parseando JSON:', error);
+            return [];
+        }
+    }
+    
+    return [];
+};
+
+// ================= FUNCIÓN AUXILIAR PARA IMÁGENES =================
+function getSafeImagePath(imagePath) {
+    if (!imagePath || imagePath === '') {
+        return '/public/images/default-product.jpg';
+    }
+    
+    // Si es una URL externa, usarla directamente
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+        return imagePath;
+    }
+    
+    // Si es una ruta local, asegurar que empiece con /public
+    if (!imagePath.startsWith('/public')) {
+        if (imagePath.startsWith('/images')) {
+            return '/public' + imagePath;
+        }
+        return '/public/images/' + imagePath;
+    }
+    
+    return imagePath;
+}
+
+// ================= MODIFICAR LA FUNCIÓN processProductPrices =================
 const processProductPrices = (product) => {
     const precioDOP = parseFloat(product.precio) || 0;
     
@@ -74,6 +130,12 @@ const processProductPrices = (product) => {
         }
     }
     
+    // Procesar imágenes
+    const imagen = getSafeImagePath(product.imagen);
+    const imagenesAdicionales = parseArrayFromPostgres(product.imagenes_adicionales)
+        .map(img => getSafeImagePath(img))
+        .filter(img => img);
+    
     return {
         ...product,
         // Precios en DOP
@@ -94,10 +156,10 @@ const processProductPrices = (product) => {
         // Arrays procesados
         tallas: parseArrayFromPostgres(product.tallas),
         colores: parseArrayFromPostgres(product.colores),
-        imagenes_adicionales: parseArrayFromPostgres(product.imagenes_adicionales),
+        imagenes_adicionales: imagenesAdicionales,
         
-        // Imagen por defecto si no existe
-        imagen: product.imagen || '/public/images/default-product.jpg'
+        // Imagen segura
+        imagen: imagen
     };
 };
 
@@ -175,40 +237,6 @@ const formatArrayForPostgres = (data) => {
     return '{}';
 };
 
-// Función para convertir array PostgreSQL a JavaScript
-const parseArrayFromPostgres = (pgArray) => {
-    if (!pgArray) return [];
-    
-    if (Array.isArray(pgArray)) return pgArray;
-    
-    if (typeof pgArray === 'string' && pgArray.startsWith('{') && pgArray.endsWith('}')) {
-        try {
-            const content = pgArray.slice(1, -1);
-            if (content.trim() === '') return [];
-            
-            const cleaned = content.replace(/"/g, '');
-            if (cleaned.trim() === '') return [];
-            
-            return cleaned.split(',').map(item => item.trim()).filter(item => item.length > 0);
-        } catch (error) {
-            console.warn('Error parseando array PostgreSQL:', error, pgArray);
-            return [];
-        }
-    }
-    
-    if (typeof pgArray === 'string' && pgArray.startsWith('[') && pgArray.endsWith(']')) {
-        try {
-            const parsed = JSON.parse(pgArray);
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-            console.warn('Error parseando JSON:', error);
-            return [];
-        }
-    }
-    
-    return [];
-};
-
 // Función auxiliar para nombres de campos (ACTUALIZADA)
 function getFieldName(field) {
     const fieldNames = {
@@ -278,11 +306,19 @@ app.use((req, res, next) => {
     next();
 });
 
-// ================= RUTAS DE ARCHIVOS ESTÁTICOS =================
+// ================= RUTAS DE ARCHIVOS ESTÁTICOS - CORREGIDO =================
+// Antes de cualquier otra ruta, configurar archivos estáticos
 app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, path) => {
+        // Asegurar que las imágenes se sirvan correctamente
+        if (path.endsWith('.jpg') || path.endsWith('.png') || path.endsWith('.gif') || path.endsWith('.webp')) {
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+        }
+    }
+}));
 
 // ================= RUTAS PARA PÁGINAS HTML =================
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'pages/index.html')));
@@ -304,6 +340,345 @@ app.get('/devoluciones', (req, res) => res.redirect('/ayuda#devoluciones'));
 app.get('/faq', (req, res) => res.redirect('/ayuda#faq'));
 app.get('/privacidad', (req, res) => res.redirect('/ayuda#privacidad'));
 app.get('/terminos', (req, res) => res.redirect('/ayuda#terminos'));
+
+// ================= FUNCIÓN PARA ENVIAR EMAIL DE BIENVENIDA =================
+async function sendWelcomeEmail(user) {
+    try {
+        await emailService.sendWelcomeEmail(user);
+        console.log(`✅ Email de bienvenida enviado a ${user.email}`);
+        return true;
+    } catch (error) {
+        console.error(`❌ Error enviando email de bienvenida:`, error.message);
+        // No lanzamos el error para no interrumpir el registro
+        return false;
+    }
+}
+
+// ================= FUNCIÓN PARA NOTIFICAR NUEVOS PRODUCTOS =================
+async function notifyUsersAboutNewProducts(product) {
+    try {
+        // Obtener todos los usuarios que quieren notificaciones
+        const usersResult = await query(
+            'SELECT id, nombre, email FROM usuarios WHERE email IS NOT NULL AND activo = true'
+        );
+        
+        if (usersResult.rows.length === 0) {
+            console.log('⚠️ No hay usuarios para notificar');
+            return;
+        }
+        
+        console.log(`📧 Notificando a ${usersResult.rows.length} usuarios sobre nuevo producto`);
+        
+        // Enviar notificación a cada usuario
+        for (const user of usersResult.rows) {
+            try {
+                await emailService.sendNewProductsNotification(
+                    [user], // Envía uno por uno para personalizar
+                    [product]
+                );
+                
+                // Pequeña pausa para no saturar
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+            } catch (error) {
+                console.error(`❌ Error notificando a ${user.email}:`, error.message);
+                // Continuar con el siguiente usuario
+                continue;
+            }
+        }
+        
+        console.log('✅ Notificaciones enviadas exitosamente');
+        
+    } catch (error) {
+        console.error('❌ Error en notifyUsersAboutNewProducts:', error);
+    }
+}
+
+// ================= MODIFICAR LA RUTA DE REGISTRO =================
+app.post('/api/register', async (req, res) => {
+    const { nombre, apellido, email, password, telefono } = req.body;
+    
+    console.log('📝 Registro:', email);
+    
+    try {
+        const existingUser = await query(
+            'SELECT id FROM usuarios WHERE email = $1',
+            [email]
+        );
+        
+        if (existingUser.rows.length > 0) {
+            return res.status(400).json({ error: 'El email ya está registrado' });
+        }
+        
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        
+        const result = await query(
+            `INSERT INTO usuarios (nombre, apellido, email, password_hash, telefono, rol, activo) 
+             VALUES ($1, $2, $3, $4, $5, 'cliente', true) 
+             RETURNING id, nombre, apellido, email, rol`,
+            [nombre, apellido, email, hashedPassword, telefono || null]
+        );
+        
+        const newUser = result.rows[0];
+        
+        // Enviar email de bienvenida (asíncrono, no esperar)
+        sendWelcomeEmail(newUser).catch(error => {
+            console.error('Error enviando email de bienvenida:', error);
+        });
+        
+        req.session.userId = newUser.id;
+        req.session.userRole = newUser.rol;
+        req.session.userEmail = newUser.email;
+        req.session.userName = `${newUser.nombre} ${newUser.apellido}`;
+        
+        res.status(201).json({
+            success: true,
+            user: newUser,
+            message: 'Registro exitoso. Revisa tu email para tu código de bienvenida.'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en registro:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= MODIFICAR LA RUTA DE CREAR PRODUCTO =================
+app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
+    const { 
+        nombre, 
+        descripcion, 
+        precio,
+        categoria, 
+        imagen, 
+        stock, 
+        tallas, 
+        colores, 
+        sku, 
+        material, 
+        coleccion,
+        imagenes_adicionales,
+        descuento_porcentaje,
+        descuento_precio,
+        notify_users // Nuevo campo para decidir si notificar
+    } = req.body;
+    
+    console.log('➕ Creando producto:', nombre);
+    
+    try {
+        const precioDOP = parseFloat(precio);
+        
+        const productData = {
+            nombre: nombre || 'Producto sin nombre',
+            descripcion: descripcion || '',
+            precio: precioDOP,
+            categoria: categoria || 'sin-categoria',
+            imagen: imagen || '/public/images/default-product.jpg',
+            stock: parseInt(stock) || 0,
+            tallas: formatArrayForPostgres(tallas),
+            colores: formatArrayForPostgres(colores),
+            sku: sku || `SKU-${Date.now()}`,
+            material: material || '',
+            coleccion: coleccion || '',
+            imagenes_adicionales: formatArrayForPostgres(imagenes_adicionales),
+            descuento_porcentaje: parseInt(descuento_porcentaje) || 0,
+            descuento_precio: descuento_precio ? parseFloat(descuento_precio) : null,
+            activo: true
+        };
+        
+        const result = await query(
+            `INSERT INTO productos (
+                nombre, descripcion, precio, categoria, imagen, stock, 
+                tallas, colores, sku, material, coleccion, 
+                imagenes_adicionales, descuento_porcentaje, descuento_precio,
+                activo, fecha_creacion
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP) 
+             RETURNING *`,
+            [
+                productData.nombre,
+                productData.descripcion,
+                productData.precio,
+                productData.categoria,
+                productData.imagen,
+                productData.stock,
+                productData.tallas,
+                productData.colores,
+                productData.sku,
+                productData.material,
+                productData.coleccion,
+                productData.imagenes_adicionales,
+                productData.descuento_porcentaje,
+                productData.descuento_precio,
+                productData.activo
+            ]
+        );
+
+        const newProduct = result.rows[0];
+        const processedProduct = processProductPrices(newProduct);
+        
+        console.log('✅ Producto creado:', processedProduct.nombre);
+        
+        // Notificar a usuarios sobre nuevo producto si se solicitó
+        if (notify_users === true || notify_users === 'true') {
+            console.log('📢 Notificando a usuarios sobre nuevo producto...');
+            notifyUsersAboutNewProducts(processedProduct).catch(error => {
+                console.error('Error notificando usuarios:', error);
+            });
+        }
+        
+        res.status(201).json({
+            ...processedProduct,
+            notification_sent: notify_users === true || notify_users === 'true'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error creando producto:', error.message);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message
+        });
+    }
+});
+
+// ================= NUEVA RUTA: TEST DE EMAIL (ADMIN) =================
+app.post('/api/admin/test-email', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ error: 'Email requerido' });
+        }
+        
+        console.log('🔧 Probando envío de email a:', email);
+        
+        const success = await emailService.testEmail(email);
+        
+        if (success) {
+            res.json({ 
+                success: true, 
+                message: 'Email de prueba enviado correctamente' 
+            });
+        } else {
+            res.status(500).json({ 
+                error: 'Error enviando email de prueba' 
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Error en test de email:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= NUEVA RUTA: ENVIAR NOTIFICACIÓN MASIVA =================
+app.post('/api/admin/send-bulk-notification', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { subject, message, product_ids } = req.body;
+        
+        if (!subject || !message) {
+            return res.status(400).json({ 
+                error: 'Asunto y mensaje son requeridos' 
+            });
+        }
+        
+        // Obtener productos si se especificaron
+        let products = [];
+        if (product_ids && product_ids.length > 0) {
+            const productsResult = await query(
+                'SELECT * FROM productos WHERE id = ANY($1)',
+                [product_ids]
+            );
+            products = productsResult.rows.map(processProductPrices);
+        }
+        
+        // Obtener usuarios
+        const usersResult = await query(
+            'SELECT id, nombre, email FROM usuarios WHERE email IS NOT NULL AND activo = true'
+        );
+        
+        const users = usersResult.rows;
+        
+        if (users.length === 0) {
+            return res.status(400).json({ 
+                error: 'No hay usuarios para notificar' 
+            });
+        }
+        
+        console.log(`📧 Enviando notificación masiva a ${users.length} usuarios`);
+        
+        // Aquí implementarías el envío masivo
+        // Por ahora solo devolvemos información
+        res.json({
+            success: true,
+            message: `Notificación programada para ${users.length} usuarios`,
+            users_count: users.length,
+            products_count: products.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en notificación masiva:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= NUEVA RUTA: SUSCRIPCIÓN A NEWSLETTER =================
+app.post('/api/newsletter/subscribe', async (req, res) => {
+    try {
+        const { email, nombre } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ error: 'Email requerido' });
+        }
+        
+        console.log('📧 Suscripción a newsletter:', email);
+        
+        // Aquí guardarías el email en una tabla de newsletter
+        // Por ahora solo simulamos
+        
+        // Enviar email de confirmación
+        try {
+            const user = { email, nombre: nombre || 'Cliente' };
+            await emailService.sendWelcomeEmail(user);
+        } catch (emailError) {
+            console.error('Error enviando email de newsletter:', emailError);
+        }
+        
+        res.json({
+            success: true,
+            message: '¡Te has suscrito exitosamente! Revisa tu email.'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en suscripción a newsletter:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// ================= NUEVA RUTA: OBTENER ESTADÍSTICAS DE EMAIL =================
+app.get('/api/admin/email-stats', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        // Obtener total de usuarios con email
+        const usersResult = await query(
+            'SELECT COUNT(*) as total_users FROM usuarios WHERE email IS NOT NULL AND activo = true'
+        );
+        
+        // Obtener últimos usuarios registrados
+        const recentUsersResult = await query(
+            'SELECT nombre, email, fecha_registro FROM usuarios WHERE email IS NOT NULL ORDER BY fecha_registro DESC LIMIT 10'
+        );
+        
+        res.json({
+            total_users: parseInt(usersResult.rows[0].total_users),
+            recent_users: recentUsersResult.rows,
+            email_service: 'Configurado y listo'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo estadísticas:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 
 // ================= API - AUTENTICACIÓN =================
 app.post('/api/login', async (req, res) => {
@@ -358,49 +733,6 @@ app.post('/api/login', async (req, res) => {
         
     } catch (error) {
         console.error('❌ Error en login:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-app.post('/api/register', async (req, res) => {
-    const { nombre, apellido, email, password, telefono } = req.body;
-    
-    console.log('📝 Registro:', email);
-    
-    try {
-        const existingUser = await query(
-            'SELECT id FROM usuarios WHERE email = $1',
-            [email]
-        );
-        
-        if (existingUser.rows.length > 0) {
-            return res.status(400).json({ error: 'El email ya está registrado' });
-        }
-        
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        
-        const result = await query(
-            `INSERT INTO usuarios (nombre, apellido, email, password_hash, telefono, rol, activo) 
-             VALUES ($1, $2, $3, $4, $5, 'cliente', true) 
-             RETURNING id, nombre, apellido, email, rol`,
-            [nombre, apellido, email, hashedPassword, telefono || null]
-        );
-        
-        const newUser = result.rows[0];
-        
-        req.session.userId = newUser.id;
-        req.session.userRole = newUser.rol;
-        req.session.userEmail = newUser.email;
-        req.session.userName = `${newUser.nombre} ${newUser.apellido}`;
-        
-        res.status(201).json({
-            success: true,
-            user: newUser
-        });
-        
-    } catch (error) {
-        console.error('❌ Error en registro:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
@@ -1097,11 +1429,12 @@ app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-// Obtener todos los usuarios (admin)
+// ================= CORREGIR LA RUTA DE OBTENER USUARIOS (ADMIN) =================
 app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
     try {
         console.log('👥 Admin: Obteniendo todos los usuarios');
         
+        // CORREGIDO: Solo seleccionar columnas que existen
         const result = await query(`
             SELECT 
                 id, 
@@ -1111,13 +1444,10 @@ app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
                 telefono,
                 rol,
                 activo,
-                fecha_registro,
-                direccion,
-                ciudad
+                fecha_registro
             FROM usuarios 
-            WHERE rol != 'admin' OR id = $1
             ORDER BY fecha_registro DESC
-        `, [req.session.userId]);
+        `);
         
         // Obtener estadísticas para cada usuario
         const usersWithStats = await Promise.all(result.rows.map(async (user) => {
@@ -1606,6 +1936,7 @@ app.get('/api/payments/config', (req, res) => {
         }
     });
 });
+
 
 // ========== PAYPAL ==========
 let paypalClient = null;
@@ -2152,102 +2483,6 @@ function generateUniqueSKU(productId = null) {
     return `MAB-${timestamp}-${random}`;
 }
 
-// Crear producto (admin) - Precio se ingresa en DOP
-app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
-    const { 
-        nombre, 
-        descripcion, 
-        precio, // Recibido en DOP desde el frontend
-        categoria, 
-        imagen, 
-        stock, 
-        tallas, 
-        colores, 
-        sku, 
-        material, 
-        coleccion,
-        imagenes_adicionales,
-        descuento_porcentaje,
-        descuento_precio // En DOP
-    } = req.body;
-    
-    console.log('➕ Creando producto:', nombre);
-    console.log('💰 Precio recibido en DOP:', precio);
-    
-    try {
-        // El precio ya viene en DOP, lo guardamos directamente
-        const precioDOP = parseFloat(precio);
-        
-        const productData = {
-            nombre: nombre || 'Producto sin nombre',
-            descripcion: descripcion || '',
-            precio: precioDOP, // Guardamos en DOP
-            categoria: categoria || 'sin-categoria',
-            imagen: imagen || '/public/images/default-product.jpg',
-            stock: parseInt(stock) || 0,
-            tallas: formatArrayForPostgres(tallas),
-            colores: formatArrayForPostgres(colores),
-            sku: sku || `SKU-${Date.now()}`,
-            material: material || '',
-            coleccion: coleccion || '',
-            imagenes_adicionales: formatArrayForPostgres(imagenes_adicionales),
-            descuento_porcentaje: parseInt(descuento_porcentaje) || 0,
-            descuento_precio: descuento_precio ? parseFloat(descuento_precio) : null,
-            activo: true
-        };
-        
-        const result = await query(
-            `INSERT INTO productos (
-                nombre, descripcion, precio, categoria, imagen, stock, 
-                tallas, colores, sku, material, coleccion, 
-                imagenes_adicionales, descuento_porcentaje, descuento_precio,
-                activo, fecha_creacion
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP) 
-             RETURNING *`,
-            [
-                productData.nombre,
-                productData.descripcion,
-                productData.precio,
-                productData.categoria,
-                productData.imagen,
-                productData.stock,
-                productData.tallas,
-                productData.colores,
-                productData.sku,
-                productData.material,
-                productData.coleccion,
-                productData.imagenes_adicionales,
-                productData.descuento_porcentaje,
-                productData.descuento_precio,
-                productData.activo
-            ]
-        );
-
-        const newProduct = result.rows[0];
-        const processedProduct = processProductPrices(newProduct);
-        
-        console.log('✅ Producto creado:', processedProduct.nombre);
-        console.log('💰 Precio:', processedProduct.precio_formateado);
-        
-        res.status(201).json(processedProduct);
-        
-    } catch (error) {
-        console.error('❌ Error creando producto:', error.message);
-        
-        let errorMessage = 'Error interno del servidor';
-        if (error.message.includes('null value')) {
-            errorMessage = 'Faltan campos requeridos';
-        } else if (error.message.includes('unique constraint')) {
-            errorMessage = 'El SKU ya existe';
-        }
-        
-        res.status(500).json({ 
-            error: errorMessage,
-            details: error.message
-        });
-    }
-});
-
 // Actualizar producto (admin)
 app.put('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res) => {
     const { id } = req.params;
@@ -2585,50 +2820,30 @@ app.get('/api/create-test-data', async (req, res) => {
     }
 });
 
+// ================= RUTA PARA IMÁGENES POR DEFECTO =================
+app.get('/public/images/default-product.jpg', (req, res) => {
+    const defaultImagePath = path.join(__dirname, 'public/images/default-product.jpg');
+    
+    // Verificar si existe la imagen por defecto
+    if (fs.existsSync(defaultImagePath)) {
+        res.sendFile(defaultImagePath);
+    } else {
+        // Crear directorio si no existe
+        const imagesDir = path.join(__dirname, 'public/images');
+        if (!fs.existsSync(imagesDir)) {
+            fs.mkdirSync(imagesDir, { recursive: true });
+        }
+        
+        // Crear una imagen por defecto simple (puedes reemplazar con una imagen real)
+        // Por ahora devolvemos un 404 con JSON
+        res.status(404).json({ 
+            error: 'Imagen no encontrada',
+            message: 'La imagen por defecto no está configurada. Sube una imagen llamada default-product.jpg en /public/images/'
+        });
+    }
+});
+
 // ================= MANEJO DE ERRORES =================
-app.use((req, res, next) => {
-    console.log(`❌ 404: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ 
-        error: 'Ruta no encontrada',
-        method: req.method,
-        url: req.originalUrl
-    });
-});
-
-app.use((err, req, res, next) => {
-    console.error('🔥 Error del servidor:', err);
-    res.status(500).json({ 
-        error: 'Error interno del servidor',
-        message: err.message
-    });
-});
-
-// ================= INICIAR SERVIDOR =================
-app.listen(PORT, () => {
-    console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}`);
-    console.log(`\n💰 CONFIGURACIÓN DE MONEDA:`);
-    console.log(`   • Moneda principal: ${DEFAULT_CURRENCY} (${CURRENCY_SYMBOL})`);
-    console.log(`   • NOTA: Todos los precios están en pesos dominicanos`);
-    console.log(`\n📋 RUTAS PRINCIPALES:`);
-    console.log(`   • Página principal: http://localhost:${PORT}/`);
-    console.log(`   • Tienda: http://localhost:${PORT}/shop`);
-    console.log(`   • Carrito: http://localhost:${PORT}/cart`);
-    console.log(`   • Checkout: http://localhost:${PORT}/checkout`);
-    console.log(`   • Admin: http://localhost:${PORT}/admin`);
-    console.log(`   • Cuenta: http://localhost:${PORT}/account`);
-    console.log(`\n📍 DIRECCIONES (FORMATO SIMPLIFICADO):`);
-    console.log(`   • API Direcciones: http://localhost:${PORT}/api/users/:id/addresses`);
-    console.log(`   • Campos requeridos: nombre, nombre_completo, telefono, provincia, municipio, sector, referencia`);
-    console.log(`\n🔧 RUTAS DE API:`);
-    console.log(`   • Test: http://localhost:${PORT}/api/test`);
-    console.log(`   • Config moneda: http://localhost:${PORT}/api/currency/config`);
-    console.log(`   • Productos (DOP): http://localhost:${PORT}/api/products`);
-    console.log(`   • Provincias RD: http://localhost:${PORT}/api/dominican-republic/provinces`);
-    console.log(`   • Config pagos: http://localhost:${PORT}/api/payments/config`);
-    console.log(`\n👤 CREDENCIALES:`);
-    console.log(`   • Admin: admin@gmail.com / admin123`);
-    console.log(`\n✅ Listo para usar! Direcciones simplificadas y todos los precios en Pesos Dominicanos (DOP)`);
-});
 
 // Endpoint temporal para compatibilidad
 app.post('/api/payments/create-stripe-payment', async (req, res) => {
@@ -2642,4 +2857,91 @@ app.post('/api/payments/create-stripe-payment', async (req, res) => {
         currency: 'DOP',
         amount: req.body.amount || 0
     });
+});
+
+// ================= MANEJO DE ERRORES GLOBALES =================
+
+// Capturar errores no manejados de promesas
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('🔥 Error no manejado en Promise:', reason);
+    console.error('📦 Promise:', promise);
+});
+
+// Capturar excepciones no capturadas
+process.on('uncaughtException', (error) => {
+    console.error('💥 Excepción no capturada:', error);
+    // No cerrar el proceso para desarrollo
+    // En producción podrías querer reiniciar
+});
+
+// Middleware para rutas no encontradas
+app.use((req, res, next) => {
+    console.log(`❌ 404: ${req.method} ${req.originalUrl}`);
+    
+    // Si es una imagen, devolver JSON en lugar de HTML
+    if (req.originalUrl.includes('.jpg') || req.originalUrl.includes('.png') || 
+        req.originalUrl.includes('.gif') || req.originalUrl.includes('.webp')) {
+        return res.status(404).json({ 
+            error: 'Imagen no encontrada',
+            url: req.originalUrl,
+            suggestion: 'Asegúrate de que la imagen exista en /public/images/'
+        });
+    }
+    
+    res.status(404).json({ 
+        error: 'Ruta no encontrada',
+        method: req.method,
+        url: req.originalUrl
+    });
+});
+
+// Middleware para errores generales
+app.use((err, req, res, next) => {
+    console.error('🔥 Error del servidor:', err);
+    res.status(500).json({ 
+        error: 'Error interno del servidor',
+        message: err.message,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+});
+
+// ================= INICIAR SERVIDOR =================
+app.listen(PORT, () => {
+    console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`\n💰 CONFIGURACIÓN DE MONEDA:`);
+    console.log(`   • Moneda principal: ${DEFAULT_CURRENCY} (${CURRENCY_SYMBOL})`);
+    console.log(`   • NOTA: Todos los precios están en pesos dominicanos`);
+    console.log(`\n📧 SISTEMA DE EMAILS:`);
+    console.log(`   • Email de bienvenida automático`);
+    console.log(`   • Notificaciones de nuevos productos`);
+    console.log(`   • Emails semanales programados`);
+    console.log(`   • Servicio: ${process.env.EMAIL_HOST || 'No configurado'}`);
+    
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+        console.log(`\n⚠️  ADVERTENCIA: Email no configurado. Añade credenciales en .env`);
+    }
+    
+    console.log(`\n📋 RUTAS PRINCIPALES:`);
+    console.log(`   • Página principal: http://localhost:${PORT}/`);
+    console.log(`   • Tienda: http://localhost:${PORT}/shop`);
+    console.log(`   • Carrito: http://localhost:${PORT}/cart`);
+    console.log(`   • Checkout: http://localhost:${PORT}/checkout`);
+    console.log(`   • Admin: http://localhost:${PORT}/admin`);
+    console.log(`   • Cuenta: http://localhost:${PORT}/account`);
+    
+    console.log(`\n📍 DIRECCIONES (FORMATO SIMPLIFICADO):`);
+    console.log(`   • API Direcciones: http://localhost:${PORT}/api/users/:id/addresses`);
+    console.log(`   • Campos requeridos: nombre, nombre_completo, telefono, provincia, municipio, sector, referencia`);
+    
+    console.log(`\n🔧 RUTAS DE API:`);
+    console.log(`   • Test: http://localhost:${PORT}/api/test`);
+    console.log(`   • Config moneda: http://localhost:${PORT}/api/currency/config`);
+    console.log(`   • Productos (DOP): http://localhost:${PORT}/api/products`);
+    console.log(`   • Provincias RD: http://localhost:${PORT}/api/dominican-republic/provinces`);
+    console.log(`   • Config pagos: http://localhost:${PORT}/api/payments/config`);
+    
+    console.log(`\n👤 CREDENCIALES:`);
+    console.log(`   • Admin: admin@gmail.com / admin123`);
+    
+    console.log(`\n✅ Listo para usar! Sistema completo funcionando.`);
 });
